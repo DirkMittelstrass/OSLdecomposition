@@ -1,0 +1,485 @@
+---
+title: "Step 2 perfomance tests"
+date: 2019-10-07
+output: html_notebook
+---
+
+```{r global_stuff, include=FALSE}
+
+# TODO
+# - 
+
+library(Luminescence)
+library(numOSL)
+library(OSLdecomposition)
+library(knitr)
+knitr::opts_chunk$set(fig.width=10, fig.asp=.6, warning=FALSE, error=FALSE, echo=FALSE)
+
+# alternative simulations:
+
+
+```
+
+
+1. Build List with vectors which shall be varied
+
+N.it <- 1000 
+
+V.list <- list(n.Fast = c(0, 1000, 3000, 10000),
+               n.Medium = c(0, 1000, 3000, 10000),
+               n.Slow1 = c(0, 3000, 10000),
+               n.Slow2 = c(10000, 30000, 100000),
+               Background = c(0, 20, 40),
+               Channels = c(100, 400),
+               Channel.width = c(0.1, 0.2, 0.5),
+               Algorithm = c(1, 2, 3),
+               Background.fit = c(0, 1))
+               
+V.list <- list(n.Fast = c(0, 1000, 10000),
+               n.Medium = c(0, 1000),
+               n.Slow1 = c(0, 3000),
+               n.Slow2 = c(30000),
+               Background = c(0),
+               Channels = c(100, 400),
+               Channel.width = c(0.2),
+               Algorithm = c(1, 2, 3),
+               Background.fit = c(0, 1))
+               
+V.list <- list(n.Fast = c(0, 3000),
+               n.Medium = c(0, 3000),
+               n.Slow1 = c(0, 3000),
+               n.Slow2 = c(10000),
+               Background = c(0, 30),
+               Channels = c(100),
+               Channel.width = c(0.2),
+               Algorithm = c(1, 2, 3),
+               fit.background = c(0, 1))
+
+
+```{r}
+
+# How many iteration per case?
+N.it <- 1000 
+
+lambda <- c(Fast = 2, Medium = 0.5, Slow1 = 0.1, Slow2 = 0.02)
+#Slow1 = 0.1,
+X <- 1:length(lambda)
+
+V.list <- list(n.Fast = c(0, 1000, 3000, 10000),
+               n.Medium = c(0, 1000, 3000, 10000),
+               n.Slow1 = c(0, 3000, 10000),
+               n.Slow2 = c(10000, 30000, 100000),
+               Background = c(0, 20, 40),
+               Channels = c(100, 400),
+               Channel.width = c(0.1, 0.2, 0.5),
+               Algorithm = c(1, 2, 3),
+               fit.background = c(0, 1))
+
+string.Alg <- c("det","nls","det+nls")
+V.max <- NULL
+
+for (i in 1:length(V.list)) {
+  V.max <- c(V.max, length(V.list[[i]]))
+}
+
+N <- prod(V.max)
+
+# time estimation
+# prefactor: 6x @ notebook; 3x at Uni PC; 2x at home gaming PC
+print(paste0(" ~ ", 3*N*N.it/(10000*60), " hr"))
+
+```
+
+
+2. Cycle through all combinations and build a parameter set for each
+
+```{r}
+
+V.i <- rep(1, length(V.list))
+V.table <- data.frame(NULL)
+
+for (j in 1:N) {
+  
+  V <- NULL
+  
+  for (i in 1:length(V.list)) {
+  
+    if(V.i[i] > V.max[i]) {
+      V.i[i] <- 1
+      V.i[i + 1] <- V.i[i + 1] + 1
+    }
+    
+    V <- c(V, V.list[[i]][V.i[i]])
+
+  }
+  
+  V.i[1] <- V.i[1] + 1
+  
+  V.table <- rbind(V.table, V)
+}
+
+colnames(V.table) <- names(V.list)
+
+```
+
+
+3. Simulation
+
+
+
+```{r sim, error=FALSE}
+
+Time.needed <- Sys.time()
+
+C.list <- list(NULL)
+Curve <- data.frame(NULL)
+
+for (j in 1:N) {
+  
+  if (j == 1) writeLines(paste0("N = ", j, " at ", Sys.time()))
+  if (j == 2500) writeLines(paste0("N = ", j, " at ", Sys.time()))
+  if (j == 5000) writeLines(paste0("N = ", j, " at ", Sys.time()))
+  if (j == 7500) writeLines(paste0("N = ", j, " at ", Sys.time()))
+  if (j == 10000) writeLines(paste0("N = ", j, " at ", Sys.time()))
+  if (j == 12500) writeLines(paste0("N = ", j, " at ", Sys.time()))
+  if (j == 15000) writeLines(paste0("N = ", j, " at ", Sys.time()))
+  
+  
+  #j <- 29
+
+  # Build component table
+  V <- V.table[j,]
+  C.names <- names(lambda)
+  C <- data.frame(name = C.names, 
+                  lambda = lambda, 
+                  n = c(t(V[X])))
+  C <- C[C$n > 0,]
+  
+  C <- calc_OSLintervals(C, 
+                         channel.width = V$Channel.width,
+                         channel.number = V$Channels,
+                         verbose = FALSE,
+                         background.fitting = V$fit.background)
+  
+  C.list[[j]] <- list(NULL)
+  C.list[[j]]$input <- C
+  C.list[[j]]$parameter <- V
+  
+  # ...
+
+  R.table <- data.frame(NULL)
+  
+  for (i in 1:N.it) {
+    
+      R <- data.frame(Fast.n = NA, Fast.sigma = NA, Fast.inside = NA,
+                  Medium.n = NA, Medium.sigma = NA, Medium.inside = NA,
+                  Slow1.n = NA, Slow1.sigma = NA, Slow1.inside = NA,
+                  Slow2.n = NA, Slow2.sigma = NA, Slow2.inside = NA,
+                  Time = NA, Failed = 1)
+    
+    # Simulate input curve
+      Curve <-simulate_OSLcurve(C,
+                                channel.width = V$Channel.width,
+                                channel.number = V$Channels,
+                                add.background = V$Background,
+                                add.gaussian.noise = sqrt(V$Background),
+                                simulate.curve = TRUE)
+      
+      time.start <- Sys.time()
+      
+      # Decompose
+      C.temp <- decompose_OSLcurve(Curve, 
+                                   C, 
+                                   algorithm = string.Alg[V$Algorithm], 
+                                   verbose = FALSE)
+      
+      R$Time <- as.numeric(Sys.time() - time.start)
+      
+      # Did the fit succeed?
+      if (sum(is.na(C.temp$n))==0) {
+        R$Failed <- 0
+        
+        # Allocate fitting results for each component to result table line
+        for (x in 1:length(C.names)) {
+        
+          if (sum(C.temp$name==C.names[x])==1) {
+            
+             C.line <- C.temp[C.temp$name==C.names[x],]
+            
+            R[[paste0(C.names[x],".n")]] <- C.line$n
+            R[[paste0(C.names[x],".sigma")]] <- C.line$n.error
+            
+            
+            # is the true value located inside the error bars?
+            if (abs(C[C$name==C.names[x],]$n - C.line$n) < C.line$n.error) {
+              
+              R[[paste0(C.names[x],".inside")]] <- 1 
+            } else {
+              
+              R[[paste0(C.names[x],".inside")]] <- 0 
+            }
+          }
+        }
+        
+      }
+      
+
+      R.table <- rbind(R.table, R)
+  }
+
+ 
+ C.list[[j]]$output <- R.table
+}
+
+Time.needed <- Sys.time() - Time.needed
+writeLines(Time.needed)
+
+#C:\Users\dm59leto\Desktop\Step2 Test
+save.image(paste0("C:/Users/dm59leto/Desktop/Step2 Test/", Sys.Date(),"_Step2-SIM.RData"))
+
+#W:\R\OSLdecomposition
+save.image(paste0("W:/R/OSLdecomposition/", Sys.Date(),"_Step2-SIM.RData"))
+
+
+```
+
+3min for 100*100 calculations
+
+
+4. Summarize output and put into one big table
+
+```{r}
+
+
+S.table <- data.frame(NULL)
+
+for (j in 1:N) {
+
+  S <- C.list[[j]][["output"]]
+  V <- C.list[[j]][["input"]]
+  
+  S.line <- data.frame(K = nrow(V),
+                       Time = mean(S$Time, na.rm = TRUE),
+                       Failed = sum(S$Failed, na.rm = TRUE))
+  
+  for (i in 1:length(C.names)) {
+    
+    S.n <- NA
+    S.sigma <- NA
+    
+   S.name <- C.names[i]
+   
+   if (sum(V$name==S.name)==1) {
+     S.n <- S[[paste0(S.name, ".n")]] / V$n[V$name==S.name]
+     S.sigma <- S[[paste0(S.name, ".sigma")]] / V$n[V$name==S.name]
+   }
+
+   
+   S.component <- data.frame(mea = mean(S.n, na.rm = TRUE),
+                             err = sd(S.n, na.rm = TRUE),
+                             s.mea = mean(S.sigma, na.rm = TRUE),
+                             s.rat = mean(S.sigma, na.rm = TRUE)/sd(S.n, na.rm = TRUE),
+                             inside = sum(S[[paste0(C.names[i], ".inside")]] == 1) / 
+                               (sum(S[[paste0(C.names[i], ".inside")]] == 1) + 
+                                  sum(S[[paste0(C.names[i], ".inside")]] == 0)))
+   colnames(S.component) <- c(paste0(S.name,".mean"),
+                              paste0(S.name,".error"),
+                              paste0(S.name,".sigma.mean"),
+                              paste0(S.name,".sigma.ratio"),
+                              paste0(S.name,".inside"))
+   
+   S.line <- cbind(S.line, S.component)
+  }
+  
+  
+  S.table <- rbind(S.table, S.line)
+
+}
+
+S.table <- cbind(V.table, S.table)
+
+
+```
+
+4.1 Display one specfic case:
+
+```{r}
+
+# 1234 -> 9010 with background fitting
+
+i.Case <- 9010
+
+C <- C.list[[i.Case]]$input
+V <- C.list[[i.Case]]$parameter
+
+# Simulate input curve
+Curve <-simulate_OSLcurve(C,
+                          channel.width = V$Channel.width,
+                          channel.number = V$Channels,
+                          add.background = V$Background,
+                          add.gaussian.noise = sqrt(V$Background),
+                          simulate.curve = TRUE)
+
+# Decompose
+C.temp <- decompose_OSLcurve(Curve, 
+                             C, 
+                             algorithm = string.Alg[V$Algorithm], 
+                             verbose = TRUE)
+
+# Plot
+plot_OSLcurve(Curve, C.temp, title = paste0("Example curve of simulation entry: ", i.Case))
+kable(V)
+
+```
+
+
+5.1 Time efficiency
+
+```{r}
+
+O.table <- data.frame(matrix(NA, nrow = 4, ncol = 3))
+
+for (j in 1:3) {
+  for (i in 1:4) {
+    O.table[i,j] <- mean(S.table[((S.table$K == i) & (S.table$Algorithm == j)),]$Time, na.rm = TRUE) * 1000
+    
+  }
+  
+}
+
+print(O.table)
+
+
+```
+
+
+
+5.2 Accuracy table
+
+```{r}
+
+TABLE <- S.table[(S.table$fit.background==1), ]
+#TABLE <- S.table
+print(nrow(TABLE))
+
+Col.selection <- seq(13, 28, 5) # means
+#Col.selection <- seq(17, 32, 5) # inside
+
+O.table <- data.frame(matrix(NA, nrow = 8, ncol = 4))
+colnames(O.table) <- colnames(S.table[,Col.selection])
+rownames(O.table) <- c("Minimum", "5% percentile", "25% percentile", 
+                      "Median", 
+                      "75% percentile", "95% percentile", "Maximum", 
+                      "Bandwidth")
+
+for (a in V.list$Algorithm) {
+  
+  j <- 1
+  for (i in Col.selection) {
+  
+    O.table[1:7,j] <- quantile(TABLE[(TABLE$Algorithm == a), i], 
+                               probs = c(0, 0.05, 0.25, 0.5, 0.75, 0.95, 1), 
+                               na.rm = TRUE)
+    
+    O.table[8,j] <- nrow(TABLE[(TABLE$Algorithm == a) & 
+                                   (TABLE[,i] < 1.1) & 
+                                   (TABLE[,i] > 0.9) &
+                                   !is.na(TABLE[,i]),]) / 
+      nrow(TABLE[(TABLE$Algorithm == a) & 
+      !is.na(TABLE[,i]),])
+    
+    j <- j + 1
+  }
+
+  print(O.table)
+  
+}
+
+
+#write.csv(C.table, paste0(path,"/S.table_accuracy.csv"))
+```
+
+# plot correct error over estimated error
+
+
+#####################################
+5.2 Component-number table
+
+```{r}
+K.table <- data.frame(NULL)
+for (i in 1:4) {
+  
+  # Change Chi.weight to select sub-data set
+  K.table <- rbind(K.table, 
+                   hist(S.table[(S.table$K.input == i) & (S.table$Chi.weight == 0),]$K.output, 
+                        breaks = seq(0.5, 5.5, 1), plot=FALSE)$counts)
+  
+}
+colnames(K.table) <- paste0("out=", 1:5)
+
+```
+
+
+5.3 Correlation table
+
+```{r}
+path <- "C:/Users/mitte/Desktop/Step 1 - correlation tables"
+
+# Correlation table. Warning! Calculation can take several minutes
+C.table <- cor(S.table[S.table$Chi.weight == 0,], use = "pairwise.complete.obs", method = "kendall")
+write.csv(C.table, paste0(path,"/S.table_correlations_Chi-not-weighted.csv"))
+```
+
+
+
+9. Create some box plots
+
+```{r, fig.width=12.5, fig.height=5}
+
+library(ggplot2)
+library(gridExtra)
+theme_set(theme_bw())
+
+  Dlot.1 <- rbind(data.frame(Lambda.rel = S.table[(S.table$Chi.weight==0) &
+                                                    !is.na(S.table$ratio_Fast),]$ratio_Fast,
+                               Approach = factor("Chi² not weighted")),
+                    data.frame(Lambda.rel = S.table[S.table$Chi.weight==1 &
+                                                    !is.na(S.table$ratio_Fast),]$ratio_Fast,
+                               Approach = factor("Chi² weighted")))
+
+  
+ Plot.1 <- ggplot(Dlot.1, aes(color = Approach, x = Lambda.rel)) +
+   geom_density(size=1) + xlim(0.9, 1.1)
+   #geom_violin() + ylim(0.95, 1.05)
+ 
+
+ ###################################################
+ 
+  Dlot.2 <- rbind(data.frame(Lambda.rel = S.table[!is.na(S.table$ratio_Fast),]$ratio_Fast,
+                             Chi.weight = S.table[!is.na(S.table$ratio_Fast),]$Chi.weight,
+                             Component = factor("Fast")),
+                  data.frame(Lambda.rel = S.table[!is.na(S.table$ratio_Medium),]$ratio_Medium,
+                             Chi.weight = S.table[!is.na(S.table$ratio_Medium),]$Chi.weight,
+                             Component = factor("Medium")),
+                  data.frame(Lambda.rel = S.table[!is.na(S.table$ratio_Slow1),]$ratio_Slow1,
+                             Chi.weight = S.table[!is.na(S.table$ratio_Slow1),]$Chi.weight,
+                             Component = factor("Slow1")),
+                  data.frame(Lambda.rel = S.table[!is.na(S.table$ratio_Slow2),]$ratio_Slow2,
+                             Chi.weight = S.table[!is.na(S.table$ratio_Slow2),]$Chi.weight,
+                             Component = factor("Slow2")))
+
+  
+ Plot.2 <- ggplot(Dlot.2, aes(color = Chi.weight, y = Lambda.rel, x = Component)) +
+   geom_violin() + scale_y_log10() + ylim(0.5, 2)
+#geom_boxplot
+
+ ###################################################
+ 
+ lay <- cbind(1,2)
+ grid.arrange(Plot.1, Plot.2, layout_matrix = lay)
+ 
+ # nrow(S.table[(S.table$K.diff < 0) & (S.table$n_Slow1 > 0) & is.na(S.table$ratio_Slow1),]) / nrow(S.table[S.table$K.diff < 0,])
+
+```
+
+

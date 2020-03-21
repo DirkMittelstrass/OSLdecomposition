@@ -1,0 +1,126 @@
+---
+title: "Performance test of the decomposing algorithms"
+output:
+  html_document:
+    df_print: paged
+---
+
+Last change: 2019-04-04
+
+Documentation:
+- first attempt to compare performance of my alogrithm with other decompostion algorithm
+- competitor: nls() in default mode with fixed lambdas
+- results: They are equally capable to decompose even curve with just a few detection events 
+
+
+-------------------------------------------------------------
+
+Step 1: Create a simulated default curve 
+
+
+```{r, fig.width=10, fig.asp=.5}
+components <- data.frame(name = c("Fast","Medium","Slow"), lambda = c(3, 0.5, 0.05), n = c(1000, 1000, 10000))
+
+#curve <- simulate_OSLcurve(components, channel.number = 200, channel.width = 0.1, simulate.curve = TRUE)
+
+curve <- simulate_OSLcurve(components, channel.number = 200, channel.width = 0.1, simulate.curve = TRUE, add.gaussian.noise = 5, add.background = 20)
+
+plot_OSLcurve(curve, components, display = "detailed", 
+                          title ="Simulated curve")
+```
+
+
+Step 2: Decompose the default curve
+
+2.1 Fit with nls and with 3 free parameters (n's)
+```{r, fig.width=10, fig.asp=.5}
+
+components2 <- decompose_OSLalternatively(curve, components, algorithm = "nls")
+plot_OSLcurve(curve, components2, display = "detailed", 
+                          title ="Decomposed by nonlinear regression with fixed lambdas")
+```
+
+
+2.2 Decompose by my algorithm
+```{r, fig.width=10, fig.asp=.5}
+
+#components <- calc_OSLintervals(components, curve)
+components3 <- decompose_OSLcurve(curve, components)
+plot_OSLcurve(curve,components3, 
+              title="Decomposed by equation system")
+
+```
+
+2.3 Comparison table
+
+```{r}
+data.frame(component = components$name,
+           lambda = components$lambda,
+           n.real = components$n,
+           n.regression = round(components2$n),
+           n.equation.system = round(components3$n))
+
+```
+
+Step 3: Test performance of decomposition approaches
+
+3.1. Create table
+
+```{r, message=FALSE warning=FALSE fig.width=10, fig.asp=.5}
+
+# create n.vector
+n <- 1000
+n.v <- n
+while (n > 1) {
+  n <- ceiling(n * 0.98 - 1)
+  n.v <- c(n.v, n)
+}
+
+# ratio of components
+c.ratio = c(1, 1, 10)
+
+# Create component data.frame
+comp <- data.frame(name = c("Fast","Medium","Slow"), 
+                   lambda = c(3, 0.5, 0.05), 
+                   n = c.ratio * n)
+curve.template <- simulate_OSLcurve(comp, 
+                                    channel.number = 200, 
+                                    channel.width = 0.1, 
+                                    simulate.curve = TRUE)
+
+comp <- calc_OSLintervals(comp, curve.template)
+
+
+comp.table <- data.frame(NULL)
+
+for (n in n.v) {
+  comp$n <- n * c.ratio
+  curv <- simulate_OSLcurve(comp, curve.template, simulate.curve = TRUE)
+  #curv <- simulate_OSLcurve(comp, channel.number = 200, channel.width = 0.1, simulate.curve = TRUE, add.gaussian.noise = 5, add.background = 20)
+
+  comp.reg <- decompose_OSLalternatively(curv, comp, algorithm = "nls")
+  
+  comp.eq <- decompose_OSLcurve(curv, comp)
+
+  comp.table <- rbind(comp.table, data.frame(
+                      Fast.expected = comp$n[1],
+                      Medium.expected = comp$n[2],
+                      Slow.expected = comp$n[3],
+                      Fast.reg = comp.reg$n[1],
+                      Medium.reg = comp.reg$n[2],
+                      Slow.reg = comp.reg$n[3],
+                      Fast.eq = comp.eq$n[1],
+                      Medium.eq = comp.eq$n[2],
+                      Slow.eq = comp.eq$n[3]
+                      ))
+}
+comp.table 
+
+plot_OSLcurve(curv,comp.reg, title="Last curve; Decomposed by nonlinear regression")
+plot_OSLcurve(curv,comp.eq, title="Last curve; Decomposed by equation system")
+
+write.table(comp.table, "PerformanceTestTable.txt", sep="\t")
+
+```
+
+

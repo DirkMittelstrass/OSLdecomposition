@@ -1,0 +1,69 @@
+---
+title: "Analyze and manipulate OSL data"
+output: html_notebook
+---
+
+
+```{r global_stuff, include=FALSE}
+
+# TODO
+# +
+
+library(Luminescence)
+library(numOSL)
+library(OSLdecomposition)
+#library(knitr)
+library(shiny)
+
+knitr::opts_chunk$set(fig.width=10, 
+                      fig.asp=.6, 
+                      warning=FALSE,
+                      error=FALSE,
+                      echo=FALSE)
+```
+
+
+
+```{r}
+
+# choose BIN file:
+#path <- file.choose()
+
+data.path <- list(BK8 = "C:\\Users\\mitte\\Desktop\\Masterarbeit\\data\\BK-8_1295-1280_63-40um_2mm_Qz1_ed.BIN",
+                  Oy7 = "C:\\Users\\mitte\\Desktop\\Masterarbeit\\data\\Oy7-01-14_63-100_1mm_Qz1-1_ed.BIN",
+                  BT1214 = "C:\\Users\\mitte\\Desktop\\Masterarbeit\\data\\BT1214_all_FKQ_mx.BIN",
+                  BT594 = "C:\\Users\\mitte\\Desktop\\Masterarbeit\\data\\BT594_607_608_612_619.BIN",
+                  Batagai = "C:\\Users\\mitte\\Desktop\\Masterarbeit\\data\\Batagai_2-7_B-2-47_OSL_63-100_2mm_Qz1_ed.BIN")
+
+data.set <- list(NULL)
+
+for (i in 1:length(data.path)) {
+  
+  data.set[[i]] <- read_BIN2R(data.path[[i]], fastForward = TRUE, txtProgressBar = TRUE)
+}
+  
+  
+
+
+```
+
+
+Build overview for all aliquots
+
+```{r}
+D <- data.set[[1]]
+
+Table <- data.frame(NULL)
+
+for (i in 1:length(Data)) {
+  Line <- data.frame(index = i,
+                     position = D[[i]]@records[[1]]@info[["POSITION"]])
+}
+
+# isTRUE( all.equal(df2,df1) )
+# identical(df2,df1)
+
+
+
+```
+

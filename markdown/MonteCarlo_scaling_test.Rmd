@@ -1,0 +1,226 @@
+---
+title: 'Test: Scale down Monte Carlo scattering interval in plot_GrowthCurve'
+output:
+  html_notebook: default
+date: '2019-05-16'
+---
+
+```{r global_stuff, include=FALSE}
+library(Luminescence)
+library(knitr)
+```
+
+
+Sample: BK8 (from Maggi)
+Decomposed with 3 components
+
+Table indices:
+- 1 = Late background substracted
+- 2 = fast component
+- 3 = medium component
+- 4 = slow component
+
+APPROACH:
+The LxTx.error values in the LxTx tables are multiplied with a scaling factor at the beginning of plot_GrowthCurve(). The resulting De.Error (and also D01.Error) are divided at the end of the function
+
+RESULTS/DISCUSSION:
+In case of 'good' data: The specific De.Error value changes with changing scaling factor. But the median De.Error and the De.Error distribution remains about the same. Conclusion: Scaling the Monte Carlo interval down does not change the Error value results beside some method-inherent randomness
+
+In case of 'bad' data: Growth curve of data set "Fast 1" shows, that good but noisy data is improved by MC scaling (smaller and more reasonable error bar). But "Medium 16" shows, that this approach sometimes work for 'trash' curves too and may lead to false certainty. "Fast 12" shows, that MC scaling can increase the De.Error in case of growth curves with (slightly) negative curvature. A linear fit would have been a better solution in this case. "Slow 11" shows a another issue which is not solved by MC scaling: Is the nat-signal much higher than the reg-signals than even small errors lead to large errors at the reg. point. Here, switching linear fitting or weighting the LxTx errors according to the signal intensity might help. "Slow 20" has one bad data point (negative high dose reg-point because of negative Tx) which lead to a bad fitting. Deleting this point would have saved this data set.
+
+RECOMMENDATION:
+Add option for "BAD DATA" fitting:
+- based on fitting "EXP OR LIN"
+- deploy MC scaling with scaling.factor = 0.01
+- switch to LIN fitting if the curvature of EXP is negative or about zero
+- delete points with negative Tx values
+- delete points with Tx.error values larger than Tx itself
+- if all the above is applied, and De.Error is still larger than De, switch to LIN fitting
+
+
+
+## plot_GrowthCurve calculations
+
+! Use "run current chunk" !
+
+```{r calc_DeErrors}
+
+scaling.factors <- c(1, 0.5, 0.1, 0.01, 0.001)
+results <- list(NULL)
+overviews <- list(NULL)
+
+for (i in 1:length(SAR.list)) {
+  
+  result.table <- data.frame(NULL)
+ 
+  for (j in 1:length(SAR.list[[i]]@data$LnLxTnTx.table)) {
+    
+    result.line <- c(j, NA)
+    
+    for (scaling in scaling.factors) {
+      
+      #######      #######      #######      #######      #######      #######
+      
+      De.data <- plot_GrowthCurve2(SAR.list[[i]]@data$LnLxTnTx.table[[j]], 
+                                   scaling = scaling,
+                                   output.plot = FALSE,
+                                   verbose = FALSE)  
+      
+      #######      #######      #######      #######      #######      #######
+      
+      result.line[2] <- De.data@data[["De"]][["De"]]
+      result.line <- c(result.line, De.data@data[["De"]][["De.Error"]])
+    }
+    
+    result.table <- rbind(result.table, result.line)
+  }
+  
+  colnames(result.table) <- c("index","De", paste0("scaling=", scaling.factors))
+  results[[i]] <- result.table
+  
+  # build overview tables
+  row.max <- NULL
+  row.median <- NULL
+  row.sd <- NULL
+  row.NAs <- NULL
+  for (x in 2:ncol(result.table)) {
+    row.max <- c(row.max, 
+                 max(result.table[,x], na.rm = TRUE))
+    row.median <- c(row.median, 
+                    median(result.table[,x], na.rm = TRUE))
+    row.sd <- c(row.sd, 
+                round(sd(result.table[,x], na.rm = TRUE), digits = 2))
+    row.NAs <- c(row.NAs, 
+                 sum(is.na(result.table[,x])))
+  }
+  overview.table <- rbind(row.max, row.median, row.sd, row.NAs)
+  rownames(overview.table) <- c("Max_value", "Median_value", "Standard_dev", "NAs")
+  colnames(overview.table) <- c("De", paste0("scaling=", scaling.factors))
+  overviews[[i]] <- overview.table
+}
+
+```
+
+## Result tables
+
+# Late background results:
+
+```{r tables}
+kable(overviews[[1]])
+kable(results[[1]])
+```
+
+# Fast component:
+
+```{r tables}
+kable(overviews[[2]])
+kable(results[[2]])
+```
+
+# Medium component:
+
+```{r tables}
+kable(overviews[[3]])
+kable(results[[3]])
+```
+
+# Slow component:
+
+```{r tables}
+kable(overviews[[4]])
+kable(results[[4]])
+```
+
+
+
+## Special cases
+
+# Fast 1:
+Good growth curve but large error bars
+-> diverging Monte Carlo leads to random and too-large De.Error. Scaling solves this issue
+
+index	De	scaling=1	scaling=0.5	scaling=0.1	scaling=0.01	scaling=0.001
+1	911.66	376.52	203.41	183.44	170.26	169.25
+
+```{r plots, fig.asp = 1}
+plot_GrowthCurve2(SAR.list[[2]]@data$LnLxTnTx.table[1],
+                  scaling = 1, verbose = FALSE)  
+```
+
+
+# Fast 7:
+Good growth curve. Why does the error increase with scaling?
+-> it doesn't tendency is not real but comes from the randomness of De.Error 
+
+index	De	scaling=1	scaling=0.5	scaling=0.1	scaling=0.01	scaling=0.001
+7	1000.78	76.94	78.51	83.44	95.51	91.87
+
+```{r plots, fig.asp = 1}
+plot_GrowthCurve2(SAR.list[[2]]@data$LnLxTnTx.table[7],
+                  scaling = 1, verbose = FALSE)  
+```
+
+
+# Fast 12:
+Okay-ish quasi-linear growth curve. Why does the error increase with scaling?
+-> negative curvature of growth curve is probably the reason
+
+index	De	scaling=1	scaling=0.5	scaling=0.1	scaling=0.01	scaling=0.001
+12	650.42	69.68	61.66	76.97	97.21	122.75
+
+```{r plots, fig.asp = 1}
+plot_GrowthCurve2(SAR.list[[2]]@data$LnLxTnTx.table[12],
+                  scaling = 1, verbose = FALSE)  
+```
+
+
+# Medium 18:
+Negative test doses means, that the component model didn't fit for this aliquot
+-> scaling obviously helps, but curve is inverted!
+
+index	De	scaling=1	scaling=0.5	scaling=0.1	scaling=0.01	scaling=0.001
+18	223.38	34807.05	1080.41	500.34	445.59	518.09
+
+```{r plots, fig.asp = 1}
+plot_GrowthCurve2(SAR.list[[3]]@data$LnLxTnTx.table[18],
+                  scaling = 1, verbose = FALSE)
+```
+
+
+# Medium 16:
+Quite random points
+-> scaling helps, but data set is trash anyway
+
+index	De	scaling=1	scaling=0.5	scaling=0.1	scaling=0.01	scaling=0.001
+6	172.50	1553.40	4158.27	180.90	38.94	48.02
+
+```{r plots, fig.asp = 1}
+plot_GrowthCurve2(SAR.list[[3]]@data$LnLxTnTx.table[16],
+                  scaling = 1, verbose = FALSE)
+```
+
+
+# Slow 11:
+Natural signal is far above growth curve 
+-> error overestimated due runaway exponential curve. Linear fitting may had have helped
+
+index	De	scaling=1	scaling=0.5	scaling=0.1	scaling=0.01	scaling=0.001
+11	229755.28	2138863.77	2207355.54	2123848.03	1947949.23	2196980.22
+
+```{r plots, fig.asp = 1}
+plot_GrowthCurve2(SAR.list[[4]]@data$LnLxTnTx.table[11],
+                  scaling = 1, verbose = FALSE)
+```
+
+
+# Slow 20:
+Highest Reg point is negative because of small negative testdose
+
+index	De	scaling=1	scaling=0.5	scaling=0.1	scaling=0.01	scaling=0.001
+20	1553.85	549.81	975.36	725.80	801.73	911.48
+
+```{r plots, fig.asp = 1}
+plot_GrowthCurve2(SAR.list[[4]]@data$LnLxTnTx.table[20], 
+                                   scaling = 1, verbose = FALSE)  
+```
+

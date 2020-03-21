@@ -1,0 +1,25 @@
+---
+title: "Extern_call_test"
+author: "Dirk Mittelstrass"
+date: "2020/03/17"
+output:
+  html_document:
+    df_print: paged
+params:
+  lum_data: !r list(NULL)
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+lum_data <- params$lum_data
+```
+
+## R Markdown
+
+Well, this is just a test
+
+```{r test}
+class(lum_data)
+length(lum_data)
+```

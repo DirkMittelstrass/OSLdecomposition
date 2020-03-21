@@ -1,0 +1,117 @@
+---
+title: "Streched exponential test"
+date: 2019-06-18
+output: html_notebook
+---
+
+Read global curve in
+
+
+```{r global_stuff}
+
+# TODO
+# - 
+
+library(Luminescence)
+library(numOSL)
+library(OSLdecomposition)
+library(knitr)
+
+knitr::opts_chunk$set(fig.width=10, 
+                      fig.asp=.6, 
+                      warning=FALSE,
+                      error=FALSE,
+                      echo=FALSE)
+
+# Data set dependend parameters
+max_number_of_components <- 5
+
+# choose BIN file:
+path <- file.choose()
+
+# path <- "C:\\Users\\mitte\\Desktop\\Masterarbeit\\data\\Oy7-01-14_63-100_1mm_Qz1-1_ed.BIN"
+# path <- "C:\\Users\\mitte\\Desktop\\Masterarbeit\\data\\BK-8_1295-1280_63-40um_2mm_Qz1_ed.BIN"
+# path <- "C:\\Users\\mitte\\Desktop\\Masterarbeit\\data\\BT1214_all_FKQ_mx.BIN"
+# path <- "C:\\Users\\mitte\\Desktop\\Masterarbeit\\data\\BT594_607_608_612_619.BIN"
+# path <- "C:\\Users\\mitte\\Desktop\\Masterarbeit\\data\\Batagai_2-7_B-2-47_OSL_63-100_2mm_Qz1_ed.BIN"
+
+drop_selection <- c(1:4) #c(25:48)  # c(22)  c(1:4)# which aliquots to leave out?
+
+# read BIN file:
+lum_data <- read_BIN2R(path, 
+                       fastForward = TRUE,
+                       txtProgressBar = FALSE)
+lum_data[drop_selection] <- NULL
+
+# get first curve
+
+i <- 1
+while (!(lum_data[[1]]@records[[i]]@recordType == "OSL")) {
+  i <- i + 1
+}
+first_curve <- data.frame(time = lum_data[[1]]@records[[i]]@data[,1],
+                          signal = lum_data[[1]]@records[[i]]@data[,2])
+
+# check if time beginns with zero and add channel.width if the case
+if (first_curve$time[1] == 0)  first_curve$time <- first_curve$time + first_curve$time[2]
+
+Oy7.F <- first_curve
+c.Oy7.F <- decompose_OSLalternatively(first_curve, c.Oy7)
+
+#plot_OSLcurve(Batagai.F, c.Batagai.F, display = "compare_lin", title = "Natural dose OSL of first aliquot")
+
+```
+
+
+```{r}
+# calc arithmetic mean curve
+global_curve <- sum_OSLcurves(lum_data,
+                            record_type = "OSL",
+                            output.plot = TRUE)
+
+# Check if first time point is zero, if yes, correct it
+if (global_curve$time[1] == 0) {
+  global_curve$time <- global_curve$time + global_curve$time[2] - global_curve$time[1]
+  writeLines("Time axis shifted one step to the left to prevent start-at-zero")
+  # Note: decompose_OSLcurve does not use the time axis -> no need to correct single curves
+}
+
+BT1240 <- global_curve
+
+```
+
+
+...
+
+```{r}
+
+global_components <- fit_OSLcurve(global_curve,
+                                  algorithm = "streched",
+                                  N.allowed = c(1:max_number_of_components),
+                                  significance.threshold = 0.1,
+                                  stimulation.intensity = 30)
+
+```
+
+
+simulated curve from MA Zwischenstand talk 04.07.2019
+
+```{r}
+simulatedOSL.parameter <- data.frame(name = c("Fast", "Medium", "Slow"),
+                                     lambda = c(2.5, 0.5, 0.01),
+                                     n = c(1000, 1000, 10000))
+
+simulatedOSL.curve <- simulate_OSLcurve(simulatedOSL.parameter, 
+                                        channel.width = 0.1,
+                                        channel.number = 200, 
+                                        simulate.curve = TRUE,
+                                        add.background = 10,
+                                        add.poisson.noise = TRUE,
+                                        add.gaussian.noise = 5)
+
+plot_OSLcurve(simulatedOSL.curve, simulatedOSL.parameter)
+
+fit_OSLcurve(simulatedOSL.curve, 
+             F.threshold = 1)
+```
+

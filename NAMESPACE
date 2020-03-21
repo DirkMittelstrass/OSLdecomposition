@@ -1,0 +1,12 @@
+
+export(calc_OSLintervals)
+export(calc_classicOSLsignal)
+export(decompose_OSLcurve)
+export(decompose_SARdata)
+export(fit_OSLcurve)
+export(plot_OSLcurve)
+export(plot_PhotoCrosssections)
+export(prepare_OSLdata)
+export(simulate_OSLcurve)
+export(sum_OSLcurves)
+export(table_SARdata)

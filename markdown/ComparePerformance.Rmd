@@ -1,0 +1,286 @@
+---
+title: "method test A.1"
+output:
+  html_document:
+    df_print: paged
+  runtime: shiny
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.width=10, fig.asp=.8)
+library(ggplot2)
+library(OSLdecomposition)
+library(knitr)
+library(scales)
+```
+
+
+## Decreasing signal intensity with 3 components
+
+date: 2019-04-12
+
+**Infos:**
+
+* second attempt to compare performance of my alogrithm with other decompostion algorithm
+* competitor: nls() in default mode (Gauss-Newton algorithm; 50 iterations) with fixed lambdas
+
+
+
+-------------------------------------------------------------
+
+#### 1.1.: Set paramters
+
+
+```{r}
+# Parameters:
+component.names   <- c("Fast","Medium","Slow")
+component.lambdas <- c(2, 0.5, 0.05)
+Component.ratio   <- c(2, 1, 10)
+#component.names   <- c("Fast","Medium","Slow1", "Slow2")
+#component.lambdas <- c(3, 1, 0.3, 0.05)
+#Component.ratio   <- c(1, 1, 1, 5)
+detector.noise    <- 0
+signal.background <- 0
+channel.number    <- 200
+channel.width     <- 0.1
+
+# Performance variables:
+start.n           <- 1000
+end.n             <- 1
+iterations        <- 1000
+
+# create vector for the decaying signal amplitudes
+n.i <- start.n 
+while (n.i[length(n.i)] > end.n) {
+  n.i <- c(n.i, ceiling(n.i[length(n.i)] * 0.95 - 1))
+}
+
+```
+
+
+Test parameters   | Value
+------------------|------------
+Component names   | `r component.names`
+Component lambdas | `r component.lambdas`
+Component ratio   | `r Component.ratio`
+Detector noise    | `r detector.noise`
+Signal background | `r signal.background`
+Channel number    | `r channel.number`
+Channel width     | `r channel.width`
+Start n           | `r start.n`
+End n             | `r end.n`
+Decreasing steps  | `r length(n.i)`
+Iterations        | `r iterations`
+
+
+#### 1.2.: Create default data sets
+
+```{r }
+
+components.default <- data.frame(name = component.names, 
+                                 lambda = component.lambdas, 
+                                 n = Component.ratio * start.n)
+
+curve.default <- simulate_OSLcurve(components.default, 
+                                   channel.number = channel.number, 
+                                   channel.width = channel.width, 
+                                   simulate.curve = TRUE, 
+                                   add.gaussian.noise = detector.noise, 
+                                   add.background = signal.background)
+
+components.default <- calc_OSLintervals(components.default, curve.default)
+
+kable(components.default)
+
+```
+
+
+
+#### 1.3.: Example curve viewer
+
+
+```{r}
+
+components.shiny <- components.default
+
+# Create shiny plot to surf through curves
+numericInput("n", "Signal amplitude n: ", start.n)
+
+renderPlot(width = 900, height = 450,res = 100,
+           {
+            components.shiny$n <- Component.ratio * input$n
+            
+            curve.shiny <- simulate_OSLcurve(components.shiny, 
+                                               curve.default, 
+                                               simulate.curve = TRUE, 
+                                               add.gaussian.noise = detector.noise, 
+                                               add.background = signal.background)
+            
+            plot_OSLcurve(curve.shiny, components.shiny, display = "detailed", title ="Simulated OSL curve")
+})
+
+
+```
+
+### 2.: Performing tests
+
+**Data set notation:**
+
+* data set = list of data.frames
+* list elements = components
+* prefix in data.frame column name inform about used decomposition algorithm 
++ **A** = simulated 'correct' values. *A.n.error* is calculated according to Poisson statistics
++ **B** = determinant based master thesis approach
++ **C** = nonlinear regression with fixed lambdas using *nls()* in default mode
++ **D** = ...
+
+
+
+
+```{r }
+#message=FALSE warning=FALSE
+
+X <- c(1:length(component.lambdas))
+A <- components.default
+
+Data.set <- list(NULL)
+for (x in X) Data.set[[x]] <- data.frame(NULL)
+
+for (n in n.i) {
+  
+  
+  A$n <- n * Component.ratio
+  
+  Repeats <- list(NULL)
+  for (x in X) Repeats[[x]] <- data.frame(NULL)
+  
+  for (i in 1:iterations) {
+    curve <- simulate_OSLcurve(A, curve.default, 
+                           simulate.curve = TRUE,
+                           add.poisson.noise = TRUE,
+                           add.gaussian.noise = detector.noise, 
+                           add.background = signal.background)
+    
+    B <- decompose_OSLcurve(curve, 
+                            components.default)
+    
+    C <- decompose_OSLalternatively(curve, 
+                                    components.default)
+    
+    for (x in X) {
+      Repeats[[x]] <- rbind(Repeats[[x]], 
+                            data.frame(B.n = B$n[x],
+                                       B.n.error = B$n.error[x],
+                                       C.n = C$n[x],
+                                       C.n.error = C$n.error[x]))
+    }
+  }
+  
+  for (x in X) {
+  Data.set[[x]] <- rbind(Data.set[[x]], 
+                        data.frame(A.n = A$n[x],
+                                   A.n.sigma = (A$n[x])^0.5,
+                                   B.n.mean = mean(Repeats[[x]]$B.n, na.rm = TRUE),
+                                   B.n.na = sum(is.na(Repeats[[x]]$B.n)),
+                                   B.n.sigma= sd(Repeats[[x]]$B.n, na.rm = TRUE),
+                                   B.n.error.mean = mean(Repeats[[x]]$B.n.error, na.rm = TRUE),
+                                   C.n.mean = mean(Repeats[[x]]$C.n, na.rm = TRUE),
+                                   C.n.na = sum(is.na(Repeats[[x]]$C.n)),
+                                   C.n.sigma= sd(Repeats[[x]]$C.n, na.rm = TRUE),
+                                   C.n.error.mean = mean(Repeats[[x]]$C.n.error, na.rm = TRUE)))
+  }
+}
+
+
+for (x in X) {
+ write.table(Data.set[[x]], paste0(component.names[x], ".txt"), sep="\t")
+   
+}
+
+
+
+```
+
+#### 2.1.: Performance summary Method A: Solving equations with determinants
+
+```{r}
+
+# Calculate summary table for Algorithm B
+Data.summary.B <- data.frame(NULL)
+for (x in X) {
+  
+  mean.values <- Data.set[[x]]$B.n.mean / Data.set[[x]]$A.n
+  value.deviation <- Data.set[[x]]$B.n.sigma / Data.set[[x]]$A.n.sigma
+  error.deviation <- Data.set[[x]]$B.n.error.mean / Data.set[[x]]$A.n.sigma
+  
+  Data.summary.B <- rbind(Data.summary.B,
+                        data.frame(component.name = component.names[x], 
+                                   mean.value.discrepancy = percent(mean(mean.values, na.rm = TRUE) - 1),
+                                   value.deviation.discrepancy = percent(median(value.deviation, na.rm = TRUE) - 1),
+                                   calculated.error.discrepancy = percent(median(error.deviation, na.rm = TRUE) - 1),
+                                   NAs = sum(Data.set[[x]]$B.n.na)))
+  }
+
+kable(Data.summary.B)
+
+```
+
+#### 2.2.: Performance summary Method B: Nonlinear regression with fixed lambdas
+
+```{r}
+# Calculate summary table for Algorithm C
+Data.summary.C <- data.frame(NULL)
+for (x in X) {
+  
+  mean.values <- Data.set[[x]]$C.n.mean / Data.set[[x]]$A.n
+  value.deviation <- Data.set[[x]]$C.n.sigma / Data.set[[x]]$A.n.sigma
+  error.deviation <- Data.set[[x]]$C.n.error.mean / Data.set[[x]]$A.n.sigma
+  
+  Data.summary.C <- rbind(Data.summary.C,
+                        data.frame(component.name = component.names[x], 
+                                   mean.value.discrepancy = percent(mean(mean.values, na.rm = TRUE) - 1),
+                                   value.deviation.discrepancy = percent(median(value.deviation, na.rm = TRUE) - 1),
+                                   calculated.error.discrepancy = percent(median(error.deviation, na.rm = TRUE) - 1),
+                                   NAs = sum(Data.set[[x]]$C.n.na)))
+  }
+
+kable(Data.summary.C)
+```
+
+
+```{r}
+
+graph.colors <- c("black","red3","green3","blue3","darkorchid","gold","brown","pink")
+    
+    for (x in X) {
+
+      # rearrange data to work in ggplot-function
+      data <- rbind(data.frame(n = n.i, accuracy = 1, graph = "expected value"),
+                    data.frame(n = n.i, accuracy = Data.set[[x]]$B.n.mean / Data.set[[x]]$A.n - 1, graph = "equation sytem"),
+                    data.frame(n = n.i, accuracy = Data.set[[x]]$C.n.mean / Data.set[[x]]$A.n - 1, graph = "nonlinear regression"))
+            
+      res.max <- max(data$accuracy)
+      
+      ########## Plot residual curve ###########
+      
+  
+      p.res <- ggplot(data, aes(x=n, y=accuracy), colour=graph) +
+        #error.ribbon +
+        geom_line(na.rm = TRUE) +
+        scale_y_continuous(limits = c(- res.max, res.max)) +
+        scale_x_log10() + scale_x_reverse()
+        #ylab("residual") +
+  
+      show(p.res)
+      
+      
+    }
+
+    ########## Calc confidence interval ###########
+
+
+
+
+```
+
