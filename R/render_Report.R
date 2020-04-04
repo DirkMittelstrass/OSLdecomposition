@@ -6,6 +6,12 @@ render_Report <- function(object,
   # - add file directory argument
 
   ### Input checks ###
+
+  if("rmarkdown" %in% rownames(installed.packages()) == FALSE) {
+
+    stop("[render_Report()] Package 'rmarkdown' is needed to provide reports.")
+  }
+
   output_type <- tolower(output_type)
 
   #require(shiny)

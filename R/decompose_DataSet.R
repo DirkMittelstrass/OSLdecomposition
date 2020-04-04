@@ -52,10 +52,10 @@ decompose_DataSet <- function(
 
   for (j in aliquot_selection) {
     if (j < 1 || j > length(data_set)) {
-      message("Warning: Item ", j," is not a part of the data set. Item skipped")
+      message("\nWarning: Item ", j," is not a part of the data set. Item skipped")
     } else {
       if (class(data_set[[j]]) != "RLum.Analysis") {
-        message("Warning: Item ", j," is not of class RLum.Analysis. Item skipped")
+        message("\nWarning: Item ", j," is not of class RLum.Analysis. Item skipped")
       } else {
 
 
