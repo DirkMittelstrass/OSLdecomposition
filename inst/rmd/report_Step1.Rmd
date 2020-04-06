@@ -1,7 +1,7 @@
 ---
 title: "Step1_report"
 author: "Dirk Mittelstrass"
-date: "2020/04/03"
+date: "2020/04/06"
 output:
   html_document:
     df_print: paged
@@ -51,13 +51,13 @@ The subsequent diagrams are structured the following way:
 for (i in 1:nrow(fit_data$F.test)) {
   
   plot_OSLcurve(fit_data$curve, 
-                fit_data$components.list[[i]], 
+                fit_data$case.tables[[i]], 
                 title = NULL,
-                algorithm = " ")
+                algorithm = "det")
 
  # cat(paste0("<pre>**Figure ", n.figure,":** "))
-  cat(paste0("<pre>*Figure ", n.figure,": Global mean curve fit with K = ", i, 
-             " components* <pre>  ---------  <pre>"))
+  cat(paste0("<br>*Figure ", n.figure,": Global mean curve fit with K = ", i, 
+             " components*<br><br>"))
 n.figure <- n.figure + 1
 
 #cat("")
@@ -65,7 +65,7 @@ n.figure <- n.figure + 1
 
 ```
 
-\pagebreak
+ 
 **F-test**  
 But which of these fittings gives back a sufficient model of the global mean curve, without over-fitting it? We solve this by comparing the residual square sum (*RSS*) of each fitting with the *RSS* value of the previous fitting. Bluszcz & Adamiec (2006) propose to use a *F*-test:  
 
@@ -77,9 +77,9 @@ If *F~K~* falls below the preset threshold value of *F~threshold~* = `r #F_thres
 
 ```{r F-test_table}
 # print F-test table
-kable(fit_data$F.test.print, 
+kable(fit_data$F.test, 
       escape = TRUE, align = "c",
-      caption = "Table 1: Decay constants and fit quality parameters for multi-exponentional decay fitting with *K* components")
+      caption = "*Table 1: Decay constants and fit quality parameters for multi-exponentional decay fitting with *K* components*  ")
 ```
 
 The fitting with *K* = `r fit_data$K.selected` components is found to be the best suiting model to describe the given sample. Signal components with not-first-order kinetics, however, can lead to over-fitting. It is recommended to take the results of the *K* = `r fit_data$K.selected - 1` fitting model also into consideration.  
@@ -94,12 +94,10 @@ If the sample was measured with a stimulation light wavelength of about 470 nm a
 #knitr::opts_current$set(fig.asp = cross.plot.height)
 
 plot_PhotoCrosssections(fit_data,
-                        stimulation.intensity = 30,
-                        stimulation.wavelength = 470)
-                        #stimulation.intensity = stimulation_intensity,
-                        #stimulation.wavelength = stimulation_wavelength)
+                        stimulation.intensity = fit_data$fit.arguments$stimulation.intensity,
+                        stimulation.wavelength = fit_data$fit.arguments$stimulation.wavelength)
 
-  cat(paste0("<pre>*Figure ", n.figure,": Comparison of decay constants between fitting cases and comparison with reference values. Red square: Best fit*"))
+  cat(paste0("<br>*Figure ", n.figure,": Comparison of decay constants between fitting cases and comparison with reference values. Red square: Best fit*<br><br>"))
 n.figure <- n.figure + 1
 
 ```

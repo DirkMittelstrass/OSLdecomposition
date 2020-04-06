@@ -14,6 +14,9 @@
 #' * 2019-10-02, DM: Added background support and some little tweaks
 #'
 #' @section ToDo:
+#' * REDUCE AND REFACTORIZE CODE
+#' * Accept curve without components
+#' * Accept components without curve
 #' * Show fitting formula
 #' * Add pseudoLM-OSL presentation
 #' * Cut data set while zooming to improve performance
@@ -37,7 +40,7 @@
 #'
 plot_OSLcurve <- function(curve = NULL,
                           components = NULL,
-                          display = "lin-log", #"detailed", #"components", "raw" ,"compare_lin", "compare_log"
+                          display = "detailed", #"detailed", #"components", "raw" ,"compare_lin", "compare_log", "lin-log"
                           zoom = 1,
                           algorithm = "",
                           title = NULL

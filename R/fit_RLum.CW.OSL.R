@@ -12,8 +12,6 @@ fit_RLum.CW.OSL <- function(object,
                      stimulation_intensity = 30,
                      stimulation_wavelength = 470,
                      report = TRUE,
-                     report_format = "html",
-                     plot = FALSE,
                      verbose = TRUE){
 
   # ToDo:
@@ -23,6 +21,8 @@ fit_RLum.CW.OSL <- function(object,
   # - export not-html reports
 
 
+  library(OSLdecomposition)
+  library(Luminescence)
 
   # define new object list to rule out incompatible list elements
   data_set <- list()
@@ -40,7 +40,7 @@ fit_RLum.CW.OSL <- function(object,
 
         if (names(lum_data)[i]=="COMPONENTS") {
 
-          warning("Data set already contains step 1 results. They will be ovewritten")
+          warning("Data set already contains Step 1 results. Old results had been overwritten")
         }else{
 
           data_set_overhang[[length(data_set) + 1]] <- object[[i]]
@@ -64,10 +64,7 @@ fit_RLum.CW.OSL <- function(object,
 
   global_curve <- sum_OSLcurves(data_set,
                                 record_type = record_type,
-                                output.plot = plot,
-                                plot.first = FALSE,
-                                plot.global = plot,
-                                title = NULL,
+                                output.plot = FALSE,
                                 verbose = verbose)
 
   if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
@@ -86,7 +83,7 @@ fit_RLum.CW.OSL <- function(object,
                          applied.time.cut = TRUE,
                          background.fitting = FALSE,
                          verbose = verbose,
-                         output.plot = plot,
+                         output.plot = FALSE,
                          output.complex = TRUE)
 
   if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
@@ -104,6 +101,7 @@ fit_RLum.CW.OSL <- function(object,
 
       try({
 
+        report_format <- "html"
         # for test purposes:
         rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step1.Rmd"
         #rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
@@ -136,7 +134,7 @@ fit_RLum.CW.OSL <- function(object,
   # Print results
 
   object <- c(data_set, data_set_overhang, COMPONENTS = list(fit_data))
-  cat("done")
+  #cat("done\n")
   invisible(object)
 
 

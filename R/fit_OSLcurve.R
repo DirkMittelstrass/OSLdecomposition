@@ -26,7 +26,7 @@
 #' @section Last changed. 2020-04-06
 #'
 #' @author
-#' Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@@luminescence.de}
+#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
 #'
 #' @return
 #' @export
@@ -255,8 +255,10 @@ fit_OSLcurve <- function(
     #colnames(results.print) <- c("  K  ", paste0("$\\lambda_", X,"$ $(s^{-1})$"), "RSS","FOM","$F_K$")
   }
 
-  results$Chi2 <- formatC(results$Chi2)
-  results$F.value <- formatC(results$F.value)
+  results$Chi2 <- formatC(results$Chi2, digits = 3)
+  results$F.value <- formatC(results$F.value, digits = 3)
+
+  for (k in 1:nrow(results)) results[,k] <- round(results[,k], digits = 4)
 
   results[is.na(results)] <- ""
   results[results == "Inf"] <- ""
