@@ -6,7 +6,7 @@ output:
   html_document:
     df_print: paged
 params:
-  data_set: !r list(NULL)
+  fit_data: !r list(NULL)
 ---
 
 ```{r setup, include=FALSE}
@@ -27,19 +27,15 @@ knitr::opts_chunk$set(fig.width=7,
                       echo=FALSE,
                       cache=FALSE)
 
-data_set <- params$data_set
+fit_data <- params$fit_data
 
-
+K.selected <- fit_data$K.selected
+n.figure <- 1
 ```
 
 ## Test
 
 ... fill intro here ...
-
-```{r test}
-
-length(data_set)
-```
 
 The subsequent diagrams are structured the following way:
 
@@ -52,10 +48,10 @@ The subsequent diagrams are structured the following way:
 ```{r step1_display_cases, fig.asp=.6}
 
 # display fittings for all K
-for (i in 1:nrow(C.list$F.test)) {
+for (i in 1:nrow(fit_data$F.test)) {
   
-  plot_OSLcurve(global_curve, 
-                C.list$components.list[[i]], 
+  plot_OSLcurve(fit_data$curve, 
+                fit_data$components.list[[i]], 
                 title = NULL,
                 algorithm = " ")
 
@@ -76,19 +72,19 @@ But which of these fittings gives back a sufficient model of the global mean cur
 $$F_K = \frac{(RSS_{K-1} - RSS_K)/2}{RSS_K(N - 2K)} $$
 
 
-If *F~K~* falls below the preset threshold value of *F~threshold~* = `r F_threshold`, the new fitting model with *K* components is apparently not significantly better than the *K* - 1 model.
+If *F~K~* falls below the preset threshold value of *F~threshold~* = `r #F_threshold`, the new fitting model with *K* components is apparently not significantly better than the *K* - 1 model.
 
 
 ```{r F-test_table}
 # print F-test table
-kable(C.list$F.test.print, 
+kable(fit_data$F.test.print, 
       escape = TRUE, align = "c",
       caption = "Table 1: Decay constants and fit quality parameters for multi-exponentional decay fitting with *K* components")
 ```
 
-The fitting with *K* = `r K.selected` components is found to be the best suiting model to describe the given sample. Signal components with not-first-order kinetics, however, can lead to over-fitting. It is recommended to take the results of the *K* = `r K.selected - 1` fitting model also into consideration.  
+The fitting with *K* = `r fit_data$K.selected` components is found to be the best suiting model to describe the given sample. Signal components with not-first-order kinetics, however, can lead to over-fitting. It is recommended to take the results of the *K* = `r fit_data$K.selected - 1` fitting model also into consideration.  
 
-If the sample was measured with a stimulation light wavelength of about 470 nm and a stimulation light intensity of `r stimulation_intensity` mW cm^-2^ as presetted, the photoionisation cross-sections of the components can be calculated. These can be compared with the quartz LM-OSL findings given in literature.
+If the sample was measured with a stimulation light wavelength of about 470 nm and a stimulation light intensity of `r #stimulation_intensity` mW cm^-2^ as presetted, the photoionisation cross-sections of the components can be calculated. These can be compared with the quartz LM-OSL findings given in literature.
 
 ```{r step1_crosssections, fig.asp = 0.32}
 
@@ -97,9 +93,11 @@ If the sample was measured with a stimulation light wavelength of about 470 nm a
 #cross.plot.height <- (cross.plot.height + 2 + K.selected) * 0.01
 #knitr::opts_current$set(fig.asp = cross.plot.height)
 
-plot_PhotoCrosssections(C.list,
-                        stimulation.intensity = stimulation_intensity,
-                        stimulation.wavelength = stimulation_wavelength)
+plot_PhotoCrosssections(fit_data,
+                        stimulation.intensity = 30,
+                        stimulation.wavelength = 470)
+                        #stimulation.intensity = stimulation_intensity,
+                        #stimulation.wavelength = stimulation_wavelength)
 
   cat(paste0("<pre>*Figure ", n.figure,": Comparison of decay constants between fitting cases and comparison with reference values. Red square: Best fit*"))
 n.figure <- n.figure + 1

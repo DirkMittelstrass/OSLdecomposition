@@ -15,13 +15,15 @@
 #' * 2019-06-28 Deleted "fit_OSLLifeTimes" approach. Added stretched exponentials for testing. Added overview plot
 #' * 2019-10-07 Streamlined function; added optional background fitting
 #' * 2019-10-08 Seperated plotting to plot_PhotoCrosssections()
+#' * 2020-04-04 Extended output list (curve & arguments)
+#' * 2020-04-06 Extended print output and made some  tweaks. Replaced 'SAR.compatible' with 'fully.bleached'
 #'
 #' @section ToDo:
+#' * ! Replace numOSL::decomp by own code. Then enable sigma.lambda calculation and replace "easy way" of intensity calculation !
 #' * Documentation
 #' * Test background value fitting
-#' * Seperate crosssection calculation
 #'
-#' @section Last changed. 2019-10-19
+#' @section Last changed. 2020-04-06
 #'
 #' @author
 #' Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@@luminescence.de}
@@ -34,12 +36,12 @@ fit_OSLcurve <- function(
   curve,
   K.max = 5,
   F.threshold = 50,
-  stimulation.intensity = 35,
+  stimulation.intensity = 30,
   stimulation.wavelength = 470,
   applied.time.cut = FALSE,
   weight.Chi = FALSE,
   background.fitting = FALSE,
-  verbose = FALSE,
+  verbose = TRUE,
   output.complex = TRUE,
   output.plot = TRUE
 ){
@@ -161,7 +163,11 @@ fit_OSLcurve <- function(
     cross.section <- lambda / Flux
     cross.relative <- round(cross.section / cross.section[1], digits=4)
 
-    # Give components default names
+
+
+    ### NAME COMPONENTS ###
+
+    # default names:
     name <- paste0("Component ",1:k)
 
     if ((stimulation.wavelength >= 460) && (stimulation.wavelength <= 485)  ) {
@@ -196,90 +202,128 @@ fit_OSLcurve <- function(
     name[duplicated(name)] <- paste0(substr(name[duplicated(name)], 1, nchar(name[duplicated(name)]) - 2), ".c")
 
 
-    # Shall the component evaluated during the dose evaluation?
-    SAR.compatible <- rep(1,k)
-    if (applied.time.cut && (k > 1)) {
-
-      for (y in k:2) {
-
-        if(exp(- lambda[y] * max(time)) > 0.01) SAR.compatible[y] <- 0
-      }
-    }
+    # Is the component fully bleached (less than 1% residual) during stimulation?
+    fully.bleached <- rep(1,k)
+    for (y in 1:k) if(exp(- lambda[y] * max(time)) > 0.01) fully.bleached[y] <- 0
 
     ##### Build result table #####
     components <- data.frame(name = name,
                              lambda = lambda,
                              cross.section = cross.section,
                              cross.relative = cross.relative,
-                             SAR.compatible = SAR.compatible)
+                             fully.bleached = fully.bleached)
 
     row.names(components) <- 1:k
 
-    # Add n's
+    # Go the easy way to extract additional information from the fitting
     components <- decompose_OSLcurve(curve = curve,
                                      components = components,
                                      background.fitting = background.fitting,
                                      verbose = FALSE)
 
     C.list[[k]] <- components
-  }
+  } ### END building tables for the various cases ###
 
+  # Standard set of components is the on chosen by the F-test
+  components <- C.list[[K.selected]]
+
+  # Reduce amount of information in the table to avoid user irritation, also round some values
+  components <- subset(components, select = c(name, lambda, cross.section, initial.signal, n, fully.bleached))
+  N.not_fully_bleached <- (nrow(components) - sum(components$fully.bleached))
+  components$fully.bleached[components$fully.bleached == 1] <- "true"
+  components$fully.bleached[components$fully.bleached == 0] <- "false"
+  components$n <- round(components$n)
+  components$cross.section <- formatC(components$cross.section)
 
   ##### Format F-tables #####
-
-
+  # create a better looking table for publishing purposes
 
   # add "K=" column
-  results <- cbind(data.frame(K = 1:nrow(results)), results)
-
-  # create a better looking table for publishing purposes
-  results.print <- results
-  for (y in 1:ncol(results.print)) {
-
-    results.print[,y] <- formatC(results.print[,y], digits = 3)
-    results.print[grepl("NA", results.print[, y]), y] <- ""
-    results.print[grepl("Inf", results.print[, y]), y] <- ""
-  }
+  # results <- cbind(data.frame(K = 1:nrow(results)), results)
 
 
+  #results.print <- results
   # Chi² in Rmarkdown: $\\chi^2$
 
   if (background.fitting == TRUE) {
 
-    colnames(results) <- c("K", paste0("k_", X),"background","Chi2","FOM","F")
-    colnames(results.print) <- c("  K  ", paste0("$\\lambda_", X,"$ $(s^{-1})$"),"background","RSS","FOM","$F_K$")
+    colnames(results) <- c(paste0("k_", X),"background","Chi2","FOM","F.value")
+    #colnames(results.print) <- c("  K  ", paste0("$\\lambda_", X,"$ $(s^{-1})$"),"background","RSS","FOM","$F_K$")
   } else {
 
-    colnames(results) <- c("K", paste0("k_", X),"Chi2","FOM","F")
-    colnames(results.print) <- c("  K  ", paste0("$\\lambda_", X,"$ $(s^{-1})$"), "RSS","FOM","$F_K$")
+    colnames(results) <- c(paste0("k_", X),"Chi2","FOM","F.value")
+    #colnames(results.print) <- c("  K  ", paste0("$\\lambda_", X,"$ $(s^{-1})$"), "RSS","FOM","$F_K$")
   }
 
-  results.print <- subset(results.print, select = -FOM)
+  results$Chi2 <- formatC(results$Chi2)
+  results$F.value <- formatC(results$F.value)
 
+  results[is.na(results)] <- ""
+  results[results == "Inf"] <- ""
+
+
+ # for (y in 1:ncol(results)) {
+#
+ #   results[grepl("NA", results[, y]), y] <- ""
+ #   results[grepl("Inf", results[, y]), y] <- ""
+ #}
+
+ # results.print <- subset(results.print, select = -FOM)
+
+  # Print F-table and Component table
   if (verbose) {
 
     writeLines("F-test table:")
-    print(results.print)
+    print(subset(results, select = -FOM))
     writeLines(paste0("-->  ", K.selected,"-component model choosen"))
+
+    writeLines("")
+    writeLines("Signal component table:")
+    print(components)
+
+    # Give advice which components are suited for further analysis
+    if (N.not_fully_bleached > 0) {
+
+      if (N.not_fully_bleached == nrow(components)) {
+        writeLines("WARNING: No component was fully bleached during stimulation. Check your experimental settings!")
+
+      } else if (N.not_fully_bleached == 1) {
+
+        writeLines(paste0(components$name[components$fully.bleached == "false"],
+                          " was not fully bleached during stimulation and is not recommended for further dose evaluation"))
+      } else {
+
+        writeLines(paste0(paste(components$name[components$fully.bleached == "false"], collapse = ", "),
+                          " were not fully bleached during stimulation and are not recommended for further dose evaluation"))
+      }
+    }
   }
 
   ######################### Output #######################
 
   if (output.complex) {
 
-    output <- list(K.selected = K.selected,
-                   components = C.list[[K.selected]],
+    output <- list(curve = curve,
+                   K.selected = K.selected,
+                   components = components,
                    F.test = results,
-                   F.test.print = results.print,
-                   fit.list = fit.list,
-                   components.list = C.list,
-                   plot.data = plot.data)
+                #   F.test.print = results.print,
+                   fit.results = fit.list,
+                   case.tables = C.list,
+                   plot.data = plot.data,
+                   fit.arguments = list(K.max = K.max,
+                                        F.threshold = F.threshold,
+                                        stimulation.intensity = stimulation.intensity,
+                                        stimulation.wavelength = stimulation.wavelength,
+                                        applied.time.cut = applied.time.cut,
+                                        weight.Chi = weight.Chi,
+                                        background.fitting = background.fitting))
 
-    return(output)
+    invisible(output)
 
   } else {
 
-    return(C.list[[K.selected]])
+    invisible(components)
   }
 
 }

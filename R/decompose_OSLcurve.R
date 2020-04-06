@@ -37,19 +37,17 @@
 #' * 2019-09-25, DM: Merged function with decompose_OSLalternatively() and added algorithm argument
 #' * 2019-09-25, DM: Deleted unnecessary stuff (negative.values.to.zero, offset, anticorrelation)
 #' * 2019-10-02, DM: Added background fitting
+#' * 2020-04-06, DM: Added 'initial.signal' output value, reduced print output
 #
 #' @section ToDo:
 #' * Update documentation
-#' * Print running time info
-#' * Print output table
-#' * Add measurement-cut-parameter. Set $remainder of Slow components to NA if used
 #'
-#' @section Last changed: 2019-10-07
+#' @section Last changed: 2020-04-06
 #'
 #' @author
-#' Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@@luminescence.de}
+#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
 #'
-#' @seealso [calc_OSLintervals], [simulate_OSLcurve], [sum_OSLcurves]
+#' @seealso [calc_OSLintervals], [fit_OSLcurve], [sum_OSLcurves]
 #'
 #' @references
 #' Dirk Mittelstrass, Christoph Schmidt, Sebastian Kreutzer, ... .*in preperation*. Algebraic CW-OSL
@@ -66,7 +64,7 @@ decompose_OSLcurve <- function(
   curve,
   components,
   background.fitting = FALSE,
-  algorithm = "det+nls", # "det", "nls", "det+nls"
+  algorithm = "det", # "det", "nls", "det+nls"
   error.calculation = "empiric",   # "poisson", "empiric", "nls", numeric value
   verbose = TRUE
 ){
@@ -150,7 +148,7 @@ decompose_OSLcurve <- function(
 
   I <- NULL
   for (i in X) {
-    I <- c(I, sum(signal[c(ch.start[i]:ch.end[i]) ]))
+    I <- c(I, sum(signal[c(ch.start[i]:ch.end[i])]))
   }
   components$bin <- I
   components$bin.error <- rep(NA, K)
@@ -346,7 +344,13 @@ decompose_OSLcurve <- function(
     components$n.residual[i] <- round(n[i] * exp(- stim.end * lambda[i]))
   }
 
-  if (verbose) print(components)
 
-return(components)
+  # Calculate average share at initial signal
+  first_ch_signal <- n * (1 - exp(- lambda * channel.width))
+  components$initial.signal <- round(first_ch_signal / sum(first_ch_signal), digits = 4)
+
+
+  if (verbose) print(subset(components, select = c(name, n, n.error, n.residual, initial.signal)))
+
+invisible(components)
 }

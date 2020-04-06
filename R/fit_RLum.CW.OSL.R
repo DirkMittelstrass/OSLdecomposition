@@ -78,7 +78,7 @@ fit_RLum.CW.OSL <- function(object,
 
   time.start <- Sys.time()
 
-  C.list <- fit_OSLcurve(global_curve,
+  fit_data <- fit_OSLcurve(global_curve,
                          K.max = max_components,
                          F.threshold = F_threshold,
                          stimulation.intensity = stimulation_intensity,
@@ -86,7 +86,8 @@ fit_RLum.CW.OSL <- function(object,
                          applied.time.cut = TRUE,
                          background.fitting = FALSE,
                          verbose = verbose,
-                         output.plot = plot)
+                         output.plot = plot,
+                         output.complex = TRUE)
 
   if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
 
@@ -100,20 +101,31 @@ fit_RLum.CW.OSL <- function(object,
 
       # the RMD script has to be located in the "/inst" folder of the project
       # then, it will be installed with the package
-      rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
-      output_file <- paste0(getwd(), "/", "report_Step1.", report_format)
 
-      rmarkdown::render(rmd_path,
-                        params = list(data_set = data_set),
-                        output_file = output_file,
-                        output_format = paste0(report_format,"_document"),
-                        quiet = TRUE)
+      try({
+
+        # for test purposes:
+        rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step1.Rmd"
+        #rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
+        output_file <- paste0(getwd(), "/", "report_Step1.", report_format)
+
+        rmarkdown::render(rmd_path,
+                          params = list(fit_data = fit_data),
+                          output_file = output_file,
+                          output_format = paste0(report_format,"_document"),
+                          quiet = TRUE)
+
+        cat("Save", toupper(report_format), "report to:", output_file, "\n")
+
+        # ToDo: Replace the following try() outside the big try
+        try({
+          browseURL(output_file)
+          cat("Open", toupper(report_format), "report in the systems standard browser\n")
+          })
 
 
-      # Add Try() and a warning, if it fails
-      browseURL(file_path)
-
-      if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+        if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+        })
 
     } else {
 
@@ -123,8 +135,9 @@ fit_RLum.CW.OSL <- function(object,
 
   # Print results
 
-  object <- c(data_set, data_set_overhang, COMPONENTS = list(C.list))
-
+  object <- c(data_set, data_set_overhang, COMPONENTS = list(fit_data))
+  cat("done")
   invisible(object)
+
 
 }
