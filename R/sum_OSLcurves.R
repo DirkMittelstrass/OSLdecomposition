@@ -27,12 +27,12 @@
 #' * 2019-03-15, DM: rewritten for ggplots and new data format, renamend into sum_OSLcurves
 #'
 #' @section ToDo:
-#' * add more options for record selection (e.g. dose type)
+#' * add more options for record selection (e.g. dose)
 #' * interpolate x-axis if it doesn't match
 #' * accept data.frames as input objects
 #' * test if first value is zero
-#' * add legend
-#' * add info box with number of OSL curves
+#' * add legend to plot
+#' * add info box with number of OSL curves to plot
 #'
 #' @section Last changed: 2019-10-27
 #'

@@ -1,13 +1,19 @@
 ---
-title: "Step1_report"
-author: "Dirk Mittelstrass"
-date: "2020/04/06"
+title: "Step 1: Multi-exponential CW-OSL fitting at global average curve"
 output:
   html_document:
+    theme: journal
+    toc: true
+    toc_depth: 3
+    toc_float: false
     df_print: paged
 params:
   fit_data: !r list(NULL)
+  data_set: !r list(NULL)
 ---
+This report was created with the **R** package `OSLdecomposition at` (`r packageVersion("OSLdecomposition")`) at `r Sys.time()`
+
+***
 
 ```{r setup, include=FALSE}
 
@@ -18,8 +24,8 @@ library(gridExtra)
 library(ggpubr)
 
 # fig.width=6,
-knitr::opts_chunk$set(fig.width=7,
-                      fig.asp=.4,
+knitr::opts_chunk$set(fig.width=7, #7
+                      fig.asp=.6,
                       results = "asis",
                       warning=FALSE,
                       message=FALSE,
@@ -27,66 +33,18 @@ knitr::opts_chunk$set(fig.width=7,
                       echo=FALSE,
                       cache=FALSE)
 
-fit_data <- params$fit_data
+#fit_data <- params$fit_data
 
-K.selected <- fit_data$K.selected
 n.figure <- 1
 ```
 
-## Test
-
-... fill intro here ...
-
-The subsequent diagrams are structured the following way:
-
-* Upper left: Global mean curve (grey), fit model curve (black) and component signals
-* Upper right: Same as log-log diagram
-* Lower left: Residual curve between fit and global mean curve
-* Lower right: Result table with estimated type of component names (colored)
+## Summary
 
 
-```{r step1_display_cases, fig.asp=.6}
-
-# display fittings for all K
-for (i in 1:nrow(fit_data$F.test)) {
-  
-  plot_OSLcurve(fit_data$curve, 
-                fit_data$case.tables[[i]], 
-                title = NULL,
-                algorithm = "det")
-
- # cat(paste0("<pre>**Figure ", n.figure,":** "))
-  cat(paste0("<br>*Figure ", n.figure,": Global mean curve fit with K = ", i, 
-             " components*<br><br>"))
-n.figure <- n.figure + 1
-
-#cat("")
-}
-
-```
-
- 
-**F-test**  
-But which of these fittings gives back a sufficient model of the global mean curve, without over-fitting it? We solve this by comparing the residual square sum (*RSS*) of each fitting with the *RSS* value of the previous fitting. Bluszcz & Adamiec (2006) propose to use a *F*-test:  
-
-$$F_K = \frac{(RSS_{K-1} - RSS_K)/2}{RSS_K(N - 2K)} $$
+.. Fill in Main plot and Cross sections plot here
 
 
-If *F~K~* falls below the preset threshold value of *F~threshold~* = `r #F_threshold`, the new fitting model with *K* components is apparently not significantly better than the *K* - 1 model.
-
-
-```{r F-test_table}
-# print F-test table
-kable(fit_data$F.test, 
-      escape = TRUE, align = "c",
-      caption = "*Table 1: Decay constants and fit quality parameters for multi-exponentional decay fitting with *K* components*  ")
-```
-
-The fitting with *K* = `r fit_data$K.selected` components is found to be the best suiting model to describe the given sample. Signal components with not-first-order kinetics, however, can lead to over-fitting. It is recommended to take the results of the *K* = `r fit_data$K.selected - 1` fitting model also into consideration.  
-
-If the sample was measured with a stimulation light wavelength of about 470 nm and a stimulation light intensity of `r #stimulation_intensity` mW cm^-2^ as presetted, the photoionisation cross-sections of the components can be calculated. These can be compared with the quartz LM-OSL findings given in literature.
-
-```{r step1_crosssections, fig.asp = 0.32}
+```{r step1_crosssections, fig.width=10, fig.asp=0.32}
 
 #cross.plot.height <- 0
 #if ((stimulation_wavelength >= 465) && (stimulation_wavelength <= 480)) cross.plot.height <- 3
@@ -94,10 +52,131 @@ If the sample was measured with a stimulation light wavelength of about 470 nm a
 #knitr::opts_current$set(fig.asp = cross.plot.height)
 
 plot_PhotoCrosssections(fit_data,
-                        stimulation.intensity = fit_data$fit.arguments$stimulation.intensity,
-                        stimulation.wavelength = fit_data$fit.arguments$stimulation.wavelength)
+                        stimulation.intensity = fit_data$arguments$stimulation.intensity,
+                        stimulation.wavelength = fit_data$arguments$stimulation.wavelength)
 
   cat(paste0("<br>*Figure ", n.figure,": Comparison of decay constants between fitting cases and comparison with reference values. Red square: Best fit*<br><br>"))
 n.figure <- n.figure + 1
 
 ```
+
+
+## Global OSL curve
+
+For calculating the decay parameters, one representative OSL curve is needed. This is provided by combining all records to one global mean curve. Each data point of the global curve represents the arithmetic mean of all data point values of the same channel in all OSL curves. This increases the signal-to-noise ratio by about one to two orders of magnitude, but still maintains the decay parameter information.  
+
+```{r draw_global_curve}
+
+sum_OSLcurves(data_set,
+              record_type = fit_data$arguments$record.type,
+              output.plot = TRUE,
+              plot.first = TRUE,
+              plot.global = TRUE,
+              title = NULL,
+              verbose = FALSE,
+              return.plot = TRUE)
+
+# <font color=\"black\"> </font>
+
+cat(paste0("<br>*Figure ", n.figure,": Global average ", fit_data$arguments$record.type, " curve (blue) and data points of all OSL records (grey opaque)*<br><br>"))
+n.figure <- n.figure + 1
+```
+
+
+## Multi-exponential fitting {.tabset .tabset-pills}
+
+We take the global mean curve and perform a multiple cycles of multi-exponential nonlinear regression. In each cycle, the number of components *K* increases by one. With increasing number of components, decreases the signal deviation (residual curve) between the fitted model curve and the measured data and the fit gets better. 
+
+The underlying algorithm was proposed and described by Bluszcz & Adamiec (2006) and realized in **R** by the function `numOSL::decomp()` by Peng *et al.* (2013). Their function is used in `fit_OSLcurve()`, which calculated the following series of fittings, displayed with `plot_OSLcurve()`:
+
+```{r define_fitting_tabs}
+
+# Define dynamic Rmarkdown code
+markdown_code <- c(
+    "### K = {{i}}\n",
+    "```{r tab_{{i}}}\n",
+    "plot_OSLcurve(fit_data$curve, 
+                fit_data$case.tables[[{{i}}]], 
+                title = NULL)\n",
+    "```\n",
+    "* Upper left: Global mean curve (grey), fit model curve (black) and component signals",
+    "* Upper right: Same as log-log diagram",
+    "* Lower left: Residual curve between fit and global mean curve",
+    "* Lower right: Result table with estimated type of component names (colored)",
+    "\n"
+  )
+
+# Now knit the dynamic code
+tabs <- lapply(as.list(1:nrow(fit_data$F.test)),
+                function(i) knitr::knit_expand(text = markdown_code))
+```
+
+`r knitr::knit(text = unlist(tabs))`
+
+## F-test
+
+But which of these fittings gives back a sufficient model of the global mean curve, without over-fitting it? We solve this by comparing the residual square sum (*RSS*) of each fitting with the *RSS* value of the previous fitting. Bluszcz & Adamiec (2006) propose to use a *F*-test:  
+
+$$F_K = \frac{(RSS_{K-1} - RSS_K)/2}{RSS_K(N - 2K)} $$
+
+Here, *N* is the number data points (channels) of the global average curve and *K* is the number of OSL components in the fitting model. If the *F*-value *F~K~* falls below the preset threshold value of *F~threshold~* = `r fit_data$arguments$F.threshold`, the new fitting model with *K* components is apparently not significantly better than the *K* - 1 model and will be chosen as algorithm output.
+
+```{r F-test_table}
+
+F_table <- fit_data$F.test
+row_index <- c(1:nrow(F_table))
+F_table <- cbind(data.frame(K = row_index), F_table)
+
+# Nicer table header
+if (fit_data$arguments$background.fitting == TRUE) {
+
+  colnames(F_table) <- c("  K  ", paste0("$\\lambda_", row_index,"$ $(s^{-1})$"),"background","RSS","$F_K$")
+} else {
+
+  colnames(F_table) <- c("  K  ", paste0("$\\lambda_", row_index,"$ $(s^{-1})$"), "RSS","$F_K$")
+}
+
+# Chi² in Rmarkdown: $\\chi^2$
+
+# print F-test table
+kable(F_table, 
+      escape = TRUE, align = "c",
+      caption = "*Table 1: Decay constants and fit quality parameters for multi-exponentional decay fitting with *K* components*  ")
+```
+
+The fitting with *K* = `r fit_data$K.selected` components is found to be the best suiting model to describe the given sample. Signal components with not-first-order kinetics, however, can lead to over-fitting. It is recommended to take the results of the *K* = `r fit_data$K.selected - 1` fitting model also into consideration.  
+
+
+## Further information
+
+### Disclaimer
+
+This report was automatically generated by functions of the **R** package `OSLdecomposition` written and maintained by Dirk Mittelstraß (<dirk.mittelstrass@luminescence.de>). The calculation process deploys also functions of the R packages `numOSL` introduced by Jun Peng *et al.* (2013) and `Luminescence` introduced by Sebastian Kreutzer *et al.* (2012)
+
+This report and the containing results can be used, shared and published by the data set maintainer at will. If the results are published, however, it is demanded to state the main **R** package `OSLdecomposition` including its version number (`r packageVersion("OSLdecomposition")`). It is also recommended to add this report to the supplement of your publication.   
+
+A full description of the method and the algorithms involved, as well as some performance tests, can be found in the master thesis this script is based upon:
+
+-------------------
+
+*D. Mittelstraß, ‘Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz’, Master thesis, TU Dresden, Dresden, 2019.*
+
+-------------------
+
+
+### Script settings
+
+
+**Algorithm arguments** | 
+-----------------------|----------------
+Maximum allowed components |*K~max~* =  `r fit_data$arguments$K.max`
+Threshold *F*-value | *F~threshold~* = `r fit_data$arguments$F.threshold`
+
+### Session info
+
+```{r session_info}
+
+print(sessionInfo(), locale = FALSE)
+```
+
+## References

@@ -18,8 +18,6 @@ fit_RLum.CW.OSL <- function(object,
   # - add 'autoname' argument
   # - add file name argument
   # - add file directory argument
-  # - export not-html reports
-
 
   library(OSLdecomposition)
   library(Luminescence)
@@ -38,13 +36,13 @@ fit_RLum.CW.OSL <- function(object,
         data_set[[length(data_set) + 1]] <- object[[i]]
       } else {
 
-        if (names(lum_data)[i]=="COMPONENTS") {
+        if (names(object)[i]=="COMPONENTS") {
 
-          warning("Data set already contains Step 1 results. Old results had been overwritten")
+          warning("Input already contains Step 1 results. Old results will be overwritten")
         }else{
 
-          data_set_overhang[[length(data_set) + 1]] <- object[[i]]
-          warning("List element ", i, " is not of type 'RLum.Analysis'")
+          data_set_overhang[[length(data_set_overhang) + 1]] <- object[[i]]
+          warning("List element ", i, " is not of type 'RLum.Analysis' and will not be included in fitting procedure")
         }
       }
     }
@@ -52,9 +50,8 @@ fit_RLum.CW.OSL <- function(object,
   } else {
 
     data_set <- list(object)
+    warning("Input is not of type list, but output will be of type list")
   }
-
-
 
   # calc arithmetic mean curve
   if(verbose) cat("STEP 1.1 ----- Build arithmetic mean curve from all CW-OSL curves -----\n")
@@ -80,11 +77,13 @@ fit_RLum.CW.OSL <- function(object,
                          F.threshold = F_threshold,
                          stimulation.intensity = stimulation_intensity,
                          stimulation.wavelength = stimulation_wavelength,
-                         applied.time.cut = TRUE,
                          background.fitting = FALSE,
                          verbose = verbose,
                          output.plot = FALSE,
                          output.complex = TRUE)
+
+  # Add 'record_type' to the argument list
+  fit_data$arguments$record.type <- record_type
 
   if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
 
@@ -98,7 +97,6 @@ fit_RLum.CW.OSL <- function(object,
 
       # the RMD script has to be located in the "/inst" folder of the project
       # then, it will be installed with the package
-
       try({
 
         report_format <- "html"
@@ -108,7 +106,7 @@ fit_RLum.CW.OSL <- function(object,
         output_file <- paste0(getwd(), "/", "report_Step1.", report_format)
 
         rmarkdown::render(rmd_path,
-                          params = list(fit_data = fit_data),
+                          params = list(fit_data = fit_data, data_set = data_set),
                           output_file = output_file,
                           output_format = paste0(report_format,"_document"),
                           quiet = TRUE)
@@ -133,7 +131,7 @@ fit_RLum.CW.OSL <- function(object,
 
   # Print results
 
-  object <- c(data_set, data_set_overhang, COMPONENTS = list(fit_data))
+  object <- c(data_set, data_set_overhang, OSL_COMPONENTS = list(fit_data))
   #cat("done\n")
   invisible(object)
 

@@ -23,7 +23,7 @@
 #' * Documentation
 #' * Test background value fitting
 #'
-#' @section Last changed. 2020-04-06
+#' @section Last changed. 2020-04-09
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -38,7 +38,6 @@ fit_OSLcurve <- function(
   F.threshold = 50,
   stimulation.intensity = 30,
   stimulation.wavelength = 470,
-  applied.time.cut = FALSE,
   weight.Chi = FALSE,
   background.fitting = FALSE,
   verbose = TRUE,
@@ -238,45 +237,30 @@ fit_OSLcurve <- function(
   ##### Format F-tables #####
   # create a better looking table for publishing purposes
 
-  # add "K=" column
-  # results <- cbind(data.frame(K = 1:nrow(results)), results)
-
-
-  #results.print <- results
-  # Chi² in Rmarkdown: $\\chi^2$
-
   if (background.fitting == TRUE) {
 
     colnames(results) <- c(paste0("k_", X),"background","Chi2","FOM","F.value")
-    #colnames(results.print) <- c("  K  ", paste0("$\\lambda_", X,"$ $(s^{-1})$"),"background","RSS","FOM","$F_K$")
   } else {
 
     colnames(results) <- c(paste0("k_", X),"Chi2","FOM","F.value")
-    #colnames(results.print) <- c("  K  ", paste0("$\\lambda_", X,"$ $(s^{-1})$"), "RSS","FOM","$F_K$")
   }
 
-  results$Chi2 <- formatC(results$Chi2, digits = 3)
-  results$F.value <- formatC(results$F.value, digits = 3)
+  # Remove figure of merit (FOM). While it may be interesting, we don't use it.
+  results <- subset(results, select = -FOM)
+
+  results$Chi2 <- formatC(results$Chi2, digits = 4)
+  results$F.value <- formatC(results$F.value, digits = 4)
 
   for (k in 1:nrow(results)) results[,k] <- round(results[,k], digits = 4)
 
   results[is.na(results)] <- ""
   results[results == "Inf"] <- ""
 
-
- # for (y in 1:ncol(results)) {
-#
- #   results[grepl("NA", results[, y]), y] <- ""
- #   results[grepl("Inf", results[, y]), y] <- ""
- #}
-
- # results.print <- subset(results.print, select = -FOM)
-
   # Print F-table and Component table
   if (verbose) {
 
     writeLines("F-test table:")
-    print(subset(results, select = -FOM))
+    print(results)
     writeLines(paste0("-->  ", K.selected,"-component model choosen"))
 
     writeLines("")
@@ -309,17 +293,15 @@ fit_OSLcurve <- function(
                    K.selected = K.selected,
                    components = components,
                    F.test = results,
-                #   F.test.print = results.print,
                    fit.results = fit.list,
                    case.tables = C.list,
                    plot.data = plot.data,
-                   fit.arguments = list(K.max = K.max,
-                                        F.threshold = F.threshold,
-                                        stimulation.intensity = stimulation.intensity,
-                                        stimulation.wavelength = stimulation.wavelength,
-                                        applied.time.cut = applied.time.cut,
-                                        weight.Chi = weight.Chi,
-                                        background.fitting = background.fitting))
+                   arguments = list(K.max = K.max,
+                                    F.threshold = F.threshold,
+                                    stimulation.intensity = stimulation.intensity,
+                                    stimulation.wavelength = stimulation.wavelength,
+                                    weight.Chi = weight.Chi,
+                                    background.fitting = background.fitting))
 
     invisible(output)
 
