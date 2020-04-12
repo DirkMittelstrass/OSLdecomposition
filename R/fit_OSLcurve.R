@@ -23,7 +23,7 @@
 #' * Documentation
 #' * Test background value fitting
 #'
-#' @section Last changed. 2020-04-09
+#' @section Last changed. 2020-04-11
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -227,7 +227,7 @@ fit_OSLcurve <- function(
   components <- C.list[[K.selected]]
 
   # Reduce amount of information in the table to avoid user irritation, also round some values
-  components <- subset(components, select = c(name, lambda, cross.section, initial.signal, n, fully.bleached))
+  components <- subset(components, select = c(name, lambda, n, cross.section, initial.signal, fully.bleached))
   N.not_fully_bleached <- (nrow(components) - sum(components$fully.bleached))
   components$fully.bleached[components$fully.bleached == 1] <- "true"
   components$fully.bleached[components$fully.bleached == 0] <- "false"

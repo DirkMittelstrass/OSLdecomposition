@@ -5,17 +5,18 @@ output:
     theme: journal
     toc: true
     toc_depth: 3
-    toc_float: false
+    toc_float:
+      collapsed: false
     df_print: paged
 params:
   fit_data: !r list(NULL)
   data_set: !r list(NULL)
 ---
-This report was created with the **R** package `OSLdecomposition at` (`r packageVersion("OSLdecomposition")`) at `r Sys.time()`
+This report was created at `r Sys.time()` with the **R** package **OSLdecomposition** `r packageVersion("OSLdecomposition")`
 
 ***
 
-```{r setup, include=FALSE}
+```{r step1_setup, include=FALSE}
 
 library(numOSL)
 library(knitr)
@@ -23,7 +24,6 @@ library(ggplot2)
 library(gridExtra)
 library(ggpubr)
 
-# fig.width=6,
 knitr::opts_chunk$set(fig.width=7, #7
                       fig.asp=.6,
                       results = "asis",
@@ -35,16 +35,58 @@ knitr::opts_chunk$set(fig.width=7, #7
 
 #fit_data <- params$fit_data
 
+# numerate figures and tables
 n.figure <- 1
+n.table <- 1
+
+# Find out the overall number of 'record_type' curves
+# ToDo: Get this info (and the global_average data) directly from sum_OSLcurves outout
+n.curves <- 0
+for (j in 1:length(data_set)) {
+  for (i in 1:length(data_set[[j]]@records)) {
+   if (data_set[[j]]@records[[i]]@recordType == record_type) n.curves <- n.curves + 1
+  }
+}
 ```
 
 ## Summary
+<font color="black">
+The global average curve of `r n.curves` `r fit_data$arguments$record.type` records was calculated and then fitted with multi-exponential decay models with an increasing number of components *K* (Figure 2). A statistical test compared the models and found the *K* = `r fit_data$K.selected` model as sufficiently describing the global average curve (Table 1, Figure 1). 
+
+```{r show_component_table}
+
+cat(paste0("<br><i>Table ", n.table,": OSL component parameters of the K =", fit_data$K.selected," fitting</i><br>"))
+n.table <- n.table + 1
+
+component_table <- fit_data$components
+
+component_table$lambda <- round(component_table$lambda, digits = 4)
+component_table$initial.signal <- percent(component_table$initial.signal, accuracy = 0.1)
+colnames(component_table) <- c(" ", "$\\lambda$ $(s^{-1})$", "n (counts)", "cross section (cm²)", "share at first channel", "fully bleached?")
+
+kable(component_table, 
+      escape = TRUE, align = "c",)
+
+```
 
 
-.. Fill in Main plot and Cross sections plot here
+***
 
+```{r step1_draw_best_suiting_fit}
 
-```{r step1_crosssections, fig.width=10, fig.asp=0.32}
+plot_OSLcurve(fit_data$curve, 
+              fit_data$components, 
+              title = NULL)
+
+cat(paste0("<br><font color=\"black\"><i>Figure ", n.figure,": Fit model with K =", fit_data$K.selected," (black), global average curve (grey) and signal components (colored)<br>", "<b>Upper left</b>: Linear diagram. <b>Upper right</b>: Double-logarithmic diagram<br>",
+    "<b>Lower left</b>: Residual curve between fit and global average curve<br>",
+    "<b>Lower right</b>: Fitting result table with estimated type of component names</i></font><br><br>"))
+n.figure <- n.figure + 1
+```
+
+***
+
+```{r step1_draw_crosssections_diagram, fig.width=10, fig.asp=0.32}
 
 #cross.plot.height <- 0
 #if ((stimulation_wavelength >= 465) && (stimulation_wavelength <= 480)) cross.plot.height <- 3
@@ -55,11 +97,13 @@ plot_PhotoCrosssections(fit_data,
                         stimulation.intensity = fit_data$arguments$stimulation.intensity,
                         stimulation.wavelength = fit_data$arguments$stimulation.wavelength)
 
-  cat(paste0("<br>*Figure ", n.figure,": Comparison of decay constants between fitting cases and comparison with reference values. Red square: Best fit*<br><br>"))
-n.figure <- n.figure + 1
+# <font color=\"black\"> </font>
 
+  cat(paste0("<br><font color=\"black\"><i>Figure ", n.figure,": OSL signal component decay rates in dependence of component number *K*. </font><font color=\"red\">Red rectangle:</font><font color=\"black\"> Sufficient fitting choosen by the F-test.</i></font><br><br>"))
+n.figure <- n.figure + 1
 ```
 
+<br><br>
 
 ## Global OSL curve
 
@@ -76,16 +120,14 @@ sum_OSLcurves(data_set,
               verbose = FALSE,
               return.plot = TRUE)
 
-# <font color=\"black\"> </font>
-
-cat(paste0("<br>*Figure ", n.figure,": Global average ", fit_data$arguments$record.type, " curve (blue) and data points of all OSL records (grey opaque)*<br><br>"))
+cat(paste0("<br><font color=\"black\"><i>Figure ", n.figure,": Global average curve </i></font><br><br>"))
 n.figure <- n.figure + 1
 ```
 
 
 ## Multi-exponential fitting {.tabset .tabset-pills}
 
-We take the global mean curve and perform a multiple cycles of multi-exponential nonlinear regression. In each cycle, the number of components *K* increases by one. With increasing number of components, decreases the signal deviation (residual curve) between the fitted model curve and the measured data and the fit gets better. 
+We take the global mean curve and perform multiple cycles of multi-exponential nonlinear regression. In each cycle, the number of components *K* increases by one. With increasing number of components, decreases the signal deviation (residual curve) between the fitted model curve and the measured data and the fit gets better. 
 
 The underlying algorithm was proposed and described by Bluszcz & Adamiec (2006) and realized in **R** by the function `numOSL::decomp()` by Peng *et al.* (2013). Their function is used in `fit_OSLcurve()`, which calculated the following series of fittings, displayed with `plot_OSLcurve()`:
 
@@ -106,9 +148,11 @@ markdown_code <- c(
     "\n"
   )
 
-# Now knit the dynamic code
 tabs <- lapply(as.list(1:nrow(fit_data$F.test)),
                 function(i) knitr::knit_expand(text = markdown_code))
+
+
+# Now knit the dynamic code. This has to be in a seperate chunk
 ```
 
 `r knitr::knit(text = unlist(tabs))`
@@ -141,7 +185,7 @@ if (fit_data$arguments$background.fitting == TRUE) {
 # print F-test table
 kable(F_table, 
       escape = TRUE, align = "c",
-      caption = "*Table 1: Decay constants and fit quality parameters for multi-exponentional decay fitting with *K* components*  ")
+      caption = "*Table 1: Decay constants and fit quality parameters for multi-exponentional decay fitting with K components*  ")
 ```
 
 The fitting with *K* = `r fit_data$K.selected` components is found to be the best suiting model to describe the given sample. Signal components with not-first-order kinetics, however, can lead to over-fitting. It is recommended to take the results of the *K* = `r fit_data$K.selected - 1` fitting model also into consideration.  
