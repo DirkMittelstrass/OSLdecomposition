@@ -5,7 +5,7 @@
 #'
 #'
 
-fit_RLum.CW.OSL <- function(object,
+RLum.OSL_global_fitting <- function(object,
                      max_components = 3,
                      record_type = "OSL",
                      F_threshold = 50,
@@ -18,11 +18,12 @@ fit_RLum.CW.OSL <- function(object,
   # - add 'autoname' argument
   # - add file name argument
   # - add file directory argument
+  # - add background fitting functionality
 
   library(OSLdecomposition)
   library(Luminescence)
 
-  # define new object list to rule out incompatible list elements
+  # define new list object to safely ignore incompatible list elements
   data_set <- list()
   data_set_overhang <- list()
 
@@ -52,6 +53,8 @@ fit_RLum.CW.OSL <- function(object,
     data_set <- list(object)
     warning("Input is not of type list, but output will be of type list")
   }
+
+  if (length(data_set) == 0) stop("Input object contains no RLum.Analysis data")
 
   # calc arithmetic mean curve
   if(verbose) cat("STEP 1.1 ----- Build arithmetic mean curve from all CW-OSL curves -----\n")
