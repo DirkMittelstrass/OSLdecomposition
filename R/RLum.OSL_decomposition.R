@@ -1,3 +1,21 @@
+#' Title
+#'
+#' @param object
+#' @param record_type
+#' @param decay_rates
+#' If not defined, the decay rates are taken from object$OSL_decomponents$case.tables[[object$OSL_decomponents$K.selected]].
+#' Therefore, the number of components can be changed by altering object$OSL_decomponents$K.selected
+#'
+#' @param algorithm
+#' @param error_calculation
+#' @param background_fitting
+#' @param report
+#' @param verbose
+#'
+#' @return
+#' @export
+#'
+#' @examples
 RLum.OSL_decomposition <- function(
   object,
   record_type = "OSL",
@@ -8,6 +26,9 @@ RLum.OSL_decomposition <- function(
   report = TRUE,
   verbose = TRUE
 ){
+  ### ToDo's
+  # - read 'lambda.error' if available and transfer it to decompose_OSLcurve for better error calculation
+
 
   library(OSLdecomposition)
   library(Luminescence)
@@ -30,8 +51,8 @@ RLum.OSL_decomposition <- function(
 
         data_set_overhang[[length(data_set_overhang) + 1]] <- object[[i]]
 
-        if (names(object)[i] != "COMPONENTS") {
-          warning("List element ", i, " is not of type 'RLum.Analysis' and will not be included in fitting procedure")
+        if (names(object)[i] != "OSL_COMPONENTS") {
+          warning("List element ", i, " is not of type 'RLum.Analysis' and will not be included in fitting procedure, but will be appended to the result list")
         }
       }
     }
@@ -50,28 +71,35 @@ RLum.OSL_decomposition <- function(
 
   if (length(data_set) == 0) stop("Input object contains no RLum.Analysis data")
 
-  ### Get the decay rates ###
+  ##### Get the decay rates ######
+
+  global_curve <- NULL
+  component_table <- NULL
+
   if (is.null(decay_rates)) {
- ############## CONTINUE HERE ############################
-  }
 
-  # calc arithmetic mean curve
-  if(verbose) cat("STEP 2.1 ----- Build arithmetic mean curve from all CW-OSL curves -----\n")
+    if ("OSL_COMPONENTS" %in% names(data_set_overhang)) {
+      component_table <- data_set_overhang$OSL_COMPONENTS$case.tables[[data_set_overhang$OSL_COMPONENTS$K.selected]]
+      global_curve <- data_set_overhang$OSL_COMPONENTS$curve
 
-  # measure computing time
-  time.start <- Sys.time()
+    } else {
+       stop("Neither contains the input object an element $OSL_COMPONENTS (Step 1 results), nor is the argument 'decay_rates' defined")
+    }
 
-  ##########################
 
-  # prove if object is a list of aliquots or just one single aliquot
-  data_is_lone_aliquot <- FALSE
-  if (is.list(data_set)) {
+  } else if (is(decay_rates, "data.frame") && ("lambda" %in% colnames(decay_rates))) {
+    component_table <- decay_rates
+
+  } else if (is.numeric(decay_rates) && (length(decay_rates < 8))) {
+    component_table <- data.frame(lambda = decay_rates)
 
   } else {
+    stop("Neither is argument 'decay_rates' of class [data.frame] containing a column $lambda, nor is it a numeric vector with max. 7 elements")
+  }
 
-    # Change Object to List, it will be transformed back before return
-    data_is_lone_aliquot <- TRUE
-    data_set <- list(data_set)
+  # Check if the components are named
+  if (!("name" %in% colnames(component_table))) {
+    component_table$name <- paste0("Component ", 1:nrow(decay_rates))
   }
 
   # Whit NLS, just the nls() errors are available
@@ -80,58 +108,73 @@ RLum.OSL_decomposition <- function(
     error.calculation <- "nls"
   }
 
+  ################################ STEP 2.1: Integration intervals ################################
+  if (verbose) cat("STEP 2.1 ----- Calculate integration intervals -----\n")
 
-  # are the integration intervals given?
-  if (!("t.start" %in% colnames(components)) ||
-      !("t.end" %in% colnames(components)) ||
-      !("ch.start" %in% colnames(components)) ||
-      !("ch.end" %in% colnames(components))) {
-    if (verbose) warning("Integration intervals not provided. calc_OSLintervals() executed")
-    components <- calc_OSLintervals(components,
-                                    curve,
-                                    background.fitting = background.fitting,
+  # Check if the integration intervals are given
+  if (!("t.start" %in% colnames(component_table)) ||
+      !("t.end" %in% colnames(component_table)) ||
+      !("ch.start" %in% colnames(component_table)) ||
+      !("ch.end" %in% colnames(component_table))) {
+
+    time.start <- Sys.time()
+
+    if (is.null(global_curve)) {
+      cat(record_type, "curve template necessary but not given. Therefore, execute sum_OSLcurves():\n")
+      global_curve <- sum_OSLcurves(data_set,
+                                    record_type = record_type,
+                                    output.plot = FALSE,
                                     verbose = verbose)
+    }
 
+    if (verbose) cat("Execute calc_OSLintervals():\n")
+    component_table <- calc_OSLintervals(component_table,
+                                         global_curve,
+                                         background.fitting = background_fitting,
+                                         verbose = verbose)
+
+    if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+
+  } else {
+
+    if(verbose) cat("Integration intervals are already given. Step skipped\n\n")
   }
 
-  ########## Main loop #############
+  ################################ STEP 2.2: Decomposition  ################################
+  if (verbose) cat("STEP 2.2 ----- Decompose each ", record_type," curve -----\n")
+  time.start <- Sys.time()
 
-  for (j in aliquot_selection) {
-    if (j < 1 || j > length(data_set)) {
-      message("\nWarning: Item ", j," is not a part of the data set. Item skipped")
-    } else {
-      if (class(data_set[[j]]) != "RLum.Analysis") {
-        message("\nWarning: Item ", j," is not of class RLum.Analysis. Item skipped")
-      } else {
+  # Print table with the results of Ln and Tn
+  N_records <- 0
+  for (j in 1:length(data_set)) {
 
+    N_in_aliquot <- 1
+    for (i in 1:length(data_set[[j]]@records)) {
 
-        if (verbose) writeLines(" ", sep = "\n")
-        if (verbose) writeLines(c("Decompose aliquot: ", j), sep = "\t")
-        #if (verbose) writeLines(" ", sep = "\n")
+      if (data_set[[j]]@records[[i]]@recordType == record_type) {
 
-        records <- data_set[[j]]@records
+        decomp_table <- decompose_OSLcurve(data_set[[j]]@records[[i]]@data,
+                                           component_table,
+                                           algorithm = algorithm,
+                                           background.fitting = background_fitting,
+                                           verbose = FALSE)
 
-
-        ########## Perform decomposition ###########
-
-        for (i in c(1:length(records))) {
-          if (records[[i]]@recordType == record_type) {
-
-
-            decomp_table <- decompose_OSLcurve(records[[i]]@data,
-                                                components,
-                                                algorithm = algorithm,
-                                                background.fitting = background.fitting,
-                                                verbose = FALSE)
-
-            data_set[[j]]@records[[i]]@info[["COMPONENTS"]] <- decomp_table
-
-          }
-        }
+        # Add the resulting data.frame to the info section of the records RLum object
+        data_set[[j]]@records[[i]]@info[["COMPONENTS"]] <- decomp_table
 
       }
     }
   }
+
+
+  if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+
+
+  ################################ STEP 2.3: Report  ################################
+
+
+
+
 
   invisible(data_set)
 

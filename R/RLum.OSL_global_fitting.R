@@ -37,7 +37,7 @@ RLum.OSL_global_fitting <- function(object,
         data_set[[length(data_set) + 1]] <- object[[i]]
       } else {
 
-        if (names(object)[i]=="COMPONENTS") {
+        if (names(object)[i]=="OSL_COMPONENTS") {
 
           warning("Input already contains Step 1 results. Old results will be overwritten")
         }else{
