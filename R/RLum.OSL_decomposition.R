@@ -28,6 +28,7 @@ RLum.OSL_decomposition <- function(
 ){
   ### ToDo's
   # - read 'lambda.error' if available and transfer it to decompose_OSLcurve for better error calculation
+  # - collect warnings from [decompose_OSLcurve()] and others and display them bundled with record-index at the end
 
 
   library(OSLdecomposition)
@@ -49,9 +50,10 @@ RLum.OSL_decomposition <- function(
 
       } else {
 
-        data_set_overhang[[length(data_set_overhang) + 1]] <- object[[i]]
+        element_name <- names(object)[i]
+        data_set_overhang[[element_name]] <- object[[i]]
 
-        if (names(object)[i] != "OSL_COMPONENTS") {
+        if (element_name != "OSL_COMPONENTS") {
           warning("List element ", i, " is not of type 'RLum.Analysis' and will not be included in fitting procedure, but will be appended to the result list")
         }
       }
@@ -99,17 +101,17 @@ RLum.OSL_decomposition <- function(
 
   # Check if the components are named
   if (!("name" %in% colnames(component_table))) {
-    component_table$name <- paste0("Component ", 1:nrow(decay_rates))
+    component_table$name <- paste0("Component ", 1:nrow(component_table))
   }
 
   # Whit NLS, just the nls() errors are available
-  if ((algorithm == "nls") &! (error.calculation == "nls")) {
+  if ((algorithm == "nls") &! (error_calculation == "nls")) {
     if (verbose) warning("When algorithm 'nls' is chosen, error.calculation must be also 'nls'. Argument changed to error.calculation='nls'")
-    error.calculation <- "nls"
+    error_calculation <- "nls"
   }
 
   ################################ STEP 2.1: Integration intervals ################################
-  if (verbose) cat("STEP 2.1 ----- Calculate integration intervals -----\n")
+  if (verbose) cat("STEP 2.1 ----- Define signal bin intervals -----\n")
 
   # Check if the integration intervals are given
   if (!("t.start" %in% colnames(component_table)) ||
@@ -120,14 +122,17 @@ RLum.OSL_decomposition <- function(
     time.start <- Sys.time()
 
     if (is.null(global_curve)) {
-      cat(record_type, "curve template necessary but not given. Therefore, execute sum_OSLcurves():\n")
+      cat(record_type, "curve template necessary but not given. Obtain and use global average curve:\n[sum_OSLcurves()]: ")
       global_curve <- sum_OSLcurves(data_set,
                                     record_type = record_type,
                                     output.plot = FALSE,
                                     verbose = verbose)
+
+      if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+      time.start <- Sys.time()
     }
 
-    if (verbose) cat("Execute calc_OSLintervals():\n")
+    if (verbose) cat("Iterate minimum denominator determinant:\n[calc_OSLintervals()]: ")
     component_table <- calc_OSLintervals(component_table,
                                          global_curve,
                                          background.fitting = background_fitting,
@@ -141,10 +146,17 @@ RLum.OSL_decomposition <- function(
   }
 
   ################################ STEP 2.2: Decomposition  ################################
+
   if (verbose) cat("STEP 2.2 ----- Decompose each ", record_type," curve -----\n")
+  if (verbose) cat("Calculate signal intensity n in each", record_type, " by '", algorithm,"' algorithm with ", error_calculation, " error estimation\n")
+  if (verbose) cat("Table of input decay constants and signal bin intervals for [decompose_OSLcurve()]:\n")
+  if (verbose) print(subset(component_table, select = c(name, lambda, t.start, t.end, ch.start, ch.end)))
+
   time.start <- Sys.time()
 
-  # Print table with the results of Ln and Tn
+  # Build summarizing result table for each aliquot
+
+
   N_records <- 0
   for (j in 1:length(data_set)) {
 
@@ -162,17 +174,15 @@ RLum.OSL_decomposition <- function(
         # Add the resulting data.frame to the info section of the records RLum object
         data_set[[j]]@records[[i]]@info[["COMPONENTS"]] <- decomp_table
 
+        N_in_aliquot <- N_in_aliquot + 1
       }
     }
   }
-
 
   if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
 
 
   ################################ STEP 2.3: Report  ################################
-
-
 
 
 

@@ -36,13 +36,13 @@
 #' * 2019-09-09, DM: Added anticorrelating covariance terms into error estimation
 #' * 2019-09-25, DM: Merged function with decompose_OSLalternatively() and added algorithm argument
 #' * 2019-09-25, DM: Deleted unnecessary stuff (negative.values.to.zero, offset, anticorrelation)
-#' * 2019-10-02, DM: Added background fitting
-#' * 2020-04-06, DM: Added 'initial.signal' output value, reduced print output
+#' * 2019-10-02, DM: Added optional background fitting
+#' * 2020-04-06, DM: Added 'initial.signal' data.frame column; cleaned print output
 #
 #' @section ToDo:
 #' * Update documentation
 #'
-#' @section Last changed: 2020-04-06
+#' @section Last changed: 2020-04-18
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -102,13 +102,6 @@ decompose_OSLcurve <- function(
       !("ch.end" %in% colnames(components))) {
     if (verbose) warning("Integration intervals not provided. calc_OSLintervals() executed")
 
-'    if (is.na(components$lambda[nrow(components)])) {
-
-      components <- calc_OSLintervals(components, curve, background.fitting = TRUE, verbose = verbose)
-    } else {
-
-      components <- calc_OSLintervals(components, curve, background.fitting = FALSE, verbose = verbose)
-    }'
     components <- calc_OSLintervals(components,
                                     curve,
                                     background.fitting = background.fitting,
@@ -239,21 +232,13 @@ decompose_OSLcurve <- function(
 
       if (algorithm == "nls") {
 
-        #warning("nls-fit failed. Input component table returned")
-        if (is.na(components$lambda[K])) {
-          warning("A")
-        } else {
-          warning("B")
-        }
+        warning("nls-fit failed. Input component table returned")
+        #if (is.na(components$lambda[K])) {warning("A") } else { warning("B")}
         return(components)
       } else {
 
-        #if (verbose) warning("nls-fit failed. Falling back to det-results")
-        if (is.na(components$lambda[K])) {
-          warning("X")
-        } else {
-          warning("Y")
-        }
+        if (verbose) warning("nls-fit failed. Falling back to det-results")
+        #if (is.na(components$lambda[K])) {  warning("X") } else { warning("Y")}
         algorithm <- "det-fallback"
       }
 
@@ -323,10 +308,6 @@ decompose_OSLcurve <- function(
         A.k[i,] <- 0
         A.k[,k] <- 0
         A.k[i,k] <- 1
-
-        #print(paste0("### component: ", i, " with det = ", det(A.k)))
-        #print(A.k)
-
         sum.err <- sum.err + (det(A.k)*I.err[i])^2
       }
 

@@ -34,7 +34,7 @@
 #' * add legend to plot
 #' * add info box with number of OSL curves to plot
 #'
-#' @section Last changed: 2019-10-27
+#' @section Last changed: 2020-04-20
 #'
 #' @author
 #' Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@@luminescence.de}
@@ -145,7 +145,7 @@ sum_OSLcurves <- function(
   # cut curve length to shortest record and calc mean
   mean.curve <- data.frame(time = new_x_axis, signal = mean.values[1:shortest_record_length] / n)
 
-  if (verbose) writeLines(paste0("#1: Arithmetic mean curve with length ", shortest_record_length, " from ", n, " ", record_type, " records"))
+  if (verbose) writeLines(paste0("Built global average curve from arithmetic means from first ", shortest_record_length, " data points of all ", n, " ", record_type, " records"))
 
   ##============================================================================##
   # PLOT
@@ -226,7 +226,7 @@ sum_OSLcurves <- function(
     #plot title?
     if (!is.null(title)) {
       if (title == "default") {
-        title <- paste0("Global mean curve and signal scattering of ", n, " ", record_type, " records")
+        title <- paste0("Global average curve and signal scattering of ", n, " ", record_type, " records")
       }
     }
 
@@ -238,9 +238,7 @@ sum_OSLcurves <- function(
     } else {
       grid.arrange(p.lin, p.log, nrow = 1, top = title)
     }
-
-
   }
 
-  return(mean.curve)
+  invisible(mean.curve)
 }
