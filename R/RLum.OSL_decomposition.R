@@ -6,9 +6,7 @@
 #' If not defined, the decay rates are taken from object$OSL_decomponents$case.tables[[object$OSL_decomponents$K.selected]].
 #' Therefore, the number of components can be changed by altering object$OSL_decomponents$K.selected
 #'
-#' @param algorithm
 #' @param error_calculation
-#' @param background_fitting
 #' @param report
 #' @param verbose
 #'
@@ -20,15 +18,18 @@ RLum.OSL_decomposition <- function(
   object,
   record_type = "OSL",
   decay_rates = NULL,
-  algorithm = "det+nls", # "det", "nls", "det+nls"
   error_calculation = "empiric",   # "poisson", "empiric", "nls", numeric value
-  background_fitting = FALSE,
   report = TRUE,
   verbose = TRUE
 ){
   ### ToDo's
   # - read 'lambda.error' if available and transfer it to decompose_OSLcurve for better error calculation
   # - collect warnings from [decompose_OSLcurve()] and others and display them bundled with record-index at the end
+
+
+  ### currently HIDDEN PARAMETERS ###
+  algorithm <- "det" # "det", "nls", "det+nls"
+  background_fitting <- FALSE
 
 
   library(OSLdecomposition)
@@ -51,10 +52,14 @@ RLum.OSL_decomposition <- function(
       } else {
 
         element_name <- names(object)[i]
-        data_set_overhang[[element_name]] <- object[[i]]
+        if (element_name == "DECOMPOSITION") {
+          warning("Input object contained already Step 2 results (list element '$DECOMPOSITION'). Old results overwritten!")
+        } else {
 
-        if (element_name != "OSL_COMPONENTS") {
-          warning("List element ", i, " is not of type 'RLum.Analysis' and will not be included in fitting procedure, but will be appended to the result list")
+          data_set_overhang[[element_name]] <- object[[i]]
+          if (element_name != "OSL_COMPONENTS") {
+            warning("Input object list element ", i, " is not of type 'RLum.Analysis' and was included in the decomposition procedure, but was appended to the result list")
+          }
         }
       }
     }
@@ -148,44 +153,119 @@ RLum.OSL_decomposition <- function(
   ################################ STEP 2.2: Decomposition  ################################
 
   if (verbose) cat("STEP 2.2 ----- Decompose each ", record_type," curve -----\n")
-  if (verbose) cat("Calculate signal intensity n in each", record_type, " by '", algorithm,"' algorithm with ", error_calculation, " error estimation\n")
+  if (verbose) cat("Calculate signal intensity n in each", record_type, " by '", algorithm,"' algorithm with", error_calculation, "error estimation\n")
   if (verbose) cat("Table of input decay constants and signal bin intervals for [decompose_OSLcurve()]:\n")
   if (verbose) print(subset(component_table, select = c(name, lambda, t.start, t.end, ch.start, ch.end)))
 
   time.start <- Sys.time()
 
-  # Build summarizing result table for each aliquot
-
+  # Build one big table containing all results
+  # So we can easily filter out any statistical aspect we want later
+  results <- data.frame(NULL)
 
   N_records <- 0
+  if(verbose) cat("\n\n")
+  #if(verbose) cat("\       \t|\t Ln ", rep("     \t", times = nrow(test)), "    |\t Tn\n")
+  #if(verbose) cat("Aliquot\t| ", paste0("n.", 1:nrow(component_table), "    \t"), "| ", paste0("n.", 1:nrow(component_table), "    \t"))
+
   for (j in 1:length(data_set)) {
 
     N_in_aliquot <- 1
+    #if(verbose) cat(paste0("\n  #",j,"  \t"))
+    if(verbose) cat(".")
+
     for (i in 1:length(data_set[[j]]@records)) {
 
-      if (data_set[[j]]@records[[i]]@recordType == record_type) {
+      current_record <- data_set[[j]]@records[[i]]
 
-        decomp_table <- decompose_OSLcurve(data_set[[j]]@records[[i]]@data,
+      if (current_record@recordType == record_type) {
+
+        decomp_table <- decompose_OSLcurve(current_record@data,
                                            component_table,
                                            algorithm = algorithm,
                                            background.fitting = background_fitting,
                                            verbose = FALSE)
 
         # Add the resulting data.frame to the info section of the records RLum object
-        data_set[[j]]@records[[i]]@info[["COMPONENTS"]] <- decomp_table
+        current_record@info[["COMPONENTS"]] <- decomp_table
 
+        # A new line for the big table
+        results <- rbind(results, data.frame(list.index = j,
+                                             record.index = i,
+                                             n = t(decomp_table$n),
+                                             n.error = t(decomp_table$n.error),
+                                             n.residual = t(decomp_table$n.residual),
+                                             initial.signal = t(decomp_table$initial.signal),
+                                             IRR_TIME = current_record@info[["IRR_TIME"]]))
+
+        data_set[[j]]@records[[i]] <- current_record
+
+
+        #if(verbose && (N_in_aliquot < 3)) cat("|", paste0(formatC(decomp_table$n, format = "e", digits = 2),"\t"))
         N_in_aliquot <- N_in_aliquot + 1
+        N_records <- N_records + 1
       }
     }
   }
 
+  if(verbose) cat("\nSuccessfully decomposed", N_records,"records\n")
   if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
 
+  # Build overview list
+  dec_data <- list(parameters = list(record_type = record_type,
+                                     decay_rates = decay_rates,
+                                     algorithm = algorithm,
+                                     error_calculation = error_calculation,
+                                     background_fitting = background_fitting),
+                   decompositon.input = component_table,
+                   results = results)
 
   ################################ STEP 2.3: Report  ################################
 
+  if (report) {
+    if("rmarkdown" %in% rownames(installed.packages()) == TRUE) {
+
+      if(verbose) cat("STEP 2.3 ----- Create report -----\n")
+      library(rmarkdown)
+
+      time.start <- Sys.time()
+
+      # the RMD script has to be located in the "/inst" folder of the project
+      # then, it will be installed with the package
+      try({
+
+        report_format <- "html"
+        # for test purposes:
+        rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
+        #rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
+        output_file <- paste0(getwd(), "/", "report_Step2.", report_format)
+
+        rmarkdown::render(rmd_path,
+                          params = list(dec_data = dec_data, data_set = data_set),
+                          output_file = output_file,
+                          output_format = paste0(report_format,"_document"),
+                          quiet = TRUE)
+
+        cat("Save", toupper(report_format), "report to:", output_file, "\n")
+
+        # ToDo: Replace the following try() outside the big try
+        try({
+          browseURL(output_file)
+          cat("Open", toupper(report_format), "report in the systems standard browser\n")
+        })
 
 
-  invisible(data_set)
+        if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+      })
+
+    } else {
+
+      warning("Package 'rmarkdown' is needed to create reports.")
+    }
+  }
+
+  # Return decomposed data
+  object <- c(data_set, data_set_overhang, DECOMPOSITION = list(dec_data))
+  invisible(object)
 
 }

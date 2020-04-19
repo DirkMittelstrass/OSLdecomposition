@@ -18,6 +18,8 @@ This report was created at `r Sys.time()` with the **R** package **OSLdecomposit
 
 ```{r step1_setup, include=FALSE}
 
+# Last changed: 2020-04-19
+
 library(numOSL)
 library(knitr)
 library(ggplot2)
@@ -51,7 +53,7 @@ for (j in 1:length(data_set)) {
 
 ## Summary
 <font color="black">
-The global average curve of `r n.curves` `r fit_data$arguments$record.type` records was calculated and then fitted with multi-exponential decay models with an increasing number of components *K* (Figure 2). A statistical test compared the models and found the *K* = `r fit_data$K.selected` model as sufficiently describing the global average curve (Table 1, Figure 1). 
+The global average curve of `r n.curves` `r fit_data$parameters$record.type` records was calculated and then fitted with multi-exponential decay models with an increasing number of components *K* (Figure 2). A statistical test compared the models and found the *K* = `r fit_data$K.selected` model as sufficiently describing the global average curve (Table 1, Figure 1). 
 
 ```{r show_component_table}
 
@@ -94,8 +96,8 @@ n.figure <- n.figure + 1
 #knitr::opts_current$set(fig.asp = cross.plot.height)
 
 plot_PhotoCrosssections(fit_data,
-                        stimulation.intensity = fit_data$arguments$stimulation.intensity,
-                        stimulation.wavelength = fit_data$arguments$stimulation.wavelength)
+                        stimulation.intensity = fit_data$parameters$stimulation.intensity,
+                        stimulation.wavelength = fit_data$parameters$stimulation.wavelength)
 
 # <font color=\"black\"> </font>
 
@@ -112,7 +114,7 @@ For calculating the decay parameters, one representative OSL curve is needed. Th
 ```{r draw_global_curve}
 
 sum_OSLcurves(data_set,
-              record_type = fit_data$arguments$record.type,
+              record_type = fit_data$parameters$record.type,
               output.plot = TRUE,
               plot.first = TRUE,
               plot.global = TRUE,
@@ -163,7 +165,7 @@ But which of these fittings gives back a sufficient model of the global mean cur
 
 $$F_K = \frac{(RSS_{K-1} - RSS_K)/2}{RSS_K(N - 2K)} $$
 
-Here, *N* is the number data points (channels) of the global average curve and *K* is the number of OSL components in the fitting model. If the *F*-value *F~K~* falls below the preset threshold value of *F~threshold~* = `r fit_data$arguments$F.threshold`, the new fitting model with *K* components is apparently not significantly better than the *K* - 1 model and will be chosen as algorithm output.
+Here, *N* is the number data points (channels) of the global average curve and *K* is the number of OSL components in the fitting model. If the *F*-value *F~K~* falls below the preset threshold value of *F~threshold~* = `r fit_data$parameters$F.threshold`, the new fitting model with *K* components is apparently not significantly better than the *K* - 1 model and will be chosen as algorithm output.
 
 ```{r F-test_table}
 
@@ -172,7 +174,7 @@ row_index <- c(1:nrow(F_table))
 F_table <- cbind(data.frame(K = row_index), F_table)
 
 # Nicer table header
-if (fit_data$arguments$background.fitting == TRUE) {
+if (fit_data$parameters$background.fitting == TRUE) {
 
   colnames(F_table) <- c("  K  ", paste0("$\\lambda_", row_index,"$ $(s^{-1})$"),"background","RSS","$F_K$")
 } else {
@@ -211,10 +213,10 @@ A full description of the method and the algorithms involved, as well as some pe
 ### Script settings
 
 
-**Algorithm arguments** | 
+**Algorithm parameters** | 
 -----------------------|----------------
-Maximum allowed components |*K~max~* =  `r fit_data$arguments$K.max`
-Threshold *F*-value | *F~threshold~* = `r fit_data$arguments$F.threshold`
+Maximum allowed components |*K~max~* =  `r fit_data$parameters$K.max`
+Threshold *F*-value | *F~threshold~* = `r fit_data$parameters$F.threshold`
 
 ### Session info
 

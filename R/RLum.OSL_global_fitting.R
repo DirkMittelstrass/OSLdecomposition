@@ -39,11 +39,11 @@ RLum.OSL_global_fitting <- function(object,
 
         if (names(object)[i]=="OSL_COMPONENTS") {
 
-          warning("Input already contains Step 1 results. Old results will be overwritten")
+          warning("Input object already contains Step 1 results. Old results were overwritten")
         }else{
 
           data_set_overhang[[length(data_set_overhang) + 1]] <- object[[i]]
-          warning("List element ", i, " is not of type 'RLum.Analysis' and will not be included in fitting procedure")
+          warning("List element ", i, " is not of type 'RLum.Analysis' and was not included in fitting procedure")
         }
       }
     }
@@ -51,13 +51,13 @@ RLum.OSL_global_fitting <- function(object,
   } else {
 
     data_set <- list(object)
-    warning("Input is not of type list, but output will be of type list")
+    warning("Input is not of type list, but output is of type list")
   }
 
   if (length(data_set) == 0) stop("Input object contains no RLum.Analysis data")
 
   # calc arithmetic mean curve
-  if(verbose) cat("STEP 1.1 ----- Build arithmetic mean curve from all CW-OSL curves -----\n")
+  if(verbose) cat("STEP 1.1 ----- Build global average curve from all CW-OSL curves -----\n")
 
   # measure computing time
   time.start <- Sys.time()
@@ -93,7 +93,7 @@ RLum.OSL_global_fitting <- function(object,
   if (report) {
     if("rmarkdown" %in% rownames(installed.packages()) == TRUE) {
 
-      if(verbose) cat("STEP 1.3 ----- Create analysis report -----\n")
+      if(verbose) cat("STEP 1.3 ----- Create report -----\n")
       library(rmarkdown)
 
       time.start <- Sys.time()
@@ -132,10 +132,8 @@ RLum.OSL_global_fitting <- function(object,
     }
   }
 
-  # Print results
-
+  # Return fitted data
   object <- c(data_set, data_set_overhang, OSL_COMPONENTS = list(fit_data))
-  #cat("done\n")
   invisible(object)
 
 

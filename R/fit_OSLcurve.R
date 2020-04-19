@@ -23,7 +23,7 @@
 #' * Documentation
 #' * Test background value fitting
 #'
-#' @section Last changed. 2020-04-11
+#' @section Last changed. 2020-04-19
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -296,12 +296,12 @@ fit_OSLcurve <- function(
                    fit.results = fit.list,
                    case.tables = C.list,
                    plot.data = plot.data,
-                   arguments = list(K.max = K.max,
-                                    F.threshold = F.threshold,
-                                    stimulation.intensity = stimulation.intensity,
-                                    stimulation.wavelength = stimulation.wavelength,
-                                    weight.Chi = weight.Chi,
-                                    background.fitting = background.fitting))
+                   parameters = list(K.max = K.max,
+                                     F.threshold = F.threshold,
+                                     stimulation.intensity = stimulation.intensity,
+                                     stimulation.wavelength = stimulation.wavelength,
+                                     weight.Chi = weight.Chi,
+                                     background.fitting = background.fitting))
 
     invisible(output)
 
