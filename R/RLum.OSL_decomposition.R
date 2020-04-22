@@ -1,4 +1,6 @@
-#' Title
+#' Decomposes RLum.Data.Curves into its CW-OSL components
+#'
+#' @last_changed 2020-04-21
 #'
 #' @param object
 #' @param record_type
@@ -11,9 +13,8 @@
 #' @param verbose
 #'
 #' @return
-#' @export
-#'
 #' @examples
+
 RLum.OSL_decomposition <- function(
   object,
   record_type = "OSL",
@@ -28,7 +29,7 @@ RLum.OSL_decomposition <- function(
 
 
   ### currently HIDDEN PARAMETERS ###
-  algorithm <- "det" # "det", "nls", "det+nls"
+  algorithm <- "det+nls" # "det", "nls", "det+nls"
   background_fitting <- FALSE
 
 
@@ -113,6 +114,14 @@ RLum.OSL_decomposition <- function(
   if ((algorithm == "nls") &! (error_calculation == "nls")) {
     if (verbose) warning("When algorithm 'nls' is chosen, error.calculation must be also 'nls'. Argument changed to error.calculation='nls'")
     error_calculation <- "nls"
+  }
+
+  ## Little function to measure elapsed time ##
+
+  time_duration <- function(start, end){
+  v1 <- strptime(durations, format='%H:%M:%S')
+  v1$hour * 3600 + v1$min * 60 + v1$sec
+  return()
   }
 
   ################################ STEP 2.1: Integration intervals ################################
@@ -255,7 +264,7 @@ RLum.OSL_decomposition <- function(
         })
 
 
-        if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+        if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
       })
 
     } else {
@@ -267,5 +276,4 @@ RLum.OSL_decomposition <- function(
   # Return decomposed data
   object <- c(data_set, data_set_overhang, DECOMPOSITION = list(dec_data))
   invisible(object)
-
 }

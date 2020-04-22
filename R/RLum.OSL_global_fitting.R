@@ -1,9 +1,18 @@
-#' Determines CW-OSL signal components from RLum.Analysis data sets
+#' Identifies CW-OSL signal components in RLum.Analysis data sets
 #'
+#' @last_changed 2020-04-19
 #'
+#' @param object
+#' @param max_components
+#' @param record_type
+#' @param F_threshold
+#' @param stimulation_intensity
+#' @param stimulation_wavelength
+#' @param report
+#' @param verbose
 #'
-#'
-#'
+#' @return
+#' @examples
 
 RLum.OSL_global_fitting <- function(object,
                      max_components = 3,
@@ -14,7 +23,7 @@ RLum.OSL_global_fitting <- function(object,
                      report = TRUE,
                      verbose = TRUE){
 
-  # ToDo:
+  ### ToDo:
   # - add 'autoname' argument
   # - add file name argument
   # - add file directory argument
@@ -135,6 +144,4 @@ RLum.OSL_global_fitting <- function(object,
   # Return fitted data
   object <- c(data_set, data_set_overhang, OSL_COMPONENTS = list(fit_data))
   invisible(object)
-
-
 }

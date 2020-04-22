@@ -5,6 +5,11 @@
 #' @param display
 #' @param zoom
 #' @param algorithm
+#' @param hide_plot
+#' If true, plot is not drawn but can be catched by 'A <- plot_OSLcurve(...)'
+#' and displayed later by grid.arrange(A)
+#'
+#'
 #' @param title
 #'
 #' @section Changelog:
@@ -12,11 +17,12 @@
 #' * 2019-04-03, DM: Rebuild whole function
 #' * 2019-05-03, DM: Checks now curve format; added x-axis zoom
 #' * 2019-10-02, DM: Added background support and some little tweaks
+#' * 2020-04-22, DM: Enabled hidden output
 #'
 #' @section ToDo:
 #' * REDUCE AND REFACTORIZE CODE
 #' * Accept curve without components
-#' * Accept components without curve
+#' * When drawing components without curve, skip residual curve
 #' * Show fitting formula
 #' * Add pseudoLM-OSL presentation
 #' * Cut data set while zooming to improve performance
@@ -26,7 +32,7 @@
 #' * display Residual square sum
 #'
 #'
-#' @section Last changed. 2019-11-25
+#' @section Last changed. 2020-04-22
 #'
 #' @author
 #' Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@@luminescence.de}
@@ -39,10 +45,11 @@
 #' plot_OSLcurve(test.curve, test.components, display = "detailed")
 #'
 plot_OSLcurve <- function(curve = NULL,
-                          components = NULL,
+                          components,
                           display = "detailed", #"detailed", #"components", "raw" ,"compare_lin", "compare_log", "lin-log"
                           zoom = 1,
                           algorithm = "",
+                          hide_plot = FALSE,
                           title = NULL
                           ){
 
@@ -53,23 +60,6 @@ plot_OSLcurve <- function(curve = NULL,
   library(scales)
 
   ########## Checks and data preperations ###########
-
-  # Check input curve
-  if(is(curve, "RLum.Data.Curve") == FALSE & is(curve, "data.frame") == FALSE & is(curve, "matrix") == FALSE){
-    stop("[plot_OSLcurve()] Error: Input object is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")
-  }
-
-  if (!("time" %in% colnames(curve)) ||
-      !("signal" %in% colnames(curve))) {
-    curve <- data.frame(time = curve[,1],
-                        signal = curve[,2])
-  }
-
-  time <- curve$time
-  channel.width <- time[2] - time[1]
-
-  # Set x-axis zoom
-  X_limits <- c(0, max(time)*zoom)
 
   # Set color and line themes
   theme_set(theme_bw())
@@ -89,9 +79,25 @@ plot_OSLcurve <- function(curve = NULL,
                                channel.number = channel.number,
                                simulate.curve = TRUE,
                                add.poisson.noise = FALSE)
+  } else {
+
+    # Check input curve
+    if(is(curve, "RLum.Data.Curve") == FALSE & is(curve, "data.frame") == FALSE & is(curve, "matrix") == FALSE){
+      stop("[plot_OSLcurve()] Error: Input object is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")
+    }
+
+    if (!("time" %in% colnames(curve)) ||
+        !("signal" %in% colnames(curve))) {
+      curve <- data.frame(time = curve[,1],
+                          signal = curve[,2])
+    }
   }
 
+  time <- curve$time
+  channel.width <- time[2] - time[1]
 
+  # Set x-axis zoom
+  X_limits <- c(0, max(time)*zoom)
 
   # Transform data into factor-based long data set
   data <- data.frame(time = time, signal = curve$signal, graph = factor("meas"))
@@ -302,14 +308,13 @@ plot_OSLcurve <- function(curve = NULL,
                         expression(sigma[italic(n)]))
       }
 
-      if ("n.residual" %in% colnames(components)) {
-        p.table <- data.frame(p.table,
-                              n.residual = prettyNum(round(components$n.residual)))
-        p.colnames <- c(p.colnames,
-                        expression(tail[italic(n)]))
-        p.table$n.residual[is.na(p.table$n.residual)] <- ""
-
-      }
+      #if ("n.residual" %in% colnames(components)) {
+      #  p.table <- data.frame(p.table,
+      #                        n.residual = prettyNum(round(components$n.residual)))
+      #  p.colnames <- c(p.colnames,
+      #                  expression(tail[italic(n)]))
+      #  p.table$n.residual[is.na(p.table$n.residual)] <- ""
+      #}
 
 
       colnames(p.table) <- p.colnames
@@ -360,7 +365,7 @@ plot_OSLcurve <- function(curve = NULL,
 
   if (display == "return.lin") {
 
-    return(p.lin)
+    plot_object <- p.lin
 
   } else if (display == "components") {
 
@@ -368,7 +373,7 @@ plot_OSLcurve <- function(curve = NULL,
     lay <- cbind(c(1,1,2))
 
     # use grid function from gridExtra package to display linear and log plot side by side
-    grid.arrange(p.lin, p.res, layout_matrix = lay, top = title)
+    plot_object <- arrangeGrob(p.lin, p.res, layout_matrix = lay, top = title)
 
   } else if (display == "detailed") {
 
@@ -393,7 +398,8 @@ plot_OSLcurve <- function(curve = NULL,
                     rep(4,5 + tab.shift))
                   ,ncol = 2)
 
-    grid.arrange(p.lin, p.res, p.log, p.tab, layout_matrix = lay, top = title)
+    #grid.arrange(p.lin, p.res, p.log, p.tab, layout_matrix = lay, top = title)
+    plot_object <- arrangeGrob(p.lin, p.res, p.log, p.tab, layout_matrix = lay, top = title)
 
   } else if (display == "compare_lin") {
 
@@ -402,7 +408,7 @@ plot_OSLcurve <- function(curve = NULL,
                  c(2),
                  c(3))
 
-    grid.arrange(p.lin, p.res, p.tab, layout_matrix = lay, top = title)
+    plot_object <- arrangeGrob(p.lin, p.res, p.tab, layout_matrix = lay, top = title)
 
   } else if (display == "compare_log") {
 
@@ -411,7 +417,7 @@ plot_OSLcurve <- function(curve = NULL,
                  c(2),
                  c(3))
 
-    grid.arrange(p.log, p.res, p.tab, layout_matrix = lay, top = title)
+    plot_object <- arrangeGrob(p.log, p.res, p.tab, layout_matrix = lay, top = title)
 
   } else if (display == "lin-log") {
 
@@ -420,12 +426,13 @@ plot_OSLcurve <- function(curve = NULL,
                  c(1,1,1,3),
                  c(2,2,2,3))
 
-    grid.arrange(p.linlog, p.res, p.tab, layout_matrix = lay, top = title)
+    plot_object <- arrangeGrob(p.linlog, p.res, p.tab, layout_matrix = lay, top = title)
 
 
   } else {
-    grid.arrange(p.lin, nrow = 1, top = title)
+    plot_object <- arrangeGrob(p.lin, nrow = 1, top = title)
   }
 
-  #return(NULL)
+  if (!hide_plot) grid.arrange(plot_object)
+  invisible(plot_object)
 }

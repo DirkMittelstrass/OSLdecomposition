@@ -18,7 +18,7 @@ This report was created at `r Sys.time()` with the **R** package **OSLdecomposit
 
 ```{r step2_setup, include=FALSE}
 
-# Last changed: 2020-04-19
+# Last changed: 2020-04-21
 
 library(numOSL)
 library(knitr)
@@ -41,32 +41,154 @@ knitr::opts_chunk$set(fig.width=7, #7
 n.figure <- 1
 n.table <- 1
 
-# Find out the overall number of 'record_type' curves
-# ToDo: Get this info (and the global_average data) directly from sum_OSLcurves outout
+# Find out the overall number of 'record_type' curves and the indicies of the OSL curves
+# ToDo: This is ugly code. Refactorize, for example with grep()
+record_index <- list()
 n.curves <- 0
+
 for (j in 1:length(data_set)) {
+  record_index[[j]] <- c(NA)
+  n.aliquot <- 0
   for (i in 1:length(data_set[[j]]@records)) {
-   if (data_set[[j]]@records[[i]]@recordType == record_type) n.curves <- n.curves + 1
+    
+   if (data_set[[j]]@records[[i]]@recordType == record_type) {
+     n.curves <- n.curves + 1
+     n.aliquot <- n.aliquot + 1
+     # Collect index of OSL records
+     record_index[[j]][n.aliquot] <- i
+   }
   }
 }
+
+#K <- length(dec_data$parameters$decay_rates)
+K <- 3
 ```
 
-## Summary
+
+## Results {.tabset .tabset-pills}
 <font color="black">
 
-***
+A `r K`-component exponential decay model is assumed globally. Therefore, each `r dec_data$parameters$record_type` measurement can be described by:
+
+```{r step2_draw_formula}
+# *Dynamic Formula*
+
+append_B <- ""
+if (dec_data$parameters$background_fitting) append_B <- "+B"
+
+cat("$$I(t) = ", paste(paste0("n_",1:K, "e^{\\lambda_",1:K,"t}"), collapse = "+"), append_B, "$$")
+
+```
+
+
+With the decay rates *lambda* determined in Step 1 or given by the user:
+
+* lambda_1 = ...  (Fast)
+* lambda_2 = ...  (Component 2)
+
+$$I(t) = n_1e^{\lambda_1t} +B $$
+
+The decompositon process calculated the signal component intensities *n*
+
+```{r step2_create_result_tabs, eval=TRUE} 
+# ±
+
+# Define dynamic Rmarkdown code
+markdown_code <- c(
+    "### #{{j}}\n",
+    "```{r tab_{{j}}}\n",
+    "record_1 <- data_set[[{{j}}]]@records[[record_index[[{{j}}]][1]]]\n",
+    "plot_1 <- plot_OSLcurve(record_1, record_1@info$COMPONENTS,
+                             display = \"compare_lin\", hide_plot = TRUE,
+                             title = NULL)\n",
+    "record_2 <- data_set[[{{j}}]]@records[[record_index[[{{j}}]][2]]]\n",
+    "plot_2 <- plot_OSLcurve(record_2, record_2@info$COMPONENTS,
+                             display = \"compare_lin\", hide_plot = TRUE,
+                             title = NULL)\n",
+    "grid.arrange(plot_1, plot_2, layout_matrix = t(matrix(c(1,2))))\n",
+    "```\n",
+    "* Upper left: Global mean curve (grey), fit model curve (black) and component signals",
+    "* Upper right: Same as log-log diagram",
+    "\n"
+  ) # And then a TABLE
+
+   # results[results$list.index == 1,]
+
+   #  plot_title <- paste0("Record ", i, " of aliquot ", input$aliquot_i,
+   #                       " (pos.=", record@info[["POSITION"]], "): ",
+   #                       record@info[["DTYPE"]], 
+   #                       " (dose=", record@info[["IRR_TIME"]], ")")
+
+
+#    "plot_objects <- list()\n",
+#    "for (i in record_index[[{{j}}]][1:2]) {\n",
+#    "record <- data_set[[{{j}}]]@records[[i]]\n",
+#    "plot_objects <- c(plot_objects, 
+#                      plot_OSLcurve(record,
+#                                     record@info$COMPONENTS,
+#                                     display = \"compare_lin\",
+#                                     hide_plot = TRUE,
+#                                     title = NULL))}\n",
+#    "grid.arrange(plot_objects[[1]], plot_objects[[2]], layout_matrix = t(matrix(c(1,2))))\n",
+# display = \"compare_lin\",
+
+
+tabs <- lapply(as.list(1:length(data_set)),
+                function(j) knitr::knit_expand(text = markdown_code))
+
+
+# Now knit the dynamic code. This has to be in a seperate chunk
+```
+
+`r knitr::knit(text = unlist(tabs))`
+
+## Statistics
+
+
+
+
+### Intensity values
 
 ***
-
 <br><br>
 
-## ...
+### Initial signals
+
+***
+<br><br>
+
+### Correlation
+
+***
+<br><br>
+
+## Algorithm description
+
+In Step 2, we decompose each OSL curve into its signal components. We set the decay constants found in Step 1 as fixed values for all OSL curves of the data set. 
+
+### Signal bin intervals
+
+### Decomposition
+
+-------------------
+
+1. Divide the measurement time into *K* intervals. These intervals are calculated and optimized globally by `calc_OSLintervals()`.
+2. Integrate the signal curve of each OSL record over these intervals. From the integration values and the fitting model found in Step 1, build one equation system with *K* equations for each OSL record. 
+3. Solve the equation system by an analytic determinant based method, called 'Cramer's rule', and get the area under the component curve or 'intensity' *n~k~* for each signal component
+4. To enhance stability and precision of the method, refine the set of *n~k~* values in a quasi-linear regression using `base::nls()`. If this refining-fit fails, go on with the Cramer's rule achieved values.
+5. Calculate the standard deviation of the integration values from step 2 by the residuals between fit-model OSL curve and real data points 
+6. Apply the propagation of uncertainty method onto Cramer's rule and calculate the uncertainty $\sigma_k$ for each component intensity value *n~k~*
+
+-------------------
+
+### Result refinement
+
 
 ## Further information
 
 ### Disclaimer
 
-This report was automatically generated by functions of the **R** package `OSLdecomposition` written and maintained by Dirk Mittelstraß (<dirk.mittelstrass@luminescence.de>). The calculation process deploys also functions of the R packages `numOSL` introduced by Jun Peng *et al.* (2013) and `Luminescence` introduced by Sebastian Kreutzer *et al.* (2012)
+This report was automatically generated by functions of the **R** package `OSLdecomposition` written and maintained by Dirk Mittelstraß (<dirk.mittelstrass@luminescence.de>).
 
 This report and the containing results can be used, shared and published by the data set maintainer at will. If the results are published, however, it is demanded to state the main **R** package `OSLdecomposition` including its version number (`r packageVersion("OSLdecomposition")`). It is also recommended to add this report to the supplement of your publication.   
 
@@ -96,3 +218,44 @@ print(sessionInfo(), locale = FALSE)
 ```
 
 ## References
+
+
+
+
+
+```{r curve_viewer, eval=FALSE, include=FALSE}
+
+#### CURVE VIEWER ####
+# does not work with static Rmarkdown documents
+
+# Determine zoom minimum (10 data points)
+#zoom_min <- ceiling(10*100 / length(global_curve$time)) / 100
+
+# Create shiny plot to surf through curves
+numericInput("aliquot_i", "Aliquot no.: ", value = 1, min = 1, max = length(data_set))
+numericInput("record_i", "Record no.: ", value = 1, min = 1, max = length(record_index))
+
+#sliderInput("aliquot_i", "Aliquot no.: ", value = 1, step = 1, min = 1, max = aliquot.n)
+#sliderInput("record_i", "Curve no.: ", value = 1, step = 1, min = 1, max = length(record_index))
+sliderInput("zoom", "X axis zoom", min = 0.1, max = 1, value = 1)
+
+
+renderPlot(width = 900, height = 450,res = 100,
+   {
+     i <- record_index[input$record_i]
+     record <- data_set[[input$aliquot_i]]@records[[i]]
+     plot_title <- paste0("Record ", i, " of aliquot ", input$aliquot_i,
+                          " (pos.=", record@info[["POSITION"]], "): ",
+                          record@info[["DTYPE"]], 
+                          " (dose=", record@info[["IRR_TIME"]], ")")
+    
+     plot_OSLcurve(record, 
+                  record@info[["COMPONENTS"]], 
+                  display = "detailed", 
+                  title = plot_title,
+                  algorithm = dec_data$parameters$algorithm,
+                  zoom = input$zoom)
+})
+
+```
+

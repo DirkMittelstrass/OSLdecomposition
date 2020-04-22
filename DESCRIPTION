@@ -1,10 +1,10 @@
 Package: OSLdecomposition
 Type: Package
 Title: Decompose CW-OSL measurements
-Version: 0.04.02
+Version: 0.4.20
 Authors@R: person("Dirk", "Mittelstrass", email = "dirk.mittelstrass@luminescence.de", role = c("aut", "cre"))
 Description: Decomposition of PMT-measured CW-OSL curves into its signal components for SAR dosimetry data sets
-Depends: R (>= 3.6.1)
+Depends: R (>= 3.6.3)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
