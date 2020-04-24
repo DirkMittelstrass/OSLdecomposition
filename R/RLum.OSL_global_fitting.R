@@ -76,7 +76,7 @@ RLum.OSL_global_fitting <- function(object,
                                 output.plot = FALSE,
                                 verbose = verbose)
 
-  if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
 
   # find components via fitting and F-statistics
@@ -97,7 +97,7 @@ RLum.OSL_global_fitting <- function(object,
   # Add 'record_type' to the argument list
   fit_data$arguments$record.type <- record_type
 
-  if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
   if (report) {
     if("rmarkdown" %in% rownames(installed.packages()) == TRUE) {
@@ -132,7 +132,7 @@ RLum.OSL_global_fitting <- function(object,
           })
 
 
-        if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+        if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
         })
 
     } else {

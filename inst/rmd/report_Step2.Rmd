@@ -18,7 +18,7 @@ This report was created at `r Sys.time()` with the **R** package **OSLdecomposit
 
 ```{r step2_setup, include=FALSE}
 
-# Last changed: 2020-04-21
+# Last changed: 2020-04-24
 
 library(numOSL)
 library(knitr)
@@ -60,66 +60,84 @@ for (j in 1:length(data_set)) {
   }
 }
 
-#K <- length(dec_data$parameters$decay_rates)
-K <- 3
+K <- nrow(dec_data$decompositon.input)
+record_type <- dec_data$parameters$record_type
+background_fitting <- dec_data$parameters$background_fitting
+input_table <- dec_data$decompositon.input
 ```
 
 
 ## Results {.tabset .tabset-pills}
 <font color="black">
 
-A `r K`-component exponential decay model is assumed globally. Therefore, each `r dec_data$parameters$record_type` measurement can be described by:
+A `r K`-component exponential decay model is assumed globally. Therefore, each `r record_type` measurement can be described by:
 
 ```{r step2_draw_formula}
-# *Dynamic Formula*
-
 append_B <- ""
-if (dec_data$parameters$background_fitting) append_B <- "+B"
+if (background_fitting) append_B <- "+B"
 
+# Draw basic formula
 cat("$$I(t) = ", paste(paste0("n_",1:K, "e^{\\lambda_",1:K,"t}"), collapse = "+"), append_B, "$$")
-
 ```
 
 
-With the decay rates *lambda* determined in Step 1 or given by the user:
+With the following decay rates $\lambda$ determined in Step 1 or given by the user:
 
-* lambda_1 = ...  (Fast)
-* lambda_2 = ...  (Component 2)
+```{r step2_decay_rate_list}
+for (k in 1:K) {
+  cat(paste0("* $\\lambda_", k,"=", round(input_table$lambda[k], digits = 4),"$ $s^{-1}$ ",
+             "(", input_table$name[k] ,")\n"))
+}
+```
 
-$$I(t) = n_1e^{\lambda_1t} +B $$
+The decompositon process calculates the signal component intensities $n$ and their standard deviations $\sigma$. The intensity values $n$ equal the areas under the component curves (including the remaining virtual signal beyond the stimulation end) and have the same unit as the detector signal (usually *counts* or *mA*). Be also aware that the uncertainty values $\sigma$ account just for the signal noise. Errors in the decay rate values or the decay kinetics may lead to intensity value $n$ discrepancies without increasing the uncertainty value $\sigma$ enough to sufficiently account for them.
 
-The decompositon process calculated the signal component intensities *n*
+```{r step2_create_result_tabs} 
+# Build result tables
 
-```{r step2_create_result_tabs, eval=TRUE} 
-# ±
+intensity_tables <- list()
+for (j in 1:length(data_set)) {
+  result_fragment <- dec_data$results[dec_data$results$list.index == j,]
+  aliquot_table <- subset(result_fragment, select = c(record.index, IRR_TIME))
+  colnames(aliquot_table) <- c("record index", "irradiation time (s)")
+  
+  for (k in 1:K) {
+    intensities <- result_fragment[,colnames(result_fragment) == paste0("n.", k)]
+    sigmas <- result_fragment[,colnames(result_fragment) == paste0("n.error.", k)]
+    new_col <- data.frame(row = paste0(round(intensities), " ± ", round(sigmas)))
+    colnames(new_col) <- paste0("$n_", k, " ± \\sigma_", k,"$ (", input_table$name[k] ,")")
+    
+    aliquot_table <- cbind(aliquot_table, new_col)
+  }
+  
+  intensity_tables[[j]] <- aliquot_table
+}
 
 # Define dynamic Rmarkdown code
-markdown_code <- c(
+dynamic_code <- c(
     "### #{{j}}\n",
-    "```{r tab_{{j}}}\n",
+    "```{r tab_{{j}}_OSL_plots}\n", # Draw first two plots side by side
     "record_1 <- data_set[[{{j}}]]@records[[record_index[[{{j}}]][1]]]\n",
     "plot_1 <- plot_OSLcurve(record_1, record_1@info$COMPONENTS,
-                             display = \"compare_lin\", hide_plot = TRUE,
-                             title = NULL)\n",
+                             display = \"compare_lin\", hide_plot = TRUE)\n",
     "record_2 <- data_set[[{{j}}]]@records[[record_index[[{{j}}]][2]]]\n",
     "plot_2 <- plot_OSLcurve(record_2, record_2@info$COMPONENTS,
-                             display = \"compare_lin\", hide_plot = TRUE,
-                             title = NULL)\n",
+                             display = \"compare_lin\", hide_plot = TRUE)\n",
     "grid.arrange(plot_1, plot_2, layout_matrix = t(matrix(c(1,2))))\n",
     "```\n",
-    "* Upper left: Global mean curve (grey), fit model curve (black) and component signals",
-    "* Upper right: Same as log-log diagram",
-    "\n"
-  ) # And then a TABLE
+    "<i><b>Figure 1.`r {{j}}`:</b> Signal components and residual curve of first two `r record_type` records.<br>",
+    "<b>Left:</b> First record (index = `r record_index[[{{j}}]][1]`),",
+    " usually natural or recovered dose signal ($L_n$).<br>",
+    "<b>Right:</b> Second record (index = `r record_index[[{{j}}]][2]`),",
+    " usually test-dose signal ($T_n$).</i><br><br>",
+    "***\n", # Now print the overview table
+    "<i><b>Table 1.`r {{j}}`:</b> Signal component intensities $n$ and their standard deviation $\\sigma$ calculated by the decomposition process.</i><br>",
+    "```{r tab_{{j}}_result_tables}\n",
+    "kable(intensity_tables[[{{j}}]], escape = TRUE, align = \"c\")\n",
+    "```\n"
+  ) 
 
-   # results[results$list.index == 1,]
-
-   #  plot_title <- paste0("Record ", i, " of aliquot ", input$aliquot_i,
-   #                       " (pos.=", record@info[["POSITION"]], "): ",
-   #                       record@info[["DTYPE"]], 
-   #                       " (dose=", record@info[["IRR_TIME"]], ")")
-
-
+### ALTERNATIVE MORE VARIABLE (but buggy) PLOT ASSIGNEMENT:
 #    "plot_objects <- list()\n",
 #    "for (i in record_index[[{{j}}]][1:2]) {\n",
 #    "record <- data_set[[{{j}}]]@records[[i]]\n",
@@ -127,14 +145,13 @@ markdown_code <- c(
 #                      plot_OSLcurve(record,
 #                                     record@info$COMPONENTS,
 #                                     display = \"compare_lin\",
-#                                     hide_plot = TRUE,
-#                                     title = NULL))}\n",
-#    "grid.arrange(plot_objects[[1]], plot_objects[[2]], layout_matrix = t(matrix(c(1,2))))\n",
-# display = \"compare_lin\",
+#                                     hide_plot = TRUE))}\n",
+
+
 
 
 tabs <- lapply(as.list(1:length(data_set)),
-                function(j) knitr::knit_expand(text = markdown_code))
+                function(j) knitr::knit_expand(text = dynamic_code))
 
 
 # Now knit the dynamic code. This has to be in a seperate chunk
@@ -146,8 +163,16 @@ tabs <- lapply(as.list(1:length(data_set)),
 
 
 
-
 ### Intensity values
+
+```{r}
+
+
+#ggplot(data, aes(fill=condition, y=value, x=specie)) + 
+#    geom_bar(position="dodge", stat="identity")
+```
+
+
 
 ***
 <br><br>

@@ -152,7 +152,7 @@ RLum.OSL_decomposition <- function(
                                          background.fitting = background_fitting,
                                          verbose = verbose)
 
-    if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+    if(verbose)  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
   } else {
 
@@ -218,7 +218,7 @@ RLum.OSL_decomposition <- function(
   }
 
   if(verbose) cat("\nSuccessfully decomposed", N_records,"records\n")
-  if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
+  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
   # Build overview list
   dec_data <- list(parameters = list(record_type = record_type,
