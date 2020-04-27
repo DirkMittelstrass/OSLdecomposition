@@ -235,6 +235,7 @@ RLum.OSL_decomposition <- function(
     if("rmarkdown" %in% rownames(installed.packages()) == TRUE) {
 
       if(verbose) cat("STEP 2.3 ----- Create report -----\n")
+      if(verbose) cat("This process can take up to a few minutes...\n")
       library(rmarkdown)
 
       time.start <- Sys.time()

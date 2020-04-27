@@ -34,8 +34,10 @@ knitr::opts_chunk$set(fig.width=7, #7
                       error=FALSE,
                       echo=FALSE,
                       cache=FALSE)
-
-#fit_data <- params$fit_data
+## set ggplot design 
+# (just for directly plotted diagrams. sub-function plot are not affected)
+theme_set(theme_minimal())
+graph_colors <- c("red3","green3","blue3","darkorchid","gold","brown","pink")
 
 # numerate figures and tables
 n.figure <- 1
@@ -67,7 +69,7 @@ input_table <- dec_data$decompositon.input
 ```
 
 
-## Results {.tabset .tabset-pills}
+## Basics 
 <font color="black">
 
 A `r K`-component exponential decay model is assumed globally. Therefore, each `r record_type` measurement can be described by:
@@ -90,33 +92,74 @@ for (k in 1:K) {
 }
 ```
 
-The decompositon process calculates the signal component intensities $n$ and their standard deviations $\sigma$. The intensity values $n$ equal the areas under the component curves (including the remaining virtual signal beyond the stimulation end) and have the same unit as the detector signal (usually *counts* or *mA*). Be also aware that the uncertainty values $\sigma$ account just for the signal noise. Errors in the decay rate values or the decay kinetics may lead to intensity value $n$ discrepancies without increasing the uncertainty value $\sigma$ enough to sufficiently account for them.
 
-```{r step2_create_result_tabs} 
-# Build result tables
+... add signal bin info here ...
+
+... and fundamental approach here ...
+
+... and refer to the paper or master thesis here ...
+
+
+## Aliquot results
+
+The data set is divided into `r length(data_set)` `RLum.Analysis' objects. Each RLum.Analysis objects represents one measurement sequence and therefore the measurement of one aliquot or one grain in case of single grain data.
+
+```{r step2_create_tab_data} 
+### This chunk rearranges the data for the dynamic tabs, no direct output is produced
 
 intensity_tables <- list()
+barplots <- list()
+barplot_labels <- list()
+
 for (j in 1:length(data_set)) {
-  result_fragment <- dec_data$results[dec_data$results$list.index == j,]
-  aliquot_table <- subset(result_fragment, select = c(record.index, IRR_TIME))
+  result <- dec_data$results[dec_data$results$list.index == j,]
+   if(result$IRR_TIME[1] == 0) result$IRR_TIME[1] <- "?"
+  
+  aliquot_table <- subset(result, select = c(record.index, IRR_TIME))
+  
+  plot_table <- data.frame(NULL)
+
   colnames(aliquot_table) <- c("record index", "irradiation time (s)")
   
   for (k in 1:K) {
-    intensities <- result_fragment[,colnames(result_fragment) == paste0("n.", k)]
-    sigmas <- result_fragment[,colnames(result_fragment) == paste0("n.error.", k)]
-    new_col <- data.frame(row = paste0(round(intensities), " ± ", round(sigmas)))
-    colnames(new_col) <- paste0("$n_", k, " ± \\sigma_", k,"$ (", input_table$name[k] ,")")
+    intensities <- result[,colnames(result) == paste0("n.", k)]
+    intensities_reduced <- intensities - result[,colnames(result) == paste0("n.residual.", k)]
+    sigmas <- result[,colnames(result) == paste0("n.error.", k)]
     
+    # Append current component to Table 1 table
+    new_col <- data.frame(row = paste0(round(intensities), " ± ", round(sigmas)))
+    colnames(new_col) <- paste0("$n_", k, " ± \\sigma_", k,
+                                "$ (", input_table$name[k] ,")")
     aliquot_table <- cbind(aliquot_table, new_col)
+    
+    # Append current component to Figure 2 plot data
+    plot_table <- rbind(plot_table, data.frame(x_axis = 1:length(intensities_reduced),
+                                               y_axis = intensities_reduced,
+                                               component = input_table$name[k]))
   }
   
   intensity_tables[[j]] <- aliquot_table
+  barplots[[j]] <- plot_table
+  barplot_labels[[j]] <- data.frame(breaks = 1:length(intensities_reduced),
+                                    labels = paste0("#", 1:length(intensities_reduced), 
+                                                    "\n", result$IRR_TIME, " s"))
+  # add record@info[["IRR_UNIT"]]
 }
+```
 
+### Intensity tables {.tabset .tabset-pills}
+
+The decompositon process calculates the signal component intensities $n$ and their standard deviations $\sigma$. The intensity values $n$ equal the areas under the component curves (including the remaining virtual signal beyond the stimulation end) and have the same unit as the detector signal (usually *counts* or *mA*). Be aware that the uncertainty values $\sigma$ account just for the signal noise. Errors in the decay rate values or the decay kinetics may lead to intensity value $n$ discrepancies without increasing the uncertainty value $\sigma$ enough to sufficiently account for them.
+
+```{r step2_create_result_tabs} 
 # Define dynamic Rmarkdown code
 dynamic_code <- c(
+  
+    # Tab header
     "### #{{j}}\n",
-    "```{r tab_{{j}}_OSL_plots}\n", # Draw first two plots side by side
+    
+    # Draw the OSL plots of the first two records side by side
+    "```{r tab_{{j}}_OSL_plots}\n", 
     "record_1 <- data_set[[{{j}}]]@records[[record_index[[{{j}}]][1]]]\n",
     "plot_1 <- plot_OSLcurve(record_1, record_1@info$COMPONENTS,
                              display = \"compare_lin\", hide_plot = TRUE)\n",
@@ -126,15 +169,29 @@ dynamic_code <- c(
     "grid.arrange(plot_1, plot_2, layout_matrix = t(matrix(c(1,2))))\n",
     "```\n",
     "<i><b>Figure 1.`r {{j}}`:</b> Signal components and residual curve of first two `r record_type` records.<br>",
-    "<b>Left:</b> First record (index = `r record_index[[{{j}}]][1]`),",
+    "<u>Left:</u> First record (index = `r record_index[[{{j}}]][1]`),",
     " usually natural or recovered dose signal ($L_n$).<br>",
-    "<b>Right:</b> Second record (index = `r record_index[[{{j}}]][2]`),",
-    " usually test-dose signal ($T_n$).</i><br><br>",
-    "***\n", # Now print the overview table
+    "<u>Right:</u> Second record (index = `r record_index[[{{j}}]][2]`),",
+    " usually test-dose signal ($T_n$).</i><br><br>\n", 
+    
+    # Print the full intensity table
     "<i><b>Table 1.`r {{j}}`:</b> Signal component intensities $n$ and their standard deviation $\\sigma$ calculated by the decomposition process.</i><br>",
-    "```{r tab_{{j}}_result_tables}\n",
+    "```{r tab_{{j}}_result_table}\n",
     "kable(intensity_tables[[{{j}}]], escape = TRUE, align = \"c\")\n",
-    "```\n"
+    "```\n",
+    "<br><br>\n",
+    
+    # Draw the intensity barplot
+    "```{r tab_{{j}}_result_barplot}\n",
+    "ggplot(barplots[[{{j}}]], aes(fill=component, y=y_axis, x=x_axis)) + ",
+    "geom_bar(position=\"dodge\", stat=\"identity\") + ",
+    "scale_x_continuous(name = paste0(record_type, \" measurement no. and received dose\"),",
+                     "breaks = barplot_labels[[{{j}}]]$breaks,",
+                     "labels = barplot_labels[[{{j}}]]$labels) +",
+    "scale_y_continuous(name = \"component signal\", labels = scientific) +",
+    "scale_fill_manual(values = graph_colors)",
+    "```\n",
+    "***\n"
   ) 
 
 ### ALTERNATIVE MORE VARIABLE (but buggy) PLOT ASSIGNEMENT:
@@ -159,19 +216,15 @@ tabs <- lapply(as.list(1:length(data_set)),
 
 `r knitr::knit(text = unlist(tabs))`
 
-## Statistics
 
 
+## Data set statistics
+
+Planned features:
+* Component wise barplot and histogram of natural signal intensities
+* Initial signal composition of first and second measurement
 
 ### Intensity values
-
-```{r}
-
-
-#ggplot(data, aes(fill=condition, y=value, x=specie)) + 
-#    geom_bar(position="dodge", stat="identity")
-```
-
 
 
 ***
@@ -182,7 +235,16 @@ tabs <- lapply(as.list(1:length(data_set)),
 ***
 <br><br>
 
-### Correlation
+## Correlations
+
+```{r}
+# Hint: search for "Correlogram"
+# or: http://www.sthda.com/english/wiki/correlation-analyses-in-r
+
+#pairs(subset(results, select = c("n.1", "n.2", "n.3", "IRR_TIME")))
+
+```
+
 
 ***
 <br><br>

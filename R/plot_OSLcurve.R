@@ -32,7 +32,7 @@
 #' * display Residual square sum
 #'
 #'
-#' @section Last changed. 2020-04-22
+#' @section Last changed. 2020-04-27
 #'
 #' @author
 #' Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@@luminescence.de}
@@ -62,7 +62,7 @@ plot_OSLcurve <- function(curve = NULL,
   ########## Checks and data preperations ###########
 
   # Set color and line themes
-  theme_set(theme_bw())
+  theme_set(theme_minimal())
   graph.colors <- c("darkgrey", "black","red3","green3","blue3","darkorchid","gold","brown","pink")
   graph.sizes <- c(1, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
   graph.shapes <-  c(16, 32, 32, 32, 32, 32, 32, 32, 32)
@@ -148,21 +148,8 @@ plot_OSLcurve <- function(curve = NULL,
       scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
       scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
       ylab("signal (cts)") + xlab("time (s)") +
-      theme(axis.ticks.x = element_blank(),
-            axis.ticks.y = element_blank(),
-            panel.border = element_blank(),
-            axis.title = element_text(size = 8))
+      theme(axis.title = element_text(size = 8))
 
-
-'    scale_colour_manual(values = graph.colors, labels = graph.labels, guide = guide_legend(title = NULL)) +
-      scale_size_manual(values = graph.sizes, labels = graph.labels, guide = guide_legend(title = NULL)) +
-      scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = guide_legend(title = NULL)) +
-      scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = guide_legend(title = NULL)) +
-      theme(legend.position = c(1,1), legend.justification = c(1,1),
-            legend.text = element_text(size = 8),
-            legend.background = element_rect(fill="white", colour = "grey"),
-            legend.title=element_blank(),
-            legend.key.size = unit(0.5, "cm")) +'
 
     ######################## RESIDUAL PLOT #########################################################
 
@@ -214,9 +201,7 @@ plot_OSLcurve <- function(curve = NULL,
       scale_y_continuous(limits = c(- res.max, res.max)) +
       ylab("residual") +
       annotate("segment", x = 0, xend = max(curve$time), y = 0, yend = 0, colour = "black", size = 1) +
-      theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank(),
-            axis.title.x = element_blank(), panel.border = element_blank(),
-            axis.title = element_text(size = 8)) +
+      theme(axis.title.x = element_blank(), axis.title = element_text(size = 8)) +
       scale.intervals +
       res.intervals
 
@@ -250,8 +235,7 @@ plot_OSLcurve <- function(curve = NULL,
         scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
         scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
         ylab("signal (cts)") + xlab("time (s)")  +
-        theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), panel.border = element_blank(),
-              axis.title = element_text(size = 8))
+        theme(axis.title = element_text(size = 8))
 
 
       ######################## LIN LOG PLOT #########################################################
@@ -339,7 +323,7 @@ plot_OSLcurve <- function(curve = NULL,
 
       } else {
 
-        p.tab <- ggplot() + geom_blank() + theme(panel.border = element_blank())
+        p.tab <- ggplot() + geom_blank()
       }
     }
     ##################################################################################################
@@ -354,8 +338,7 @@ plot_OSLcurve <- function(curve = NULL,
       scale_x_continuous(limits = X_limits) +
       # geom_point(size = 1, shape =  16, color = "darkgrey", na.rm = TRUE) +
       #  ylim(0, round(max(curve$signal) * 1.1)) +
-      ylab("signal (cts)") + xlab("time (s)")  +
-      theme(axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), panel.border = element_blank())
+      ylab("signal (cts)") + xlab("time (s)")
 
   }
 
