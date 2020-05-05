@@ -18,13 +18,14 @@ This report was created at `r Sys.time()` with the **R** package **OSLdecomposit
 
 ```{r step2_setup, include=FALSE}
 
-# Last changed: 2020-04-24
+# Last changed: 2020-04-28
 
 library(numOSL)
 library(knitr)
 library(ggplot2)
 library(gridExtra)
 library(ggpubr)
+library(stargazer)
 
 knitr::opts_chunk$set(fig.width=7, #7
                       fig.asp=.6,
@@ -72,7 +73,7 @@ input_table <- dec_data$decompositon.input
 ## Basics 
 <font color="black">
 
-A `r K`-component exponential decay model is assumed globally. Therefore, each `r record_type` measurement can be described by:
+If we assume `r K` independent [exponential decays](https://en.wikipedia.org/wiki/Exponential_decay) to describe `r record_type` signal curves, then each single `r record_type` measurement can be approximated by:
 
 ```{r step2_draw_formula}
 append_B <- ""
@@ -83,16 +84,15 @@ cat("$$I(t) = ", paste(paste0("n_",1:K, "e^{\\lambda_",1:K,"t}"), collapse = "+"
 ```
 
 
-With the following decay rates $\lambda$ determined in Step 1 or given by the user:
+We assume that the decay rates $\lambda$ are similar in all measurements of the data set and define them as global constants. These global decay constans were already determined in Step 1 or preset by the user:
 
 ```{r step2_decay_rate_list}
 for (k in 1:K) {
-  cat(paste0("* $\\lambda_", k,"=", round(input_table$lambda[k], digits = 4),"$ $s^{-1}$ ",
-             "(", input_table$name[k] ,")\n"))
+  cat(paste0("* ", input_table$name[k]," $\\lambda_", k,"=", round(input_table$lambda[k], digits = 4),"$ $s^{-1}$\n"))
 }
 ```
 
-
+To solve equation (1) for each measurement, we divide each signal curve into `r K` bins. The (known) signal value of each bin can be approximated  Each signal bin is then dexcribed by 
 ... add signal bin info here ...
 
 ... and fundamental approach here ...
@@ -102,7 +102,7 @@ for (k in 1:K) {
 
 ## Aliquot results
 
-The data set is divided into `r length(data_set)` `RLum.Analysis' objects. Each RLum.Analysis objects represents one measurement sequence and therefore the measurement of one aliquot or one grain in case of single grain data.
+The processed data set consists of `r length(data_set)` `RLum.Analysis` objects. Each `RLum.Analysis` objects represents one measurement sequence and therefore the measurement of one aliquot or one grain in case of single grain data.
 
 ```{r step2_create_tab_data} 
 ### This chunk rearranges the data for the dynamic tabs, no direct output is produced
@@ -128,7 +128,7 @@ for (j in 1:length(data_set)) {
     
     # Append current component to Table 1 table
     new_col <- data.frame(row = paste0(round(intensities), " ± ", round(sigmas)))
-    colnames(new_col) <- paste0("$n_", k, " ± \\sigma_", k,
+    colnames(new_col) <- paste0(input_table$name[k],"\n$n_", k, " ± \\sigma_", k,#"$")
                                 "$ (", input_table$name[k] ,")")
     aliquot_table <- cbind(aliquot_table, new_col)
     
@@ -147,16 +147,98 @@ for (j in 1:length(data_set)) {
 }
 ```
 
-### Intensity tables {.tabset .tabset-pills}
+### Component intensities {.tabset .tabset-pills}
 
 The decompositon process calculates the signal component intensities $n$ and their standard deviations $\sigma$. The intensity values $n$ equal the areas under the component curves (including the remaining virtual signal beyond the stimulation end) and have the same unit as the detector signal (usually *counts* or *mA*). Be aware that the uncertainty values $\sigma$ account just for the signal noise. Errors in the decay rate values or the decay kinetics may lead to intensity value $n$ discrepancies without increasing the uncertainty value $\sigma$ enough to sufficiently account for them.
 
-```{r step2_create_result_tabs} 
+
+```{r step2_create_result_tabs1} 
+# Define dynamic Rmarkdown code, structured in tabs
+dynamic_code <- c("#### #{{j}}\n",
+                  
+# Print the full intensity table
+    "<i><b>Table 1.`r {{j}}`:</b> Signal component intensities $n$ and their standard deviation $\\sigma$ calculated by the decomposition process.</i><br>",
+    "```{r tab_{{j}}_result_table}\n",
+    "kable_table <- intensity_tables[[{{j}}]]\n",
+    "kable(kable_table, escape = TRUE, align = \"c\")\n",
+    "```\n",
+    "<br><br>\n")
+    # The trick against the bug might be to switch between format = html and = markdown, = latex
+
+tabs <- lapply(as.list(1:length(data_set)),
+                function(j) knitr::knit_expand(text = dynamic_code))
+
+# Now knit the dynamic code. This has to be in a seperate chunk
+```
+`r knitr::knit(text = unlist(tabs))`
+<br>
+<br>
+### Component intensities2 {.tabset .tabset-pills}
+
+```{r step2_create_result_tabs12} 
+# Define dynamic Rmarkdown code, structured in tabs
+dynamic_code <- c("#### #{{j}}\n",
+                  
+# Print the full intensity table
+    "<i><b>Table 1.`r {{j}}`:</b> Signal component intensities $n$ and their standard deviation $\\sigma$ calculated by the decomposition process.</i><br>",
+    "```{r tab_{{j}}_result_table}\n",
+    "kable_table <- intensity_tables[[{{j}}]]\n",
+    "stargazer(kable_table, type=\"html\", summary=FALSE, rownames=FALSE)\n",
+    "```\n",
+    "<br><br>\n")
+    # The trick against the bug might be to switch between format = html and = markdown, = latex
+
+tabs <- lapply(as.list(1:length(data_set)),
+                function(j) knitr::knit_expand(text = dynamic_code))
+
+# Now knit the dynamic code. This has to be in a seperate chunk
+```
+`r knitr::knit(text = unlist(tabs))`
+
+### Component intensities3 {.tabset .tabset-pills}
+```{r step2_create_result_tabs2} 
+dynamic_code <- c("#### #{{j}}\n",
+                  
+    # Draw the intensity barplot
+    "```{r tab_{{j}}_result_barplot}\n",
+    "ggplot(barplots[[{{j}}]], aes(fill=component, y=y_axis, x=x_axis)) + ",
+    "geom_bar(position=\"dodge\", stat=\"identity\") + ",
+    "scale_x_continuous(name = paste0(record_type, \" measurement no. and received dose\"),",
+                     "breaks = barplot_labels[[{{j}}]]$breaks,",
+                     "labels = barplot_labels[[{{j}}]]$labels) +",
+    "scale_y_continuous(name = \"component signal\") +", #, labels = scientific
+    "scale_fill_manual(values = graph_colors)",
+    "```\n",
+    "<i><b>Figure 1.`r {{j}}`:</b> `r record_type` component intensities of all measurements ",
+    "of measurement sequence `r {{j}}`. Contrary to table 1, not the values of parameter $n$ ",
+    "are displayed, instead the remaining signal after the stimulation end is subtracted from $n$. ",
+    "This doesn't affect the signal behaviours but reduces values of slow decaying components ",
+    "for better comparibility.",
+    "   </i><br><br>\n")
+
+tabs <- lapply(as.list(1:length(data_set)),
+                function(j) knitr::knit_expand(text = dynamic_code))
+```
+`r knitr::knit(text = unlist(tabs))`
+
+### Decay models {.tabset .tabset-fade .tabset-pills}
+
+With all parameters of our fundamental equation now known (see first paragraph), the signal decay can now be modelled. If the scattering of the measured signal around the model curve is displayed by the residual plot (lower plots in figure 2). Is the residual plot dominated by random noise, the model can be expected as valid. Systematic deviations in parts of the plot indicate at least one of the following systematic errors:
+
+* Incorrect decay constants 
+* Not-first-order decay kinetics
+* Insufficient number of signal components (under-fitting)
+* Unstable light stimulation
+* Inadequate or missing background correction
+
+The plots in figure 2 allow the evaluation of the model quality for the first two measurements of each measurement sequence.
+
+```{r step2_create_result_tabs3, eval = FALSE} 
 # Define dynamic Rmarkdown code
 dynamic_code <- c(
   
     # Tab header
-    "### #{{j}}\n",
+    "#### #{{j}}\n",
     
     # Draw the OSL plots of the first two records side by side
     "```{r tab_{{j}}_OSL_plots}\n", 
@@ -168,31 +250,11 @@ dynamic_code <- c(
                              display = \"compare_lin\", hide_plot = TRUE)\n",
     "grid.arrange(plot_1, plot_2, layout_matrix = t(matrix(c(1,2))))\n",
     "```\n",
-    "<i><b>Figure 1.`r {{j}}`:</b> Signal components and residual curve of first two `r record_type` records.<br>",
+    "<i><b>Figure 2.`r {{j}}`:</b> Signal components and residual curve of first two `r record_type` records.<br>",
     "<u>Left:</u> First record (index = `r record_index[[{{j}}]][1]`),",
     " usually natural or recovered dose signal ($L_n$).<br>",
     "<u>Right:</u> Second record (index = `r record_index[[{{j}}]][2]`),",
-    " usually test-dose signal ($T_n$).</i><br><br>\n", 
-    
-    # Print the full intensity table
-    "<i><b>Table 1.`r {{j}}`:</b> Signal component intensities $n$ and their standard deviation $\\sigma$ calculated by the decomposition process.</i><br>",
-    "```{r tab_{{j}}_result_table}\n",
-    "kable(intensity_tables[[{{j}}]], escape = TRUE, align = \"c\")\n",
-    "```\n",
-    "<br><br>\n",
-    
-    # Draw the intensity barplot
-    "```{r tab_{{j}}_result_barplot}\n",
-    "ggplot(barplots[[{{j}}]], aes(fill=component, y=y_axis, x=x_axis)) + ",
-    "geom_bar(position=\"dodge\", stat=\"identity\") + ",
-    "scale_x_continuous(name = paste0(record_type, \" measurement no. and received dose\"),",
-                     "breaks = barplot_labels[[{{j}}]]$breaks,",
-                     "labels = barplot_labels[[{{j}}]]$labels) +",
-    "scale_y_continuous(name = \"component signal\", labels = scientific) +",
-    "scale_fill_manual(values = graph_colors)",
-    "```\n",
-    "***\n"
-  ) 
+    " usually test-dose signal ($T_n$).</i><br><br>\n")
 
 ### ALTERNATIVE MORE VARIABLE (but buggy) PLOT ASSIGNEMENT:
 #    "plot_objects <- list()\n",
@@ -204,40 +266,24 @@ dynamic_code <- c(
 #                                     display = \"compare_lin\",
 #                                     hide_plot = TRUE))}\n",
 
-
-
-
 tabs <- lapply(as.list(1:length(data_set)),
                 function(j) knitr::knit_expand(text = dynamic_code))
-
-
-# Now knit the dynamic code. This has to be in a seperate chunk
 ```
-
 `r knitr::knit(text = unlist(tabs))`
 
 
+## Further statistics
 
-## Data set statistics
+<br><br><i>
 
-Planned features:
+<u>Planned features:</u>  
+
 * Component wise barplot and histogram of natural signal intensities
 * Initial signal composition of first and second measurement
+* Scatterplots or full correlogram of the components and the irradiation time
 
-### Intensity values
 
-
-***
-<br><br>
-
-### Initial signals
-
-***
-<br><br>
-
-## Correlations
-
-```{r}
+```{r some_infos}
 # Hint: search for "Correlogram"
 # or: http://www.sthda.com/english/wiki/correlation-analyses-in-r
 
@@ -245,6 +291,7 @@ Planned features:
 
 ```
 
+</i><br><br>
 
 ***
 <br><br>

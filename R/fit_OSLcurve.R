@@ -17,13 +17,14 @@
 #' * 2019-10-08 Seperated plotting to plot_PhotoCrosssections()
 #' * 2020-04-04 Extended output list (curve & arguments)
 #' * 2020-04-06 Extended print output and made some  tweaks. Replaced 'SAR.compatible' with 'fully.bleached'
+#' * 2020-05-05 Replaced 'fully.bleached' with 'bleaching.grade'
 #'
 #' @section ToDo:
 #' * ! Replace numOSL::decomp by own code. Then enable sigma.lambda calculation and replace "easy way" of intensity calculation !
-#' * Documentation
-#' * Test background value fitting
+#' * Write documentation
+#' * Reconsider background value fitting
 #'
-#' @section Last changed. 2020-04-19
+#' @section Last changed. 2020-05-05
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -201,16 +202,15 @@ fit_OSLcurve <- function(
     name[duplicated(name)] <- paste0(substr(name[duplicated(name)], 1, nchar(name[duplicated(name)]) - 2), ".c")
 
 
-    # Is the component fully bleached (less than 1% residual) during stimulation?
-    fully.bleached <- rep(1,k)
-    for (y in 1:k) if(exp(- lambda[y] * max(time)) > 0.01) fully.bleached[y] <- 0
+    # How much is the component bleached during stimulation?
+    bleaching.grade <- round(1 - exp(- lambda * max(time)), digits = 4)
 
     ##### Build result table #####
     components <- data.frame(name = name,
                              lambda = lambda,
                              cross.section = cross.section,
                              cross.relative = cross.relative,
-                             fully.bleached = fully.bleached)
+                             bleaching.grade = bleaching.grade)
 
     row.names(components) <- 1:k
 
@@ -227,10 +227,7 @@ fit_OSLcurve <- function(
   components <- C.list[[K.selected]]
 
   # Reduce amount of information in the table to avoid user irritation, also round some values
-  components <- subset(components, select = c(name, lambda, n, cross.section, initial.signal, fully.bleached))
-  N.not_fully_bleached <- (nrow(components) - sum(components$fully.bleached))
-  components$fully.bleached[components$fully.bleached == 1] <- "true"
-  components$fully.bleached[components$fully.bleached == 0] <- "false"
+  components <- subset(components, select = c(name, lambda, n, cross.section, initial.signal, bleaching.grade))
   components$n <- round(components$n)
   components$cross.section <- formatC(components$cross.section)
 
@@ -268,18 +265,18 @@ fit_OSLcurve <- function(
     print(components)
 
     # Give advice which components are suited for further analysis
-    if (N.not_fully_bleached > 0) {
+    if (any(bleaching.grade < 0.99)) {
 
-      if (N.not_fully_bleached == nrow(components)) {
+      if (sum(bleaching.grade < 0.99) == nrow(components)) {
         writeLines("WARNING: No component was fully bleached during stimulation. Check your experimental settings!")
 
-      } else if (N.not_fully_bleached == 1) {
+      } else if (sum(bleaching.grade < 0.99)  == 1) {
 
-        writeLines(paste0(components$name[components$fully.bleached == "false"],
+        writeLines(paste0(components$name[bleaching.grade < 0.99],
                           " was not fully bleached during stimulation and is not recommended for further dose evaluation"))
       } else {
 
-        writeLines(paste0(paste(components$name[components$fully.bleached == "false"], collapse = ", "),
+        writeLines(paste0(paste(components$name[bleaching.grade < 0.99], collapse = ", "),
                           " were not fully bleached during stimulation and are not recommended for further dose evaluation"))
       }
     }

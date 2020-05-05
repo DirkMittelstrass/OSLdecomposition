@@ -32,6 +32,8 @@ RLum.OSL_global_fitting <- function(object,
   library(OSLdecomposition)
   library(Luminescence)
 
+  object_name <- deparse(quote(object))
+
   # define new list object to safely ignore incompatible list elements
   data_set <- list()
   data_set_overhang <- list()
@@ -95,7 +97,7 @@ RLum.OSL_global_fitting <- function(object,
                          output.complex = TRUE)
 
   # Add 'record_type' to the argument list
-  fit_data$arguments$record.type <- record_type
+  fit_data$parameters$record.type <- record_type
 
   if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
@@ -118,7 +120,9 @@ RLum.OSL_global_fitting <- function(object,
         output_file <- paste0(getwd(), "/", "report_Step1.", report_format)
 
         rmarkdown::render(rmd_path,
-                          params = list(fit_data = fit_data, data_set = data_set),
+                          params = list(fit_data = fit_data,
+                                        data_set = data_set,
+                                        object_name = object_name),
                           output_file = output_file,
                           output_format = paste0(report_format,"_document"),
                           quiet = TRUE)
