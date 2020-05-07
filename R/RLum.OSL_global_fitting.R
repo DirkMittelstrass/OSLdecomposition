@@ -102,7 +102,7 @@ RLum.OSL_global_fitting <- function(object,
   if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
   if (report) {
-    if("rmarkdown" %in% rownames(installed.packages()) == TRUE) {
+    if(("rmarkdown" %in% rownames(installed.packages())) && ("kableExtra" %in% rownames(installed.packages()))) {
 
       if(verbose) cat("STEP 1.3 ----- Create report -----\n")
       library(rmarkdown)
@@ -141,7 +141,7 @@ RLum.OSL_global_fitting <- function(object,
 
     } else {
 
-      warning("Package 'rmarkdown' is needed to create reports.")
+      warning("Packages 'rmarkdown' and 'kableExtra' are needed to create reports. One or both are missing.")
     }
   }
 

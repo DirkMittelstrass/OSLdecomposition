@@ -13,13 +13,13 @@ params:
   data_set: !r list(NULL)
   object_name: !r c("")
 ---
-Report of the Mittelstraß *et al.* (2020) Step 1 analysis of the data set **`r object_name`** performed with the function `RLum.OSL_global_fitting()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` exexuted at `r Sys.time()`.
+Report of the [Mittelstraß *et al.* (2020)](#disclaimer) Step 1 analysis of the data set **`r object_name`** performed with the function `RLum.OSL_global_fitting()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` executed at `r Sys.time()`.
 
 ***
 
 ```{r step1_setup, include=FALSE}
 
-Last_changed <- "2020-05-05"
+Last_changed <- "2020-05-07"
 
 library(kableExtra)
 library(numOSL)
@@ -39,6 +39,7 @@ knitr::opts_chunk$set(fig.width=7, #7
 
 # Find out the overall number of 'record_type' curves
 # ToDo: Get this info (and the global_average data) directly from sum_OSLcurves outout
+record_type <- fit_data$parameters$record.type
 n.curves <- 0
 for (j in 1:length(data_set)) {
   for (i in 1:length(data_set[[j]]@records)) {
@@ -50,23 +51,28 @@ for (j in 1:length(data_set)) {
 ## Basics
 <font color="black">
 
+We assume all `r record_type` measurements in this data set can be sufficently described by a sum exponential decays:
 
-<i><u>Planned content:</u>
+$$I(t) = \sum_{i=1}^K n_ie^{-\lambda_it}$$
+
+The goal of Step 1, performed by `RLum.OSL_global_fitting()` is to determine the number of components $K$ and their decay constants $\lambda_i$. We assume the decay constants are the same for all measurements in the data set and therefore global constants. Thus, we calculate one global average `r record_type` curve and performed at it the multi-exponential fitting approach described by [Bluszcz & Adamiec (2006)](#ref).
+
+<i><u>Further content planned for this chapter:</u>
 
 * sheme about the steps with Step 1 highlighted
-* short describtion of basic approach and fundamental assumptions
-* general formula
 
 </i><br>
 
 
 ## Results
 
-The global average curve of `r n.curves` `r fit_data$parameters$record.type` records was calculated and then fitted with multi-exponential decay models with an increasing number of components *K* (Figure 2). A statistical test compared the models and found the *K* = `r fit_data$K.selected` model as sufficiently describing the global average curve (Table 1, Figure 1). 
+### Best fitting
 
-```{r show_component_table}
+The [global average curve](#M1) of `r n.curves` `r record_type` measurements was calculated and then fitted with [multi-exponential decay models](#M2) with an increasing number of components *K*. Then a [statistical test](#M3) compared the models and found the *K* = `r fit_data$K.selected` model as sufficiently describing the global average curve (Table 1, Figure 1). 
 
-cat(paste0("<br><i><b>Table 1:</b> Signal component parameters of the K=", fit_data$K.selected," multi-exponential decay model chosen as best suting fitting by an F-test. </i><br>"))
+```{r step1_show_component_table}
+
+cat(paste0("<br><i><b>Table 1:</b> Signal components of the K = ", fit_data$K.selected," multi-exponential decay model chosen as best suiting fitting by an F-test. Each signal component is defined by its intensity $n$ and its decay contant $\\lambda$, which can be converted in the photo-ionisation cross-section $\\sigma$.<br><u>First channel share</u>: Average contribution to the signal at beginning of the measurement.<br><u>Bleaching grade</u>: Average approximated defect state depletion during the stimulation.</i><br>"))
 
 component_table <- fit_data$components
 
@@ -77,15 +83,12 @@ colnames(component_table) <- c(" ", "$\\lambda$ $(s^{-1})$", "$n$ (counts)", "$\
 
 #kable(component_table, escape = TRUE, align = "c",) %>%
 #  kable_styling(bootstrap_options = c("striped", "condensed"))
-
-kable_styling(kable(component_table, escape = TRUE, align = "c",), 
-              bootstrap_options = c("striped", "condensed"))
+kable(component_table, escape = TRUE, align = "c",) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  column_spec(1, bold = TRUE)
 
 ```
 <br>
-***  
-<br>
-
 ```{r step1_draw_best_suiting_fit}
 
 plot_OSLcurve(fit_data$curve, 
@@ -97,7 +100,13 @@ cat(paste0("<br><i><b>Figure 1:</b> Fit model with K =", fit_data$K.selected," (
     "<u>Lower right</u>: Fitting result table with estimated type of component names</i><br><br>"))
 ```
 
-***
+### Photo-ionisation cross-sections
+
+The decay constant $\lambda_{k}$ of each component can be translated into the photo-ionisation cross-section $\sigma_{k}$ of the associated defect state: 
+
+$$\sigma_{k}=\lambda_{k} {hc \over I_{stim}\lambda_{stim}}$$
+Here, $h$ is the [Planck constant](https://en.wikipedia.org/wiki/Planck_constant), $c$ is the [speed of light](https://en.wikipedia.org/wiki/Speed_of_light), $I_{stim}$ is the stimulation light intensity and $\lambda_{stim}$ is the stimulation light wavelength. If this wavelength is about ~ 470 nm and the measured sample material is quartz, then the resulting photo-ionisation cross-section can be compared with literature values, see figure 2.
+
 
 ```{r step1_draw_crosssections_diagram, fig.width=10, fig.asp=0.32}
 
@@ -112,21 +121,32 @@ plot_PhotoCrosssections(fit_data,
 
 # <font color=\"black\"> </font>
 
-  cat("<br><i><b>Figure 2:</b> Signal component decay rates in dependence of component number *K*.<br><u>Red rectangle</u>: Fitting model choosen by the F-test.</i><br><br>")
+  cat("<br><i><b>Figure 2:</b> Comparison of the photo-ionisation cross-sections calculated from the signal component decay rates under the assumption of a stimulation light intensity of", fit_data$parameters$stimulation.intensity, "mW/cm² and a stimulation light wavelength of", fit_data$parameters$stimulation.wavelength,"nm.<br><u>Red rectangle</u>: Fitting model choosen by the F-test.</i><br><br>")
 ```
+
+Please be aware that the stimulation light intensity, displayed in the software of your OSL/TL reader, might differ from the actual stimulation light intensity. Degrading of the LEDs/lasers and the stimulation narrowing filters as well as a dirty chamber window glass can lead to significantly lower light intensities at the sample. In addition, the effective light intensity in the bulk material of the crystals depend on the reflectance and transmittance of the sample carrier, the fixation and the sample itself. Therefore, systematic shifts in the photo-ionisation cross-sections, compared with literature values, are likely.
 
 <br><br>
 
 ## Methods
 
-### Global average curve
+<i><u>Further content planned for this chapter:</u>
+
+* picture with shematic overview
+* deeper explanation of multi-exponential fitting
+* Some sentences about the limitations and the behaviour of the F-test
+* Explanation why global background-fitting is counter-productive
+
+</i><br>
+
+### Global average curve {#M1}
 
 For calculating the decay parameters, one representative OSL curve is needed. This is provided by combining all measurements to one global average curve. Each data point of this global curve represents the arithmetic mean of all data point values of the same channel in all OSL curves. This increases the signal-to-noise ratio by about one to two orders of magnitude, but still maintains the decay parameter information.  
 
-```{r draw_global_curve, fig.width=7, fig.asp=0.5}
+```{r step1_draw_global_curve, fig.width=7, fig.asp=0.5}
 
 sum_OSLcurves(data_set,
-              record_type = fit_data$parameters$record.type,
+              record_type = record_type,
               output.plot = TRUE,
               plot.first = TRUE,
               plot.global = TRUE,
@@ -138,13 +158,13 @@ cat(paste0("<br><i><b>Figure 3:</b> <u>Blue line</u>: Global average curve built
 ```
 
 
-### Multi-exponential fitting {.tabset .tabset-pills}
+### Multi-exponential fitting {.tabset .tabset-pills #M2}
 
 We take the global mean curve and perform multiple cycles of multi-exponential nonlinear regression. In each cycle, the number of components *K* increases by one. With increasing number of components, decreases the residual curve between the fitted model curve and the measured data and the fit gets better. 
 
-The underlying algorithm was proposed and described by Bluszcz & Adamiec (2006) and realized in **R** by the function `numOSL::decomp()` by Peng *et al.* (2013). Their function is used in `fit_OSLcurve()`, which calculated the following series of fittings:
+The underlying algorithm was proposed and described by [Bluszcz & Adamiec (2006)](#ref) and realized in **R** by the function `numOSL::decomp()` by [Peng *et al.* (2013)](#ref). Their function is used in `fit_OSLcurve()`, which calculated the following series of fittings:
 
-```{r define_fitting_tabs}
+```{r step1_define_fitting_tabs}
 
 # Define dynamic Rmarkdown code
 dynamic_code <- c(
@@ -166,15 +186,15 @@ tabs <- lapply(as.list(1:nrow(fit_data$F.test)),
 
 `r knitr::knit(text = unlist(tabs))`
 
-### F-test
+### F-test {#M3}
 
-But which of these fittings gives back a sufficient model of the global mean curve, without over-fitting it? We solve this by comparing the residual square sum (*RSS*) of each fitting with the *RSS* value of the previous fitting. Bluszcz & Adamiec (2006) propose to use a *F*-test:  
+But which of these fittings gives back a sufficient model of the global mean curve, without over-fitting it? We solve this by comparing the residual square sum (*RSS*) of each fitting with the *RSS* value of the previous fitting. [Bluszcz & Adamiec (2006)](#ref) propose to use a *F*-test:  
 
 $$F_K = \frac{(RSS_{K-1} - RSS_K)/2}{RSS_K(N - 2K)} $$
 
 Here, *N* is the number data points (channels) of the global average curve and *K* is the number of OSL components in the fitting model. If the *F*-value *F~K~* falls below the preset threshold value of *F~threshold~* = `r fit_data$parameters$F.threshold`, the new fitting model with *K* components is apparently not significantly better than the *K* - 1 model and will be chosen as algorithm output.
 
-```{r F-test_table}
+```{r step1_F-test_table}
 
 F_table <- fit_data$F.test
 row_index <- c(1:nrow(F_table))
@@ -200,15 +220,16 @@ The fitting with *K* = `r fit_data$K.selected` components is found to be the bes
 
 
 
-## Disclaimer
+## Disclaimer {#disclaimer}
 
-This report was automatically generated by functions of the **R** package `OSLdecomposition` written and maintained by Dirk Mittelstraß (<dirk.mittelstrass@luminescence.de>). The data analysis process deploys also functions and concepts of the **R** packages `numOSL` ([link](https://cran.r-project.org/package=numOSL)) introduced by Jun Peng *et al.* (2013) and `Luminescence` ([link](https://cran.r-project.org/package=Luminescence)) introduced by Sebastian Kreutzer *et al.* (2012). For the dynamic creation of this HTML report, the **R** packages `knitr` and `rmarkdown` are used, see Xie (2015) and Xie *et al.* (2018). All diagrams are drawn with `ggplot2` (Wickham 2016).
+This report was automatically generated by functions of the **R** package `OSLdecomposition` written and maintained by Dirk Mittelstraß (<dirk.mittelstrass@luminescence.de>). The data analysis process deploys also functions and concepts of the **R** packages `numOSL` ([link](https://cran.r-project.org/package=numOSL)) introduced by [Jun Peng *et al.* (2013)](#ref) and `Luminescence` ([link](https://cran.r-project.org/package=Luminescence)) introduced by [Sebastian Kreutzer *et al.* (2012)](#ref). For the dynamic creation of this HTML report, the **R** packages `knitr` and `rmarkdown` are used, see [Xie (2015)](#ref) and [Xie *et al.* (2018)](#ref). All diagrams are drawn with `ggplot2` [(Wickham 2016)](#ref).
 
 You can use, share and publish this report and the containing results at will, as long as you have the consent of the measurement data maintainer. If this report or its results are published, however, it is requested to refer to the main **R** package `OSLdecomposition` including its version number (`r packageVersion("OSLdecomposition")`). It is also demanded to include the following reference into your publication:
 
 -------------------
 
-*D. Mittelstraß, ‘Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz’, Master thesis, TU Dresden, Dresden, 2019.*
+*D. Mittelstraß, ‘Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz’, Master thesis, TU Dresden, Dresden, 2019.*<br>
+(ToDo: Replace with peer-reviewed publication as soon as accepted)
 
 -------------------
 
@@ -217,35 +238,75 @@ There, you can find a full description of the method and the algorithms involved
 It is allowed and encouraged to add the HTML file of this report to the electronical supplement of your publication.  
 
 
-## References
+## References {#ref}
 
-Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL decay curves. Radiation Measurements 41, 886–891. 
+Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL decay curves. Radiation Measurements 41, 886–891.<br>
 https://doi.org/10.1016/j.radmeas.2006.05.016
 
-Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fuchs, M., 2012. Introducing an R package for luminescence dating analysis. Ancient TL 30.
+Durcan, J.A., Duller, G.A.T., 2011. The fast ratio: A rapid measure for testing the dominance of the fast component in the initial OSL signal from quartz. Radiation Measurements 46, 1065–1072.<br>
+https://doi.org/10.1016/j.radmeas.2011.07.016
 
-Peng, J., Dong, Z., Han, F., Long, H., Liu, X., 2013. R package numOSL: numeric routines for optically stimulated luminescence dating. Ancient TL 31.
+Jain, M., Murray, A.S., Bøtter-Jensen, L., 2003. Characterisation of blue-light stimulated luminescence components in different quartz samples: implications for dose measurement. Radiation Measurements 37, 441–449.<br>
+https://doi.org/10.1016/S1350-4487(03)00052-0
 
-Wickham, H., 2016. ggplot2: elegant graphics for data analysis, Second edition. ed, Use R! Springer, Cham.
+Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fuchs, M., 2012. Introducing an R package for luminescence dating analysis. Ancient TL 30.<br>
+http://ancienttl.org/ATL_30-1_2012/ATL_30-1_Kreutzer_p1-8.pdf
+
+Peng, J., Dong, Z., Han, F., Long, H., Liu, X., 2013. R package numOSL: numeric routines for optically stimulated luminescence dating. Ancient TL 31.<br>
+http://ancienttl.org/ATL_31-2_2013/ATL_31-2_Peng_p41-48.pdf
+
+Singarayer, J.S., Bailey, R.M., 2003. Further investigations of the quartz optically stimulated luminescence components using linear modulation. Radiation Measurements, Proceedings of the 10th international Conference on Luminescence and Electron-Spin Resonance Dating (LED 2002) 37, 451–458.<br>
+https://doi.org/10.1016/S1350-4487(03)00062-3
+
+Wickham, H., 2016. ggplot2: elegant graphics for data analysis, Second edition. ed, Use R! Springer, Cham.<br>
 https://ggplot2.tidyverse.org/
 
-Xie, Y., 2015. Dynamic documents with R and Knitr, Second edition. ed. CRC Press/Taylor & Francis, Boca Raton.
+Xie, Y., 2015. Dynamic documents with R and Knitr, Second edition. ed. CRC Press/Taylor & Francis, Boca Raton.<br>
 https://yihui.org/knitr/
 
-Xie, Y., Allaire, J.J., Grolemund, G., 2018. R Markdown: the definitive guide. Taylor & Francis, CRC Press, Boca Raton.
+Xie, Y., Allaire, J.J., Grolemund, G., 2018. R Markdown: the definitive guide. Taylor & Francis, CRC Press, Boca Raton.<br>
 https://bookdown.org/yihui/rmarkdown/
 
 
 ## Script parameters
 
-Last major change in the script code: `r Last_changed`  
+```{r step1_build_parameter_table}
 
-**Algorithm parameters** | 
------------------------|----------------
-Maximum allowed components |*K~max~* =  `r fit_data$parameters$K.max`
-Threshold *F*-value | *F~threshold~* = `r fit_data$parameters$F.threshold`
+# Algorithm settings
+para_table <- data.frame(n = "Analyzed data set", t = object_name)
+para_table <- rbind(para_table, 
+                    data.frame(n = "Analyzed record type", t = record_type),
+                    data.frame(n = "Maximum allowed components ", t = paste0("*K*~max~ = ", fit_data$parameters$K.max)),
+                    data.frame(n = "Threshold *F*-value", t = paste0("*F*~threshold~ = ", fit_data$parameters$F.threshold)))
 
-</font>
+# Photo-ionisation
+para_table <- rbind(para_table, 
+                    data.frame(n = "Stimulation wavelength", t = paste0(fit_data$parameters$stimulation.wavelength," nm")),
+                    data.frame(n = "Stimulation intensity", t = paste0(fit_data$parameters$stimulation.intensity," mW/cm²")))
+
+#  Global curve
+ch.N <- length(fit_data$curve$time)
+ch.W <- fit_data$curve$time[2]-fit_data$curve$time[1]
+para_table <- rbind(para_table, 
+                    data.frame(n = "No. of input measurements", t = n.curves),
+                    data.frame(n = "No. of input sequences", t = length(data_set)),
+                    data.frame(n = "Channel time ", t = paste0("$\\delta$*t* = ", prettyNum(ch.W), " s")),
+                    data.frame(n = "Channels ", t = paste0("*N* = ", ch.N)),
+                    data.frame(n = "Global curve length ", t = paste0("*t* = *N*$\\delta$*t* = ", prettyNum(ch.W*ch.N), " s")))
+
+
+colnames(para_table) <- c("","")
+kable(para_table, escape = TRUE, align = "l",) %>%
+  kable_styling(bootstrap_options = c("condensed"), full_width = FALSE, position = "left") %>%
+  pack_rows("Settings", 1, 4) %>%
+  pack_rows("Photo-ionisation cross-section parameter", 5, 6) %>%
+  pack_rows("Global curve properties", 7, 11)
+
+```
+<br><br>
+Last major change in the script code: `r Last_changed`  by D. Mittelstraß
+<br></font>
+
 **Session info:**
 
 ```{r session_info}

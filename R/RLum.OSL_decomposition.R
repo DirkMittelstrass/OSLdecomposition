@@ -232,7 +232,7 @@ RLum.OSL_decomposition <- function(
   ################################ STEP 2.3: Report  ################################
 
   if (report) {
-    if("rmarkdown" %in% rownames(installed.packages()) == TRUE) {
+    if(("rmarkdown" %in% rownames(installed.packages())) && ("kableExtra" %in% rownames(installed.packages()))) {
 
       if(verbose) cat("STEP 2.3 ----- Create report -----\n")
       if(verbose) cat("This process can take up to a few minutes...\n")
@@ -270,7 +270,7 @@ RLum.OSL_decomposition <- function(
 
     } else {
 
-      warning("Package 'rmarkdown' is needed to create reports.")
+      warning("Packages 'rmarkdown' and 'kableExtra' are needed to create reports. One or both are missing.")
     }
   }
 
