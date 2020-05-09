@@ -1,6 +1,6 @@
 #' Decomposes RLum.Data.Curves into its CW-OSL components
 #'
-#' @last_changed 2020-04-21
+#' @last_changed 2020-05-07
 #'
 #' @param object
 #' @param record_type
@@ -35,6 +35,8 @@ RLum.OSL_decomposition <- function(
 
   library(OSLdecomposition)
   library(Luminescence)
+
+  object_name <- deparse(substitute(object))
 
   # define new list object to safely ignore incompatible list elements
   data_set <- list()
@@ -235,7 +237,7 @@ RLum.OSL_decomposition <- function(
     if(("rmarkdown" %in% rownames(installed.packages())) && ("kableExtra" %in% rownames(installed.packages()))) {
 
       if(verbose) cat("STEP 2.3 ----- Create report -----\n")
-      if(verbose) cat("This process can take up to a few minutes...\n")
+      if(verbose) cat("This process can take a few minutes...\n")
       library(rmarkdown)
 
       time.start <- Sys.time()
@@ -251,7 +253,9 @@ RLum.OSL_decomposition <- function(
         output_file <- paste0(getwd(), "/", "report_Step2.", report_format)
 
         rmarkdown::render(rmd_path,
-                          params = list(dec_data = dec_data, data_set = data_set),
+                          params = list(dec_data = dec_data,
+                                        data_set = data_set,
+                                        object_name = object_name),
                           output_file = output_file,
                           output_format = paste0(report_format,"_document"),
                           quiet = TRUE)

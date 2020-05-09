@@ -32,7 +32,7 @@ RLum.OSL_global_fitting <- function(object,
   library(OSLdecomposition)
   library(Luminescence)
 
-  object_name <- deparse(quote(object))
+  object_name <- deparse(substitute(object))
 
   # define new list object to safely ignore incompatible list elements
   data_set <- list()

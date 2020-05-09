@@ -11,23 +11,24 @@ output:
 params:
   dec_data: !r list(NULL)
   data_set: !r list(NULL)
+  object_name: !r c("")
 ---
-This report was created at `r Sys.time()` with the **R** package **OSLdecomposition** `r packageVersion("OSLdecomposition")`
+Report of the [Mittelstraß *et al.* (2020)](#disclaimer) Step 2 analysis of the data set **`r object_name`** performed with the function `RLum.OSL_decomposition()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` executed at `r Sys.time()`.
 
 ***
 
 ```{r step2_setup, include=FALSE}
 
-# Last changed: 2020-04-28
+# Last changed: 2020-05-07
 
 library(numOSL)
 library(knitr)
 library(ggplot2)
 library(gridExtra)
-library(ggpubr)
-library(stargazer)
+#library(ggpubr)
+library(kableExtra)
 
-knitr::opts_chunk$set(fig.width=7, #7
+knitr::opts_chunk$set(fig.width=7,
                       fig.asp=.6,
                       results = "asis",
                       warning=FALSE,
@@ -147,7 +148,7 @@ for (j in 1:length(data_set)) {
 }
 ```
 
-### Component intensities {.tabset .tabset-pills}
+### Intensitiy tables {.tabset .tabset-pills}
 
 The decompositon process calculates the signal component intensities $n$ and their standard deviations $\sigma$. The intensity values $n$ equal the areas under the component curves (including the remaining virtual signal beyond the stimulation end) and have the same unit as the detector signal (usually *counts* or *mA*). Be aware that the uncertainty values $\sigma$ account just for the signal noise. Errors in the decay rate values or the decay kinetics may lead to intensity value $n$ discrepancies without increasing the uncertainty value $\sigma$ enough to sufficiently account for them.
 
@@ -159,11 +160,11 @@ dynamic_code <- c("#### #{{j}}\n",
 # Print the full intensity table
     "<i><b>Table 1.`r {{j}}`:</b> Signal component intensities $n$ and their standard deviation $\\sigma$ calculated by the decomposition process.</i><br>",
     "```{r tab_{{j}}_result_table}\n",
-    "kable_table <- intensity_tables[[{{j}}]]\n",
-    "kable(kable_table, escape = TRUE, align = \"c\")\n",
+   # "kable_table <- intensity_tables[[{{j}}]]\n",
+    "kable(intensity_tables[[{{j}}]], escape = TRUE, row.names = FALSE, align = \"c\") %>%\n",
+    "kable_styling(bootstrap_options = c(\"striped\", \"condensed\"), fixed_thead = TRUE)",
     "```\n",
     "<br><br>\n")
-    # The trick against the bug might be to switch between format = html and = markdown, = latex
 
 tabs <- lapply(as.list(1:length(data_set)),
                 function(j) knitr::knit_expand(text = dynamic_code))
@@ -173,29 +174,8 @@ tabs <- lapply(as.list(1:length(data_set)),
 `r knitr::knit(text = unlist(tabs))`
 <br>
 <br>
-### Component intensities2 {.tabset .tabset-pills}
 
-```{r step2_create_result_tabs12} 
-# Define dynamic Rmarkdown code, structured in tabs
-dynamic_code <- c("#### #{{j}}\n",
-                  
-# Print the full intensity table
-    "<i><b>Table 1.`r {{j}}`:</b> Signal component intensities $n$ and their standard deviation $\\sigma$ calculated by the decomposition process.</i><br>",
-    "```{r tab_{{j}}_result_table}\n",
-    "kable_table <- intensity_tables[[{{j}}]]\n",
-    "stargazer(kable_table, type=\"html\", summary=FALSE, rownames=FALSE)\n",
-    "```\n",
-    "<br><br>\n")
-    # The trick against the bug might be to switch between format = html and = markdown, = latex
-
-tabs <- lapply(as.list(1:length(data_set)),
-                function(j) knitr::knit_expand(text = dynamic_code))
-
-# Now knit the dynamic code. This has to be in a seperate chunk
-```
-`r knitr::knit(text = unlist(tabs))`
-
-### Component intensities3 {.tabset .tabset-pills}
+### Intensity plots {.tabset .tabset-pills}
 ```{r step2_create_result_tabs2} 
 dynamic_code <- c("#### #{{j}}\n",
                   
@@ -233,7 +213,7 @@ With all parameters of our fundamental equation now known (see first paragraph),
 
 The plots in figure 2 allow the evaluation of the model quality for the first two measurements of each measurement sequence.
 
-```{r step2_create_result_tabs3, eval = FALSE} 
+```{r step2_create_result_tabs3, eval = TRUE} 
 # Define dynamic Rmarkdown code
 dynamic_code <- c(
   

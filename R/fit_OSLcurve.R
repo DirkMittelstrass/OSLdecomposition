@@ -24,7 +24,7 @@
 #' * Write documentation
 #' * Reconsider background value fitting
 #'
-#' @section Last changed. 2020-05-05
+#' @section Last changed. 2020-05-07
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -130,17 +130,19 @@ fit_OSLcurve <- function(
       # Build overview table
       result_vector <- fit$LMpars[,3][X]
       if (background.fitting == TRUE) result_vector <- c(result_vector, fit$constant[1])
-      result_vector <- c(result_vector,
-                         fit$value,
-                         fit$FOM,
-                         F_value)
-
+      result_vector <- c(result_vector, fit$value, fit$FOM, F_value)
       results <- rbind(results, result_vector)
 
-      }
+    } else {
+
+      # leave loop and delete unused columns
+      results <- results[,-c(i:K.max)]
+      X <- X[-c(i:K.max)]
+      break
+    }
   }
 
-  if (K.selected == 0) stop("no sucessful fit")
+  if ((K.selected == 0)||(nrow(results) == 0)) stop("no sucessful fit")
 
   ###### Build component tables names and estimate photo-ionisation crosssections #####
 
@@ -265,18 +267,19 @@ fit_OSLcurve <- function(
     print(components)
 
     # Give advice which components are suited for further analysis
-    if (any(bleaching.grade < 0.99)) {
+    bleach <- components$bleaching.grade
+    if (any(bleach < 0.99)) {
 
-      if (sum(bleaching.grade < 0.99) == nrow(components)) {
+      if (sum(bleach < 0.99) == nrow(components)) {
         writeLines("WARNING: No component was fully bleached during stimulation. Check your experimental settings!")
 
-      } else if (sum(bleaching.grade < 0.99)  == 1) {
+      } else if (sum(bleach < 0.99)  == 1) {
 
-        writeLines(paste0(components$name[bleaching.grade < 0.99],
+        writeLines(paste0(components$name[bleach < 0.99],
                           " was not fully bleached during stimulation and is not recommended for further dose evaluation"))
       } else {
 
-        writeLines(paste0(paste(components$name[bleaching.grade < 0.99], collapse = ", "),
+        writeLines(paste0(paste(components$name[bleach < 0.99], collapse = ", "),
                           " were not fully bleached during stimulation and are not recommended for further dose evaluation"))
       }
     }
