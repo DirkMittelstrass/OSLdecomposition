@@ -139,6 +139,7 @@ Please be aware that the stimulation light intensity, displayed in the software 
 
 ## Methods
 
+```{r eval=FALSE, include=FALSE}
 <i><u>Further content planned for this chapter:</u>
 
 * picture with shematic overview
@@ -147,6 +148,9 @@ Please be aware that the stimulation light intensity, displayed in the software 
 * Explanation why global background-fitting is counter-productive
 
 </i><br>
+```
+
+
 
 ### Global average curve {#M1}
 
