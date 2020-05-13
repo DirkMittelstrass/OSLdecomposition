@@ -13,7 +13,7 @@ params:
   data_set: !r list(NULL)
   object_name: !r c("")
 ---
-Report of the [Mittelstraß *et al.* (2020)](#disclaimer) Step 1 analysis of the data set **`r object_name`** performed with the function `RLum.OSL_global_fitting()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` executed at `r Sys.time()`.
+Report of the [Mittelstraß *et al.* (2019)](#disclaimer) Step 1 analysis of the data set **`r object_name`** performed with the function `RLum.OSL_global_fitting()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` executed at `r Sys.time()`.
 
 ***
 
@@ -29,7 +29,6 @@ library(numOSL)
 library(knitr)
 library(ggplot2)
 library(gridExtra)
-#library(ggpubr)
 
 knitr::opts_chunk$set(fig.width=7,
                       fig.asp=.6,
@@ -242,8 +241,9 @@ You can use, share and publish this report and the containing results at will, a
 
 -------------------
 
-*D. Mittelstraß, ‘Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz’, Master thesis, TU Dresden, Dresden, 2019.*<br>
-(ToDo: Replace with peer-reviewed publication as soon as accepted)
+**Mittelstraß D., Schmidt C., Beyer J., and Straessner A., 2019. Automated identification and separation of quartz CW-OSL signal components with R. talk presented at the Central European Conference on Luminescence and Trapped-Charge dating: DLED 2019, Bingen, Germany**<br>
+http://luminescence.de/OSLdecomp_talk.pdf <br>
+*(reference will be replaced as soon as peer-reviewed publication is accepted)*
 
 -------------------
 
