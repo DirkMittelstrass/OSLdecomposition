@@ -15,10 +15,10 @@
 #' @examples
 
 RLum.OSL_global_fitting <- function(object,
-                     max_components = 3,
+                     max_components = 4,
                      record_type = "OSL",
-                     F_threshold = 50,
-                     stimulation_intensity = 30,
+                     F_threshold = 500,
+                     stimulation_intensity = 35,
                      stimulation_wavelength = 470,
                      report = TRUE,
                      verbose = TRUE){
@@ -29,7 +29,6 @@ RLum.OSL_global_fitting <- function(object,
   # - add file directory argument
   # - add background fitting functionality
 
-  library(OSLdecomposition)
   library(Luminescence)
 
   object_name <- deparse(substitute(object))
@@ -54,16 +53,12 @@ RLum.OSL_global_fitting <- function(object,
         }else{
 
           data_set_overhang[[length(data_set_overhang) + 1]] <- object[[i]]
-          warning("List element ", i, " is not of type 'RLum.Analysis' and was not included in fitting procedure")
-        }
-      }
-    }
+          warning("List element ", i, " is not of type 'RLum.Analysis' and was not included in fitting procedure")}}}
 
   } else {
 
     data_set <- list(object)
-    warning("Input is not of type list, but output is of type list")
-  }
+    warning("Input is not of type list, but output is of type list")}
 
   if (length(data_set) == 0) stop("Input object contains no RLum.Analysis data")
 
@@ -114,7 +109,7 @@ RLum.OSL_global_fitting <- function(object,
       try({
 
         report_format <- "html"
-        # for test purposes:
+        # for test purposes only:
         rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step1.Rmd"
         #rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
         output_file <- paste0(getwd(), "/", "report_Step1.", report_format)
@@ -131,19 +126,15 @@ RLum.OSL_global_fitting <- function(object,
 
         # ToDo: Replace the following try() outside the big try
         try({
+
           browseURL(output_file)
-          cat("Open", toupper(report_format), "report in the systems standard browser\n")
-          })
+          cat("Open", toupper(report_format), "report in the systems standard browser\n")})
 
-
-        if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-        })
+        if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")})
 
     } else {
 
-      warning("Packages 'rmarkdown' and 'kableExtra' are needed to create reports. One or both are missing.")
-    }
-  }
+      warning("Packages 'rmarkdown' and 'kableExtra' are needed to create reports. One or both are missing.")}}
 
   # Return fitted data
   object <- c(data_set, data_set_overhang, OSL_COMPONENTS = list(fit_data))

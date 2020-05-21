@@ -32,8 +32,6 @@ RLum.OSL_decomposition <- function(
   algorithm <- "det+nls" # "det", "nls", "det+nls"
   background_fitting <- FALSE
 
-
-  library(OSLdecomposition)
   library(Luminescence)
 
   object_name <- deparse(substitute(object))
@@ -41,7 +39,6 @@ RLum.OSL_decomposition <- function(
   # define new list object to safely ignore incompatible list elements
   data_set <- list()
   data_set_overhang <- list()
-  data_is_lone_aliquot <- FALSE
 
   # Test if input object is a list
   if (is.list(object)) {
@@ -72,8 +69,6 @@ RLum.OSL_decomposition <- function(
     if (class(object) == "RLum.Analysis") {
 
       data_set <- list(object)
-      data_is_lone_aliquot <- TRUE
-
     } else {
       stop("Input object is not a RLum.Analysis object nor a list of RLum.Analysis objects ")
     }
@@ -211,13 +206,9 @@ RLum.OSL_decomposition <- function(
 
         data_set[[j]]@records[[i]] <- current_record
 
-
         #if(verbose && (N_in_aliquot < 3)) cat("|", paste0(formatC(decomp_table$n, format = "e", digits = 2),"\t"))
         N_in_aliquot <- N_in_aliquot + 1
-        N_records <- N_records + 1
-      }
-    }
-  }
+        N_records <- N_records + 1}}}
 
   if(verbose) cat("\nSuccessfully decomposed", N_records,"records\n")
   if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
@@ -265,18 +256,13 @@ RLum.OSL_decomposition <- function(
         # ToDo: Replace the following try() outside the big try
         try({
           browseURL(output_file)
-          cat("Open", toupper(report_format), "report in the systems standard browser\n")
-        })
+          cat("Open", toupper(report_format), "report in the systems standard browser\n")})
 
-
-        if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-      })
+        if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")})
 
     } else {
 
-      warning("Packages 'rmarkdown' and 'kableExtra' are needed to create reports. One or both are missing.")
-    }
-  }
+      warning("Packages 'rmarkdown' and 'kableExtra' are needed to create reports. One or both are missing.")}}
 
   # Return decomposed data
   object <- c(data_set, data_set_overhang, DECOMPOSITION = list(dec_data))

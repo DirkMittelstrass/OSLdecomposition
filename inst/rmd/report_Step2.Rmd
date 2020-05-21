@@ -19,10 +19,11 @@ Report of the [Mittelstraß *et al.* (2019)](#disclaimer) Step 2 analysis of the
 
 ```{r step2_setup, include=FALSE}
 
-Last_changed <-"2020-05-13" 
+Last_changed <-"2020-05-21" 
 
 ### Planned further features:
 #
+# * Change tab headers #{{j}} to record$sequence based nummeration
 # * alternative bar-plot arrangement with all natural dose measurements in one plot etc.
 # * Add kableExtra::add_header_above() with component names in table 1
 # * barplot with initial signal compositions
@@ -51,29 +52,27 @@ knitr::opts_chunk$set(fig.width=7,
 theme_set(theme_minimal())
 graph_colors <- c("red3","green3","blue3","darkorchid","gold","brown","pink")
 
-# numerate figures and tables
-n.figure <- 1
-n.table <- 1
-
-# Find out the overall number of 'record_type' curves and the indicies of the OSL curves
-# ToDo: This is ugly code. Refactorize, for example with grep()
-record_index <- list()
+# Not every list element in the data set may contain the selected record_type
+# so we have to collect the data indices in a seperate list
+record <- list()
 n.curves <- 0
 
 for (j in 1:length(data_set)) {
-  record_index[[j]] <- c(NA)
-  n.aliquot <- 0
-  for (i in 1:length(data_set[[j]]@records)) {
-    
-   if (data_set[[j]]@records[[i]]@recordType == record_type) {
-     n.curves <- n.curves + 1
-     n.aliquot <- n.aliquot + 1
-     # Collect index of OSL records
-     record_index[[j]][n.aliquot] <- i
-   }
-  }
-}
 
+  index <- c(NULL)
+  
+  for (i in 1:length(data_set[[j]]@records)) {
+    if (data_set[[j]]@records[[i]]@recordType == record_type) {
+      
+      index <- c(index, i)
+      n.curves <- n.curves + 1}}
+  
+  if (length(index) > 0) {
+    
+    record[[""]] <- list(sequence = j, 
+                         index = index)}}
+
+# assign some local objects just for better readable code:
 K <- nrow(dec_data$decompositon.input)
 record_type <- dec_data$parameters$record_type
 background_fitting <- dec_data$parameters$background_fitting
@@ -102,8 +101,8 @@ This report displays the results of Step 2, performed by `OSLdecomposition::RLum
 ```{r step2_decay_rate_list}
 cat(paste0("* $K=", K,"$\n"))
 for (k in 1:K) {
-  cat(paste0("* $\\lambda_", k,"=", round(input_table$lambda[k], digits = 4),"$ $s^{-1}$ (", input_table$name[k],")\n"))
-}
+  cat(paste0("* $\\lambda_", k,"=", round(input_table$lambda[k], digits = 4),
+             "$ $s^{-1}$ (", input_table$name[k],")\n"))}
 ```
 
 We assume that the decay rates $\lambda$ are similar for all measurements and set them as global constants. Thus, each CW-OSL decay curve can be described by:
@@ -131,9 +130,11 @@ intensity_tables <- list()
 barplots <- list()
 barplot_labels <- list()
 
-for (j in 1:length(data_set)) {
-  result <- dec_data$results[dec_data$results$list.index == j,]
-   if(result$IRR_TIME[1] == 0) result$IRR_TIME[1] <- "?"
+for (j in 1:length(record)) {
+  
+  result <- dec_data$results[dec_data$results$list.index == record[[j]]$sequence,]
+
+  if(result$IRR_TIME[1] == 0) result$IRR_TIME[1] <- "?"
   
   aliquot_table <- subset(result, select = c(record.index, IRR_TIME))
   
@@ -142,13 +143,13 @@ for (j in 1:length(data_set)) {
   colnames(aliquot_table) <- c("record index", "irradiation time (s)")
   
   for (k in 1:K) {
+    
     intensities <- result[,colnames(result) == paste0("n.", k)]
     #intensities_reduced <- intensities - result[,colnames(result) == paste0("n.residual.", k)]
     sigmas <- result[,colnames(result) == paste0("n.error.", k)]
     
     # Append current component to Table 1 table
     new_col <- data.frame(row = paste0(round(intensities), " ± ", round(sigmas)))
-    #colnames(new_col) <- paste0("$n_", k, " ± \\sigma_", k, "$")
     colnames(new_col) <- paste0("$n_", k, " ± \\sigma_", k, "$ (", input_table$name[k] ,")")
     aliquot_table <- cbind(aliquot_table, new_col)
     
@@ -159,9 +160,7 @@ for (j in 1:length(data_set)) {
          # Append current component to Figure 2 plot data
       plot_table <- rbind(plot_table, data.frame(x_axis = 1:length(intensities),
                                                y_axis = intensities,
-                                               component = input_table$name[k]))
-    }
-  }
+                                               component = input_table$name[k]))}}
   
   intensity_tables[[j]] <- aliquot_table
   barplots[[j]] <- plot_table
@@ -189,7 +188,7 @@ dynamic_code <- c("#### #{{j}}\n",
     "```\n",
     "<br><br>\n")
 
-tabs <- lapply(as.list(1:length(data_set)),
+tabs <- lapply(as.list(1:length(record)),
                 function(j) knitr::knit_expand(text = dynamic_code))
 
 # Now knit the dynamic code. This has to be in a seperate chunk
@@ -218,7 +217,7 @@ dynamic_code <- c("#### #{{j}}\n",
     "the measurement time are displayed.",
     "   </i><br><br>\n")
 
-tabs <- lapply(as.list(1:length(data_set)),
+tabs <- lapply(as.list(1:length(record)),
                 function(j) knitr::knit_expand(text = dynamic_code))
 ```
 `r knitr::knit(text = unlist(tabs))`
@@ -245,18 +244,18 @@ dynamic_code <- c(
     
     # Draw the OSL plots of the first two records side by side
     "```{r tab_{{j}}_OSL_plots}\n", 
-    "record_1 <- data_set[[{{j}}]]@records[[record_index[[{{j}}]][1]]]\n",
+    "record_1 <- data_set[[record[[{{j}}]]$sequence]]@records[[record[[{{j}}]]$index[1]]]\n",
     "plot_1 <- plot_OSLcurve(record_1, record_1@info$COMPONENTS,
                              display = \"compare_lin\", hide_plot = TRUE)\n",
-    "record_2 <- data_set[[{{j}}]]@records[[record_index[[{{j}}]][2]]]\n",
+    "record_2 <- data_set[[record[[{{j}}]]$sequence]]@records[[record[[{{j}}]]$index[2]]]\n",
     "plot_2 <- plot_OSLcurve(record_2, record_2@info$COMPONENTS,
                              display = \"compare_lin\", hide_plot = TRUE)\n",
     "grid.arrange(plot_1, plot_2, layout_matrix = t(matrix(c(1,2))))\n",
     "```\n",
     "<i><b>Figure 2.`r {{j}}`:</b> Signal components and residual curve of first two `r record_type` records.<br>",
-    "<u>Left:</u> First record (index = `r record_index[[{{j}}]][1]`),",
+    "<u>Left:</u> First record (index = `r record[[{{j}}]]$index[1]`),",
     " usually natural or recovered dose signal ($L_n$).<br>",
-    "<u>Right:</u> Second record (index = `r record_index[[{{j}}]][2]`),",
+    "<u>Right:</u> Second record (index = `r record[[{{j}}]]$index[2]`),",
     " usually test-dose signal ($T_n$).</i><br><br>\n")
 
 ### ALTERNATIVE MORE VARIABLE (but buggy) PLOT ASSIGNEMENT:
@@ -269,7 +268,7 @@ dynamic_code <- c(
 #                                     display = \"compare_lin\",
 #                                     hide_plot = TRUE))}\n",
 
-tabs <- lapply(as.list(1:length(data_set)), function(j) knitr::knit_expand(text = dynamic_code))
+tabs <- lapply(as.list(1:length(record)), function(j) knitr::knit_expand(text = dynamic_code))
 ```
 `r knitr::knit(text = unlist(tabs))`
 
@@ -372,7 +371,7 @@ para_table <- data.frame(n = "Analyzed data set", t = object_name)
 para_table <- rbind(para_table, 
                     data.frame(n = "Analyzed record type", t = record_type),
                     data.frame(n = "No. of measurements", t = format(n.curves)),
-                    data.frame(n = "No. of sequences", t = format(n.aliquot)))
+                    data.frame(n = "No. of sequences", t = format(length(record))))
 
 #  Global curve
 para_table <- rbind(para_table, 
