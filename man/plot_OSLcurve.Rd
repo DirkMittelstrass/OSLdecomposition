@@ -6,14 +6,20 @@
 \usage{
 plot_OSLcurve(
   curve = NULL,
-  components = NULL,
-  display = "lin-log",
+  components,
+  display = "detailed",
   zoom = 1,
   algorithm = "",
+  hide_plot = FALSE,
   title = NULL
 )
 }
 \arguments{
+\item{display}{Choices: "detailed" (default), "components", "raw" ,"compare_lin", "compare_log", "lin-log"}
+
+\item{hide_plot}{If true, plot is not drawn but can be catched by 'A <- plot_OSLcurve(...)'
+and displayed later by grid.arrange(A)}
+
 \item{title}{}
 }
 \description{
@@ -24,21 +30,24 @@ Advanced plot function for decomposed OSL curves and component data
 * 2019-03-06, DM: First reasonable version
 * 2019-04-03, DM: Rebuild whole function
 * 2019-05-03, DM: Checks now curve format; added x-axis zoom
-* 2019-10-02, DM: Added background support and some little tweaks
+* 2019-10-02, DM: Added background component support and some little tweaks
+* 2020-04-22, DM: Enabled hidden output
 }
 
 \section{ToDo}{
 
-* Show fitting formula
-* Add pseudoLM-OSL presentation
+* REFACTORIZE CODE
+* ! Add pseudoLM-OSL presentation !
+* ! Put the ggplot building in its own sub-function !
+* When drawing components without curve, skip residual curve
+* Display fitting formula
+* Display residual square sum
 * Cut data set while zooming to improve performance
 * Debug residual curve zoom
-* Get rid of library(ggpubr) to decrease dependencies
-* Add early/late background substraction case
-* display Residual square sum
+* Get rid of libraries 'scale' and 'ggpubr' to decrease dependencies
 }
 
-\section{Last changed. 2019-11-25}{
+\section{Last changed. 2020-04-27}{
 NA
 }
 
@@ -49,5 +58,5 @@ plot_OSLcurve(test.curve, test.components, display = "detailed")
 
 }
 \author{
-Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
 }

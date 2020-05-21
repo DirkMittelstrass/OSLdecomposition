@@ -8,7 +8,7 @@ decompose_OSLcurve(
   curve,
   components,
   background.fitting = FALSE,
-  algorithm = "det+nls",
+  algorithm = "det",
   error.calculation = "empiric",
   verbose = TRUE
 )
@@ -53,7 +53,8 @@ It also estimates the standard deviation of the amplitudes by using the error pr
 \item 2019-09-09, DM: Added anticorrelating covariance terms into error estimation
 \item 2019-09-25, DM: Merged function with decompose_OSLalternatively() and added algorithm argument
 \item 2019-09-25, DM: Deleted unnecessary stuff (negative.values.to.zero, offset, anticorrelation)
-\item 2019-10-02, DM: Added background fitting
+\item 2019-10-02, DM: Added optional background fitting
+\item 2020-04-06, DM: Added 'initial.signal' data.frame column; cleaned print output
 }
 }
 
@@ -61,14 +62,11 @@ It also estimates the standard deviation of the amplitudes by using the error pr
 
 \itemize{
 \item Update documentation
-\item Print running time info
-\item Print output table
-\item Add measurement-cut-parameter. Set $remainder of Slow components to NA if used
 }
 }
 
 \section{Last changed}{
- 2019-10-07
+ 2020-04-18
 }
 
 \examples{
@@ -79,10 +77,10 @@ Dirk Mittelstrass, Christoph Schmidt, Sebastian Kreutzer, ... .\emph{in preperat
 signal component decomposition of quartz and its use for natural dose evaluation
 }
 \seealso{
-\link{calc_OSLintervals}, \link{simulate_OSLcurve}, \link{sum_OSLcurves}
+\link{calc_OSLintervals}, \link{fit_OSLcurve}, \link{sum_OSLcurves}
 }
 \author{
-Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
 }
 \keyword{CW-OSL}
 \keyword{CWOSL}
