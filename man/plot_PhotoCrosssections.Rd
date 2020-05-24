@@ -5,14 +5,14 @@
 \title{Plot comparison of the global OSL curve photo-crosssections with literature values}
 \usage{
 plot_PhotoCrosssections(
-  fit.result.list,
-  stimulation.intensity = 35,
-  stimulation.wavelength = 470,
+  fit.list,
+  stimulation.intensity,
+  stimulation.wavelength,
   title = NULL
 )
 }
 \arguments{
-\item{fit.result.list}{}
+\item{fit.list}{}
 }
 \value{
 
@@ -23,18 +23,17 @@ Plot comparison of the global OSL curve photo-crosssections with literature valu
 \section{Changelog}{
 
 * 2019-10-08 Seperated from fit_OSLcurve()
+* 2020-04-09 Changed from decay rates to photoionisation cross-sections; cleaned code
 }
 
 \section{ToDo}{
 
-* Clean code
 * Documentation
 * Sometimes the red rectangle is not drawn (fit_OSLcurve(Batagai, K.max = 6)). Why?
-* Add Slow1, Slow2 etc into output.plot
-* for other than just 470nm values
+* literature values for other than just 470nm values
 }
 
-\section{Last changed. 2019-10-25}{
+\section{Last changed. 2020-04-09}{
 NA
 }
 
@@ -42,5 +41,5 @@ NA
 
 }
 \author{
-Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
 }

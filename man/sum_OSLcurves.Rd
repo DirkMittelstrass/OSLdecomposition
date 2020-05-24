@@ -52,17 +52,17 @@ at sets of records with low signal-to-noise ratio
 \section{ToDo}{
 
 \itemize{
-\item add more options for record selection (e.g. dose type)
+\item add more options for record selection (e.g. dose)
 \item interpolate x-axis if it doesn't match
 \item accept data.frames as input objects
 \item test if first value is zero
-\item add legend
-\item add info box with number of OSL curves
+\item add legend to plot
+\item add info box with number of OSL curves to plot
 }
 }
 
 \section{Last changed}{
- 2019-10-27
+ 2020-04-20
 }
 
 \references{

@@ -8,12 +8,11 @@ fit_OSLcurve(
   curve,
   K.max = 5,
   F.threshold = 50,
-  stimulation.intensity = 35,
+  stimulation.intensity = 30,
   stimulation.wavelength = 470,
-  applied.time.cut = FALSE,
   weight.Chi = FALSE,
   background.fitting = FALSE,
-  verbose = FALSE,
+  verbose = TRUE,
   output.complex = TRUE,
   output.plot = TRUE
 )
@@ -36,19 +35,22 @@ Fit global mean curve to get decay constants
 * 2019-06-28 Deleted "fit_OSLLifeTimes" approach. Added stretched exponentials for testing. Added overview plot
 * 2019-10-07 Streamlined function; added optional background fitting
 * 2019-10-08 Seperated plotting to plot_PhotoCrosssections()
+* 2020-04-04 Extended output list (curve & arguments)
+* 2020-04-06 Extended print output and made some  tweaks. Replaced 'SAR.compatible' with 'fully.bleached'
+* 2020-05-05 Replaced 'fully.bleached' with 'bleaching.grade'
 }
 
 \section{ToDo}{
 
-* Documentation
-* Test background value fitting
-* Seperate crosssection calculation
+* ! Replace numOSL::decomp by own code. Then enable sigma.lambda calculation and replace "easy way" of intensity calculation !
+* Write documentation
+* Reconsider background value fitting
 }
 
-\section{Last changed. 2019-10-19}{
+\section{Last changed. 2020-05-07}{
 NA
 }
 
 \author{
-Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
 }
