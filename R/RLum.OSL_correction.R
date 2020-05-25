@@ -1,4 +1,6 @@
-#' Title
+#' Various tools for checking and manipulation CW-OSL curves in RLum.Analysis data sets
+#'
+#' @last_changed 2020-05-24
 #'
 #' @param object [RLum.Analysis-class] (**required**):
 #' input object containing data for analysis, alternatively a [list] of
@@ -6,45 +8,39 @@
 #'
 #' @param record_type
 #' @param background_sequence
-#' @param offset
+#' @param subtract_offset
 #' @param check_consistency
-#' @param check_signal_level
-#' @param tailor_records
-#' **Inactive**. This algorithm cut
+#' @param check_signal_level **Inactive**
+#' @param tailor_records **Inactive**
+#' @param record_cut
+#' @param correct_PMTsaturation **Inactive**
 #' @param verbose
 #' @param report
-
 #'
 #'
-#' @param tailor_records
-#' @param record_cut
-#'
-#' @section Notes
-#'
+#' @Notes
 #' The order of processing is:
-#' check_consistency -> tailor_records -> record_cut -> background_sequence -> check_signal_level -> offset
+#' check_consistency -> tailor_records -> record_cut -> correct_PMTsaturation -> background_sequence -> check_signal_level -> subtract_offset
 #'
 #' @return
-#' @export
-#'
 #' @examples
-#' library(Luminescence)
-#'
+
 RLum.OSL_correction <- function(
   object,
   record_type = "OSL",
   background_sequence = NULL,
-  offset = 0,
+  subtract_offset = 0,
   check_consistency = TRUE,
   check_signal_level = FALSE,
   tailor_records = FALSE,
-  record_cut = NA,
+  record_cut = 20,
+  correct_PMTsaturation = NA,
   verbose = TRUE,
   report = FALSE
 ){
   ### ToDo's
   # - Check for Zero as first value at the time axis
-  # - enhance 'record_sorting' to accept vectors of @info-arguments
+  # - enhance 'record_sorting' to accept vectors of @info-arguments, include LPOWER and LIGHTSOURCE per default and print arguments
   # - enhance 'background' to accept whole RLum objects
   # - deploy Luminescence::verify_SingleGrainData() for 'check_single_grain_signal'
   # - handle previous CORRECTION steps
@@ -64,7 +60,7 @@ RLum.OSL_correction <- function(
                                      tailor_records = tailor_records,
                                      background_sequence = background_sequence,
                                      check_signal_level = check_signal_level,
-                                     offset = offset))
+                                     subtract_offset = subtract_offset))
 
   # Test if object is a list. If not, create a list
   if (is.list(object)) {
@@ -76,8 +72,15 @@ RLum.OSL_correction <- function(
         data_set[[length(data_set) + 1]] <- object[[i]]
       } else {
 
-        data_set_overhang[[length(data_set_overhang) + 1]] <- object[[i]]
-        warning("List element ", i, " is not of type 'RLum.Analysis' and was not included in fitting procedure")}}
+        element_name <- names(object)[i]
+        if (element_name=="CORRECTION") {
+          warning("Data set was already manipulated by [RLum.OSL_correction()]. Old information in $CORRECTION were overwritten")
+
+          } else {
+
+            data_set_overhang[[element_name]] <- object[[i]]
+            warning("List element ", i, " is not of type 'RLum.Analysis' and was not included in fitting procedure")}}}
+
 
   } else {
 
@@ -93,7 +96,7 @@ RLum.OSL_correction <- function(
 
   if (check_consistency) {
     correction_step <- correction_step + 1 #########################################################
-    if(verbose) cat("CORRECTION STEP", correction_step,"----- Check records for consistency in the detection characteristics -----\n")
+    if(verbose) cat("CORRECTION STEP", correction_step,"----- Check records for consistency in the detection settings -----\n")
 
     # measure computing time
     time.start <- Sys.time()
@@ -165,9 +168,9 @@ RLum.OSL_correction <- function(
       }
 
       # Display statistics
-      colnames(Cstats) <- c("characteristics", "frequency", "record_type")
+      colnames(Cstats) <- c("settings", "frequency", "record_type")
       Cvector
-      if(verbose) cat(paste0("Frequency table of different sets of detection characteristics (",
+      if(verbose) cat(paste0("Frequency table of different sets of detection settings (",
                              paste(Cvector, collapse = ", "),"):\n"))
       if(verbose) print(Cstats)
       if(verbose) cat("RLum.Data.Curve@RecordType changed to",
@@ -176,7 +179,7 @@ RLum.OSL_correction <- function(
       if(verbose) cat("Further data manipulations are performed just on", record_type,"records\n")
 
     } else {
-      if(verbose) cat("All", record_type, "records have the same detection characteristics\n")
+      if(verbose) cat("All", record_type, "records have the same detection settings\n")
     }
 
     cor_data <- c(cor_data, list(measurement_characteristics = Ctable,
@@ -232,6 +235,16 @@ RLum.OSL_correction <- function(
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
   }
 
+  if (check_signal_level) {
+    correction_step <- correction_step + 1 ######################### PMT SATURATION ################################
+    if(verbose) cat("CORRECTION STEP", correction_step,"----- Correct for PMT saturation effects -----\n")
+    time.start <- Sys.time()
+
+    if(verbose) cat("THIS FUNCTION IS CURRENTLY NOT AVAILABLE")
+
+    if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+  }
+
   if (!(is.null(background_sequence) || is.na(background_sequence))
       && is.vector(background_sequence)
       && (all(background_sequence> 0) ) && (all(background_sequence<= length(data_set)))) {
@@ -273,9 +286,8 @@ RLum.OSL_correction <- function(
           data_set[[j]]@records[[i]]@data <- matrix(c(time, signal), ncol = 2)}}}
 
     cor_data <- c(cor_data, list(background_curve = background_curve))
-    if(verbose) cat("Background saved at @CORRECTION@background_curve\n")
 
-    #if(verbose) cat("Offset of", offset, "counts per second subtracted from every", record_type, "record\n")
+    if(verbose) cat("Background saved at @CORRECTION@background_curve\n")
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
   } else {
@@ -296,7 +308,7 @@ RLum.OSL_correction <- function(
   }
 
 
-  if (offset != 0) {
+  if (subtract_offset != 0) {
     correction_step <- correction_step + 1 ######################### OFFSET ################################
     if(verbose) cat("CORRECTION STEP", correction_step,"----- Subtract offset value -----\n")
     time.start <- Sys.time()
@@ -309,12 +321,12 @@ RLum.OSL_correction <- function(
           signal <- data_set[[j]]@records[[i]]@data[,2]
           channel_width <- time[2] - time[1]
 
-          signal <- signal - offset * channel_width
+          signal <- signal - subtract_offset * channel_width
           data_set[[j]]@records[[i]]@data <- matrix(c(time, signal), ncol = 2)
         }
       }
     }
-    if(verbose) cat("Offset of", offset, "counts per second subtracted from every", record_type, "record\n")
+    if(verbose) cat("Offset of", subtract_offset, "counts per second subtracted from every", record_type, "record\n")
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
   }
 

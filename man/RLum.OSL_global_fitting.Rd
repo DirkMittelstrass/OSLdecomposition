@@ -6,9 +6,9 @@
 \usage{
 RLum.OSL_global_fitting(
   object,
-  max_components = 4,
+  max_components = 3,
   record_type = "OSL",
-  F_threshold = 500,
+  F_threshold = 150,
   stimulation_intensity = 35,
   stimulation_wavelength = 470,
   report = TRUE,

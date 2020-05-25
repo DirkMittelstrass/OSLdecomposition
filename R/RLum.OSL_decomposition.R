@@ -1,6 +1,6 @@
-#' Decomposes RLum.Data.Curves into its CW-OSL components
+#' Decomposes CW-OSL curves in RLum.Analysis data sets into its signal components
 #'
-#' @last_changed 2020-05-07
+#' @last_changed 2020-05-24
 #'
 #' @param object
 #' @param record_type
@@ -57,12 +57,8 @@ RLum.OSL_decomposition <- function(
         } else {
 
           data_set_overhang[[element_name]] <- object[[i]]
-          if (element_name != "OSL_COMPONENTS") {
-            warning("Input object list element ", i, " is not of type 'RLum.Analysis' and was included in the decomposition procedure, but was appended to the result list")
-          }
-        }
-      }
-    }
+          if (!((element_name == "OSL_COMPONENTS")  || (element_name=="CORRECTION"))) {
+            warning("Input object list element ", i, " is not of type 'RLum.Analysis' and was included in the decomposition procedure, but was appended to the result list")}}}}
 
   } else {
 
@@ -239,8 +235,8 @@ RLum.OSL_decomposition <- function(
 
         report_format <- "html"
         # for test purposes:
-        rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
-        #rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
+        # rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
+        rmd_path <- system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")
         output_file <- paste0(getwd(), "/", "report_Step2.", report_format)
 
         rmarkdown::render(rmd_path,

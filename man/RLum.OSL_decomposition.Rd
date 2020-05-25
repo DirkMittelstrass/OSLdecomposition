@@ -2,7 +2,7 @@
 % Please edit documentation in R/RLum.OSL_decomposition.R
 \name{RLum.OSL_decomposition}
 \alias{RLum.OSL_decomposition}
-\title{Decomposes RLum.Data.Curves into its CW-OSL components}
+\title{Decomposes CW-OSL curves in RLum.Analysis data sets into its signal components}
 \usage{
 RLum.OSL_decomposition(
   object,
@@ -23,5 +23,5 @@ Therefore, the number of components can be changed by altering object$OSL_decomp
 
 }
 \description{
-Decomposes RLum.Data.Curves into its CW-OSL components
+Decomposes CW-OSL curves in RLum.Analysis data sets into its signal components
 }

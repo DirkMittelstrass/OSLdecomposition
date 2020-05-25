@@ -1,6 +1,6 @@
 #' Identifies CW-OSL signal components in RLum.Analysis data sets
 #'
-#' @last_changed 2020-04-19
+#' @last_changed 2020-05-24
 #'
 #' @param object
 #' @param max_components
@@ -15,15 +15,16 @@
 #' @examples
 
 RLum.OSL_global_fitting <- function(object,
-                     max_components = 4,
+                     max_components = 3,
                      record_type = "OSL",
-                     F_threshold = 500,
+                     F_threshold = 150,
                      stimulation_intensity = 35,
                      stimulation_wavelength = 470,
                      report = TRUE,
                      verbose = TRUE){
 
   ### ToDo:
+  # - Get stimulation.intensity from @info[["LPOWER"]]
   # - add 'autoname' argument
   # - add file name argument
   # - add file directory argument
@@ -47,13 +48,16 @@ RLum.OSL_global_fitting <- function(object,
         data_set[[length(data_set) + 1]] <- object[[i]]
       } else {
 
-        if (names(object)[i]=="OSL_COMPONENTS") {
+        element_name <- names(object)[i]
+
+        if (element_name=="OSL_COMPONENTS") {
 
           warning("Input object already contains Step 1 results. Old results were overwritten")
         }else{
 
-          data_set_overhang[[length(data_set_overhang) + 1]] <- object[[i]]
-          warning("List element ", i, " is not of type 'RLum.Analysis' and was not included in fitting procedure")}}}
+          data_set_overhang[[element_name]] <- object[[i]]
+          if (!((element_name == "DECOMPOSITION")  || (element_name=="CORRECTION"))) {
+            warning("Input object list element ", i, " is not of type 'RLum.Analysis' and was included in the fitting procedure, but was appended to the result list")}}}}
 
   } else {
 
@@ -110,8 +114,8 @@ RLum.OSL_global_fitting <- function(object,
 
         report_format <- "html"
         # for test purposes only:
-        rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step1.Rmd"
-        #rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
+        # rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step1.Rmd"
+        rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
         output_file <- paste0(getwd(), "/", "report_Step1.", report_format)
 
         rmarkdown::render(rmd_path,

@@ -2,17 +2,18 @@
 % Please edit documentation in R/RLum.OSL_correction.R
 \name{RLum.OSL_correction}
 \alias{RLum.OSL_correction}
-\title{Title}
+\title{Various tools for checking and manipulation CW-OSL curves in RLum.Analysis data sets}
 \usage{
 RLum.OSL_correction(
   object,
   record_type = "OSL",
   background_sequence = NULL,
-  offset = 0,
+  subtract_offset = 0,
   check_consistency = TRUE,
   check_signal_level = FALSE,
   tailor_records = FALSE,
-  record_cut = NA,
+  record_cut = 20,
+  correct_PMTsaturation = NA,
   verbose = TRUE,
   report = FALSE
 )
@@ -22,9 +23,11 @@ RLum.OSL_correction(
 input object containing data for analysis, alternatively a [list] of
 [RLum.Analysis-class] objects can be provided.}
 
-\item{tailor_records}{**Inactive**. This algorithm cut}
+\item{check_signal_level}{**Inactive**}
 
-\item{record_cut}{}
+\item{tailor_records}{**Inactive**}
+
+\item{correct_PMTsaturation}{**Inactive**}
 
 \item{report}{}
 }
@@ -32,9 +35,5 @@ input object containing data for analysis, alternatively a [list] of
 
 }
 \description{
-Title
-}
-\examples{
-library(Luminescence)
-
+Various tools for checking and manipulation CW-OSL curves in RLum.Analysis data sets
 }

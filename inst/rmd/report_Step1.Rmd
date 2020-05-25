@@ -131,8 +131,8 @@ plot_PhotoCrosssections(fit_data,
 
 Please be aware that the stimulation light intensity, displayed in the software of your OSL/TL reader, might differ from the actual stimulation light intensity. Degrading of the LEDs/lasers and the stimulation narrowing filters as well as a dirty chamber window glass can lead to significantly lower light intensities at the sample. In addition, the effective light intensity in the bulk material of the crystals depend on the reflectance and transmittance of the sample carrier, the fixation and the sample itself. Therefore, systematic shifts in the photo-ionisation cross-sections compared with literature values are likely. To manually correct for these shifts, apply the following rules when setting `RLum.OSL_global_fitting(stimulation_intensity = ?)`:
 
-* <b>Increase</b> intensity value to shift the fitted cross-sections towards <b>left</b>
-* <b>Decrease</b> intensity value to shift the fitted cross-sections towards <b>right</b>
+* <b>Increase</b> intensity value to shift the fitted cross-sections towards <b>right</b>
+* <b>Decrease</b> intensity value to shift the fitted cross-sections towards <b>left</b>
 
 <br><br>
 
