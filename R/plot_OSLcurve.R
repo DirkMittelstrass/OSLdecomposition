@@ -9,9 +9,27 @@
 #' @param algorithm
 #' @param hide_plot
 #' If true, plot is not drawn but can be catched by 'A <- plot_OSLcurve(...)'
-#' and displayed later by grid.arrange(A)
+#' and displayed later by 'grid.arrange(A)'
 #'
 #' @param title
+#'
+#' @section Notes:
+#'
+#' pseudoLM-OSL curves are created using the transformation described in Bulur (2000):
+#'
+#' $$ I_{LM}(t') = \frac{t'}{P}I_{CW}(t)  $$
+#' $$ t' = \sqrt{2Pt} $$
+#'
+#' The stimulation ramp duration $P$ is double the continous stimulation duration $t_{CW}$:
+#'
+#' $$ P = 2t_{CW}$$
+#'
+#' See Bos and Wallinga (2012) for a detailed explanation and discussion
+#'
+#' @references
+#' Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components, Radiation Measurements, 47(9), 752–758, doi:10.1016/j.radmeas.2012.01.013, 2012.
+#'
+#' Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves, Radiation Measurements, 32(2), 141–145, doi:10.1016/S1350-4487(99)00247-4, 2000.
 #'
 #' @section Changelog:
 #' * 2019-03-06, DM: First reasonable version
@@ -19,11 +37,11 @@
 #' * 2019-05-03, DM: Checks now curve format; added x-axis zoom
 #' * 2019-10-02, DM: Added background component support and some little tweaks
 #' * 2020-04-22, DM: Enabled hidden output
+#' * 2020-06-19, DM: Added pseudoLM-OSL diagrams
 #'
 #' @section ToDo:
 #' * REFACTORIZE CODE
-#' * ! Add pseudoLM-OSL presentation !
-#' * ! Put the ggplot building in its own sub-function !
+#' * ! Put the ggplot building (or at least its style options) in its own sub-function !
 #' * When drawing components without curve, skip residual curve
 #' * Display fitting formula
 #' * Display residual square sum
@@ -32,7 +50,7 @@
 #' * Get rid of libraries 'scale' and 'ggpubr' to decrease dependencies
 #'
 #'
-#' @section Last changed. 2020-04-27
+#' @section Last changed. 2020-06-19
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -147,7 +165,27 @@ plot_OSLcurve <- function(curve = NULL,
       scale_size_manual(values = graph.sizes, labels = graph.labels, guide = FALSE) +
       scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
       scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
-      ylab("signal (cts)") + xlab("time (s)") +
+      ylab("CW-OSL signal (cts)") + xlab("Time (s)") +
+      theme(axis.title = element_text(size = 8))
+
+    ######################## pseudoLM PLOT #########################################################
+
+    # transform data
+    P = 2*max(time)
+    LMdata <- data
+    LMdata$signal <- LMdata$signal * (2 * LMdata$time / P)^0.5
+    LMdata$time <- (2 * P * LMdata$time)^0.5
+
+
+    p.LM <- ggplot(LMdata, aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
+      geom_point(na.rm = TRUE) + geom_line(na.rm = TRUE) +
+      scale_y_continuous(limits = c(0, max(LMdata$signal) + 1)) +
+      scale_x_continuous(limits = c(0, X_limits[2]*2)) +
+      scale_colour_manual(values = graph.colors, labels = graph.labels, guide = FALSE) +
+      scale_size_manual(values = graph.sizes, labels = graph.labels, guide = FALSE) +
+      scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
+      scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
+      ylab("PseudoLM-OSL signal (cts)") + xlab("Time (s)") +
       theme(axis.title = element_text(size = 8))
 
 
@@ -183,7 +221,6 @@ plot_OSLcurve <- function(curve = NULL,
         t.labels[length(t.labels)] <- ""
       }
 
-      #scale.intervals <- scale_x_continuous(breaks = t.times, labels = t.labels, position = "top")
       scale.intervals <- scale_x_continuous(breaks = t.times, limits = X_limits,
                                             labels = t.labels, position = "top")
 
@@ -199,7 +236,7 @@ plot_OSLcurve <- function(curve = NULL,
       #error.ribbon +
       geom_point(size = 1, shape =  16, color = "darkgrey", na.rm = TRUE) +
       scale_y_continuous(limits = c(- res.max, res.max)) +
-      ylab("residual") +
+      ylab("Residual signal") +
       annotate("segment", x = 0, xend = max(curve$time), y = 0, yend = 0, colour = "black", size = 1) +
       theme(axis.title.x = element_blank(), axis.title = element_text(size = 8)) +
       scale.intervals +
@@ -382,7 +419,7 @@ plot_OSLcurve <- function(curve = NULL,
                   ,ncol = 2)
 
     #grid.arrange(p.lin, p.res, p.log, p.tab, layout_matrix = lay, top = title)
-    plot_object <- arrangeGrob(p.lin, p.res, p.log, p.tab, layout_matrix = lay, top = title)
+    plot_object <- arrangeGrob(p.lin, p.res, p.LM, p.tab, layout_matrix = lay, top = title)
 
   } else if (display == "compare_lin") {
 
