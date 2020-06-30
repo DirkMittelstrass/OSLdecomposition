@@ -38,6 +38,7 @@ library(knitr)
 library(ggplot2)
 library(gridExtra)
 library(kableExtra)
+library(scales)
 
 knitr::opts_chunk$set(fig.width=7,
                       fig.asp=.6,

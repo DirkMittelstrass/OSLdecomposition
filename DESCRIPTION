@@ -1,7 +1,7 @@
 Package: OSLdecomposition
 Type: Package
 Title: Decompose CW-OSL measurements
-Version: 0.5.24
+Version: 0.6.30
 Authors@R: person("Dirk", "Mittelstrass", email = "dirk.mittelstrass@luminescence.de", role = c("aut", "cre"))
 Description: Decomposition of continous wave optically stimulated luminescence (CW-OSL) measurements into its signal components for dosimetry purposes
 Depends: R (>= 3.6.3)
@@ -15,4 +15,7 @@ Imports:
     gridExtra,
     ggplot2,
     scales,
-    ggpubr
+    ggpubr,
+    kableExtra,
+    knitr,
+    rmarkdown

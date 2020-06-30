@@ -29,6 +29,7 @@ library(numOSL)
 library(knitr)
 library(ggplot2)
 library(gridExtra)
+library(scales)
 
 knitr::opts_chunk$set(fig.width=7,
                       fig.asp=.6,
@@ -41,13 +42,10 @@ knitr::opts_chunk$set(fig.width=7,
 
 # Find out the overall number of 'record_type' curves
 # ToDo: Get this info (and the global_average data) directly from sum_OSLcurves outout
-record_type <- fit_data$parameters$record.type
+record_type <- fit_data$parameters$record_type
 n.curves <- 0
 for (j in 1:length(data_set)) {
-  for (i in 1:length(data_set[[j]]@records)) {
-   if (data_set[[j]]@records[[i]]@recordType == record_type) n.curves <- n.curves + 1
-  }
-}
+  n.curves <- n.curves + sum(names(data_set[[j]]) == record_type)}
 ```
 
 ## Basics

@@ -18,13 +18,28 @@ plot_OSLcurve(
 \item{display}{Choices: "detailed" (default), "components", "raw" ,"compare_lin", "compare_log", "lin-log"}
 
 \item{hide_plot}{If true, plot is not drawn but can be catched by 'A <- plot_OSLcurve(...)'
-and displayed later by grid.arrange(A)}
+and displayed later by 'grid.arrange(A)'}
 
 \item{title}{}
 }
 \description{
 Advanced plot function for decomposed OSL curves and component data
 }
+\section{Notes}{
+
+
+pseudoLM-OSL curves are created using the transformation described in Bulur (2000):
+
+$$ I_{LM}(t') = \frac{t'}{P}I_{CW}(t)  $$
+$$ t' = \sqrt{2Pt} $$
+
+The stimulation ramp duration $P$ is double the continous stimulation duration $t_{CW}$:
+
+$$ P = 2t_{CW}$$
+
+See Bos and Wallinga (2012) for a detailed explanation and discussion
+}
+
 \section{Changelog}{
 
 * 2019-03-06, DM: First reasonable version
@@ -32,13 +47,13 @@ Advanced plot function for decomposed OSL curves and component data
 * 2019-05-03, DM: Checks now curve format; added x-axis zoom
 * 2019-10-02, DM: Added background component support and some little tweaks
 * 2020-04-22, DM: Enabled hidden output
+* 2020-06-19, DM: Added pseudoLM-OSL diagrams
 }
 
 \section{ToDo}{
 
 * REFACTORIZE CODE
-* ! Add pseudoLM-OSL presentation !
-* ! Put the ggplot building in its own sub-function !
+* ! Put the ggplot building (or at least its style options) in its own sub-function !
 * When drawing components without curve, skip residual curve
 * Display fitting formula
 * Display residual square sum
@@ -47,7 +62,7 @@ Advanced plot function for decomposed OSL curves and component data
 * Get rid of libraries 'scale' and 'ggpubr' to decrease dependencies
 }
 
-\section{Last changed. 2020-04-27}{
+\section{Last changed. 2020-06-19}{
 NA
 }
 
@@ -56,6 +71,11 @@ test.components <- data.frame(name = c("fast","medium","slow"), lambda = c(1.5,0
 test.curve <- simulate_OSLcurve(test.components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 20)
 plot_OSLcurve(test.curve, test.components, display = "detailed")
 
+}
+\references{
+Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components, Radiation Measurements, 47(9), 752–758, doi:10.1016/j.radmeas.2012.01.013, 2012.
+
+Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves, Radiation Measurements, 32(2), 141–145, doi:10.1016/S1350-4487(99)00247-4, 2000.
 }
 \author{
 Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}

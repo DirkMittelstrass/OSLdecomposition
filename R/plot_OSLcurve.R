@@ -185,7 +185,7 @@ plot_OSLcurve <- function(curve = NULL,
       scale_size_manual(values = graph.sizes, labels = graph.labels, guide = FALSE) +
       scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
       scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
-      ylab("PseudoLM-OSL signal (cts)") + xlab("Time (s)") +
+      ylab("PseudoLM-OSL signal (cts)") + xlab("Ramping time (s)") +
       theme(axis.title = element_text(size = 8))
 
 

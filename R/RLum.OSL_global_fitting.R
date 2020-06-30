@@ -96,7 +96,7 @@ RLum.OSL_global_fitting <- function(object,
                          output.complex = TRUE)
 
   # Add 'record_type' to the argument list
-  fit_data$parameters$record.type <- record_type
+  fit_data$parameters$record_type <- record_type
 
   if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
