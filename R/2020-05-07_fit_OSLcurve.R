@@ -48,7 +48,7 @@ fit_OSLcurve <- function(
 
   ################### Prepare input data ###########################
 
-  #library(numOSL)
+  library(numOSL)
 
   if(is(curve, "RLum.Data.Curve") == FALSE & is(curve, "data.frame") == FALSE){
     stop("[fit_CWCurve()] Input object is not of type 'RLum.Data.Curve' or 'data.frame'!", call. = FALSE)
@@ -90,12 +90,6 @@ fit_OSLcurve <- function(
 
   ################### Genetic algorithm fitting ###########################
 
-  # TEST PARAMETER
-  K <- 3
-  n.min <- c(0, 0, 0)
-  n.max <- c(10^6, 10^7, 10^8)
-  l.min <- c(10^-1, 10^-2, 10^-3)
-  l.max <- c(10^1, 10^0, 10^-1)
 
   X <- c(1:K.max)
 
@@ -106,20 +100,11 @@ fit_OSLcurve <- function(
 
   for (i in X) {
 
-
-    #fit <- decomp(cbind(time, signal),
-    #              ncomp = i,
-    #              constant = background.fitting,
-    #              plot = FALSE,
-    #              weight = weight.Chi)
-
-    # Use DEoptim for the genetic algorithm
-
-
-
-
-
-
+    fit <- decomp(cbind(time, signal),
+                  ncomp = i,
+                  constant = background.fitting,
+                  plot = FALSE,
+                  weight = weight.Chi)
 
     fit.list[[i]] <- fit
 

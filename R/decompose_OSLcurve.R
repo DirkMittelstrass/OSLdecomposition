@@ -3,21 +3,25 @@
 #' The function calculates the CW-OSL component amplitudes by a determinant-based algorithm.
 #' It also estimates the standard deviation of the amplitudes by using the error propagation method.
 #'
-#' @param components [data.frame] (**required**):
-#' Template table containing the decay parameters of the OSL curve. One column must be named *$lambda*.
-#' It is recommended to provide also the integration interval parameters (columns *t.start, t.end, ch.start, ch.end*),
+#' @param components [data.frame] or [numeric] vector (**required**):
+#' Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by [fit_OSLcurve].
+#' In case of a vector: It is recommended to use less than 7 parameters. The parameters will be sorted in decreasing order.
+#' In case of a data.frame. One column must be named *$lambda*.
+#' It is recommended to provide also integration interval parameters (columns *t.start, t.end, ch.start, ch.end*),
 #' which can be found by applying [calc_OSLintervals] on the global mean curve, calculated by [sum_OSLcurves].
-#' If one or more column is missing, [calc_OSLintervals] is run automatically.
+#' If one or more column is missing, a simple interval definition algorithm is run automatically (see **Notes**)..
 #'
 #' @param curve [RLum.Data.Curve-class] or [data.frame] (**required**):
-#' CW-OSL record. First column (x-axis) must contain time marks, Second column (y-axis) must contain signal values. Further columns will be ignored
+#' CW-OSL record. `$time` or first column (x-axis) for the measurement time (must have constand time intervals),
+#' `$signal` or second column (y-axis) for the signal values. Further columns will be ignored
 #'
 #' @param error.calculation (*with default*):
-#' integral error estimation approach, either **"empiric"** or **"poisson"** or **numerical value*;
+#' integral error estimation approach, either **"empiric"** or **"poisson"** or [numeric] value;
 #' Per default the data of *curve$residual* provided by [simulate_OSLcurve] is used to calculate an **empiric** standard error for each integral which will be processed in the error propagation formula.
 #' Alternatively the integral standard error can be calculated by assuming a **poisson** distributed signal error, known as *Shot noise*.
 #' This is suitable if the lack of data points on the x-axis circumvent an empiric error estimation, like with spatial or spectral resolved CCD measurements.
-#' Also the parameter can be set to a **numerical value** which will be handled as standard deviation per channel and added to the poisson distributed *Shot noise*
+#' Also the parameter can be set to a [numeric] value; which will be handled as standard deviation per channel and added to the poisson distributed *Shot noise*.
+#' If no error calculation is wished, set the argument to **"none"**. This reduces the necessary computing time heavily.
 #'
 #' @return
 #' The input table **components** [data.frame] will be returned with added/overwritten columns: *$n, $n.error, $n.residual, $I, $I.error*
@@ -37,12 +41,13 @@
 #' * 2019-09-25, DM: Merged function with decompose_OSLalternatively() and added algorithm argument
 #' * 2019-09-25, DM: Deleted unnecessary stuff (negative.values.to.zero, offset, anticorrelation)
 #' * 2019-10-02, DM: Added optional background fitting
-#' * 2020-04-06, DM: Added 'initial.signal' data.frame column; cleaned print output
+#' * 2020-04-06, DM: Added 'initial.signal' column in output data.frame; cleaned print output
+#' * 2020-07-20, DM: Added algorithm for fast interval definition based on logarithmic means; More input data checks
 #
 #' @section ToDo:
-#' * Update documentation
+#' * Update documentation (example, notes)
 #'
-#' @section Last changed: 2020-04-18
+#' @section Last changed: 2020-07-20
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -50,8 +55,6 @@
 #' @seealso [calc_OSLintervals], [fit_OSLcurve], [sum_OSLcurves]
 #'
 #' @references
-#' Dirk Mittelstrass, Christoph Schmidt, Sebastian Kreutzer, ... .*in preperation*. Algebraic CW-OSL
-#' signal component decomposition of quartz and its use for natural dose evaluation
 #'
 #' @keywords OSL CWOSL CW-OSL deconvolution decomposition component components
 #'
@@ -72,7 +75,7 @@ decompose_OSLcurve <- function(
   ########## Input checks ###########
 
   if(is(curve, "RLum.Data.Curve") == FALSE & is(curve, "data.frame") == FALSE & is(curve, "matrix") == FALSE){
-    stop("[decompose_OSLcurve()] Error: Input object is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")
+    stop("[decompose_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")
   }
 
   if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(get_RLum(curve))
@@ -80,62 +83,109 @@ decompose_OSLcurve <- function(
   if (!("time" %in% colnames(curve)) ||
       !("signal" %in% colnames(curve))) {
     curve <- data.frame(time = curve[,1],
-                        signal = curve[,2])
-  }
+                        signal = curve[,2])}
 
   if ((algorithm == "nls") &! (error.calculation == "nls")) {
     if (verbose) warning("When algorithm 'nls' is chosen, error.calculation must be also 'nls'. Argument changed to error.calculation='nls'")
-    error.calculation <- "nls"
-  }
+    error.calculation <- "nls"}
 
-  channel.width <- curve$time[2] - curve$time[1]
+  # What is the channel width?
+  dt <- curve$time[2] - curve$time[1]
 
-  # check if time beginns with zero and add channel.width if the case
-  if (curve$time[1] == 0)  curve$time <- curve$time + channel.width
+  # check if time beginns with zero and add dt if the case
+  if (curve$time[1] == 0)  curve$time <- curve$time + dt
 
-  components <- components
+  # Check if 'components' is of valid type
+  if (class(components)=="numeric") {
+    components <- data.frame(names = paste0("Component ", 1:length(components)),
+                             lambda = sort(components, decreasing = TRUE))
+
+  }else if(class(components)=="data.frame"){
+    if (!("lambda" %in% colnames(components))) {
+      stop("[decompose_OSLcurve()] Error: Input object 'components' contains no column '$lambda'!")}
+
+  }else{
+    stop("[decompose_OSLcurve()] Error: Input object 'components' is not of type 'numeric vector' or 'data.frame' !")}
+
+  # if background.fitting = FALSE (recommended), remove last row
+  # this removes also the last integration interval (which is good)
+  if (is.na(components$lambda[nrow(components)]) && (background.fitting==FALSE)) {
+    components <- components[1:(nrow(components)-1),]}
+
+
+  lambda <- components$lambda
+  K <- nrow(components)
+  X <- c(1:K)
+
+  if (K > nrow(curve)) {
+    stop("[decompose_OSLcurve()] Error: Number of decay rates in 'components' exceeds number of data points in 'curve'!")}
+
 
   # are the integration intervals given?
   if (!("t.start" %in% colnames(components)) ||
       !("t.end" %in% colnames(components)) ||
       !("ch.start" %in% colnames(components)) ||
       !("ch.end" %in% colnames(components))) {
-    if (verbose) warning("Integration intervals not provided. calc_OSLintervals() executed")
+    #if (verbose) warning("Integration intervals not provided. calc_OSLintervals() executed")
 
-    components <- calc_OSLintervals(components,
-                                    curve,
-                                    background.fitting = background.fitting,
-                                    verbose = verbose)
+    # Define the K = 1 case first:
+    ch.start <- 1
+    ch.end <- nrow(curve)
+
+    if (K > 1) {
+
+      # Calc the logarithmic means between following lambdas
+      intervals <- diff(log(lambda)) / diff(lambda)
+
+      # Test if each interval starts before k/K
+      intervals <- pmin(intervals, curve$time[nrow(curve)] * c(1:(K-1)) / K)
+
+      # Round values up to full channels
+      ch.end <- ceiling(intervals / dt)
+      ch.start <- c(1, ch.end + 1)
+      ch.end <- c(ch.end, nrow(curve))
+
+      # Test if each interval is at least one channel wide
+      for (i in 1:(K-1)) {
+        if ((ch.end[i] - ch.start[i]) < 1) {
+          ch.end[i] <- ch.start[i] + 1
+          ch.start[i + 1] <- ch.end[i] + 1}}
+
+      # In the very unlikely event that the last interval is shifted out of the measurement
+      if (ch.start[K] >= ch.end[K]) {
+        stop("[decompose_OSLcurve()] Error: Last interval is shifted out of the measurement.")}
+      }
+
+    t.start <- (ch.start - 1) * dt
+    t.end <- ch.end * dt
+    #if (verbose) cat("Intervals set to: ")
+
+    components$t.start <- t.start
+    components$t.end <- t.end
+    components$ch.start <- ch.start
+    components$ch.end <- ch.end
+
+  } else {
+
+    t.start <- components$t.start
+    t.end <- components$t.end
+    ch.start <- components$ch.start
+    ch.end <- components$ch.end
 
   }
 
-  # if background.fitting = FALSE (recommended), remove last row
-  # this removes also the last integration interval (which is good)
-  if (is.na(components$lambda[nrow(components)]) &&
-      (background.fitting==FALSE)) {
-
-    components <- components[1:(nrow(components)-1),]
-  }
 
 
 
   ########## Set parameters ###########
 
-  K <- nrow(components)
-  X <- c(1:K)
-
   signal <- curve$signal[1:components$ch.end[K]]
   time <- curve$time[1:components$ch.end[K]]
 
   components$n <- rep(NA, K)
-  components$n.error <- rep(NA, K)
+  #components$n.error <- rep(NA, K)
   components$n.residual <- rep(NA, K)
 
-  lambda <- components$lambda
-  t.start <- components$t.start
-  t.end <- components$t.end
-  ch.start <- components$ch.start
-  ch.end <- components$ch.end
 
   ### calculate integrals  ###
 
@@ -144,7 +194,7 @@ decompose_OSLcurve <- function(
     I <- c(I, sum(signal[c(ch.start[i]:ch.end[i])]))
   }
   components$bin <- I
-  components$bin.error <- rep(NA, K)
+  #components$bin.error <- rep(NA, K)
 
   n <- NULL
 
@@ -205,14 +255,14 @@ decompose_OSLcurve <- function(
 
       lambda <- components$lambda[1:(K - 1)]
       decays <- paste(n.names[1:(K - 1)],
-                      " * (exp(-",lambda," * (time - ", channel.width,")) - exp(-",lambda," * time))"
+                      " * (exp(-",lambda," * (time - ", dt,")) - exp(-",lambda," * time))"
                     , collapse=" + ")
-      decays <- paste0(decays, " + ", n.names[K], " * ",channel.width)
+      decays <- paste0(decays, " + ", n.names[K], " * ",dt)
 
 
     } else {
 
-      decays <- paste(n.names," * (exp(-",components$lambda," * (time - ", channel.width,")) - exp(-",components$lambda," * time))"
+      decays <- paste(n.names," * (exp(-",components$lambda," * (time - ", dt,")) - exp(-",components$lambda," * time))"
                       , collapse=" + ")
     }
 
@@ -327,11 +377,14 @@ decompose_OSLcurve <- function(
 
 
   # Calculate average share at initial signal
-  first_ch_signal <- n * (1 - exp(- lambda * channel.width))
+  first_ch_signal <- n * (1 - exp(- lambda * dt))
   components$initial.signal <- round(first_ch_signal / sum(first_ch_signal), digits = 4)
 
 
-  if (verbose) print(subset(components, select = c(name, n, n.error, n.residual, initial.signal)))
+  if (verbose) {
+    col_set <- c("name", "n", "n.error", "n.residual", "initial.signal")
+    col_set <- col_set[col_set %in% colnames(components)]
+    print(subset(components, select = col_set))}
 
 invisible(components)
 }
