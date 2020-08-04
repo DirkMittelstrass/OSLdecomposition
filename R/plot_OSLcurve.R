@@ -38,19 +38,20 @@
 #' * 2019-10-02, DM: Added background component support and some little tweaks
 #' * 2020-04-22, DM: Enabled hidden output
 #' * 2020-06-19, DM: Added pseudoLM-OSL diagrams
+#' * 2020-08-04, DM: Added subtitles and RSS info
 #'
 #' @section ToDo:
 #' * REFACTORIZE CODE
 #' * ! Put the ggplot building (or at least its style options) in its own sub-function !
 #' * When drawing components without curve, skip residual curve
 #' * Display fitting formula
-#' * Display residual square sum
 #' * Cut data set while zooming to improve performance
 #' * Debug residual curve zoom
 #' * Get rid of libraries 'scale' and 'ggpubr' to decrease dependencies
+#' * Change from library("XXX") to XXX::
 #'
 #'
-#' @section Last changed. 2020-06-19
+#' @section Last changed. 2020-08-04
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -86,6 +87,8 @@ plot_OSLcurve <- function(curve = NULL,
   graph.shapes <-  c(16, 32, 32, 32, 32, 32, 32, 32, 32)
   graph.lines <- c("blank", "solid","solid","solid","solid","solid","solid","solid","solid")
 
+  text_format <- theme(axis.title = element_text(size = 8),
+                       plot.subtitle = element_text(size = 9, face = "bold"))
 
   # Create curve from component table if not given
   if (is.null(curve) && !is.null(components)) {
@@ -148,6 +151,7 @@ plot_OSLcurve <- function(curve = NULL,
     graph.labels[2] <- "fitted"
 
 
+
     # rearrange data to work in ggplot-function
     for (i in X) {
 
@@ -165,8 +169,10 @@ plot_OSLcurve <- function(curve = NULL,
       scale_size_manual(values = graph.sizes, labels = graph.labels, guide = FALSE) +
       scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
       scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
-      ylab("CW-OSL signal (cts)") + xlab("Time (s)") +
-      theme(axis.title = element_text(size = 8))
+      labs(subtitle = "CW-OSL", x = "Time (s)", y ="Signal (cts)") +
+      text_format
+
+
 
     ######################## pseudoLM PLOT #########################################################
 
@@ -185,13 +191,15 @@ plot_OSLcurve <- function(curve = NULL,
       scale_size_manual(values = graph.sizes, labels = graph.labels, guide = FALSE) +
       scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
       scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
-      ylab("PseudoLM-OSL signal (cts)") + xlab("Ramping time (s)") +
-      theme(axis.title = element_text(size = 8))
+      labs(subtitle = "pseudoLM-OSL", x = "Ramping time (s)", y ="Signal (cts)") +
+      text_format
+
 
 
     ######################## RESIDUAL PLOT #########################################################
 
     res <- curve$residual
+    res_text <- paste0("Residual (RSS = ", formatC(sum(res^2, na.rm = TRUE)), ")")
 
     # set y-axis
     res.max <- ceiling(abs(max(res))) + 1
@@ -222,11 +230,11 @@ plot_OSLcurve <- function(curve = NULL,
       }
 
       scale.intervals <- scale_x_continuous(breaks = t.times, limits = X_limits,
-                                            labels = t.labels, position = "top")
+                                            labels = t.labels)#, position = "top")
 
     } else {
 
-      scale.intervals <- scale_x_continuous(limits = X_limits, position = "top")
+      scale.intervals <- scale_x_continuous(limits = X_limits)#, position = "top")
     }
 
 
@@ -236,11 +244,12 @@ plot_OSLcurve <- function(curve = NULL,
       #error.ribbon +
       geom_point(size = 1, shape =  16, color = "darkgrey", na.rm = TRUE) +
       scale_y_continuous(limits = c(- res.max, res.max)) +
-      ylab("Residual signal") +
+      labs(subtitle = res_text, x = "Time (s)", y ="Signal (cts)") +
       annotate("segment", x = 0, xend = max(curve$time), y = 0, yend = 0, colour = "black", size = 1) +
-      theme(axis.title.x = element_blank(), axis.title = element_text(size = 8)) +
+      text_format +
       scale.intervals +
       res.intervals
+
 
 
 
@@ -272,7 +281,7 @@ plot_OSLcurve <- function(curve = NULL,
         scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
         scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
         ylab("signal (cts)") + xlab("time (s)")  +
-        theme(axis.title = element_text(size = 8))
+        text_format
 
 
       ######################## LIN LOG PLOT #########################################################
@@ -300,7 +309,7 @@ plot_OSLcurve <- function(curve = NULL,
           scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
           scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
           ylab("signal (cts)") + xlab("time (s)")  +
-          theme(axis.title = element_text(size = 8))
+          text_format
 
       }
       ######################## TABLE #########################################################

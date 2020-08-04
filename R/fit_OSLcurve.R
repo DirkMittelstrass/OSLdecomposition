@@ -90,10 +90,28 @@ fit_OSLcurve <- function(
 
   ################### Genetic algorithm fitting ###########################
 
+  # minimisation function for DEoptim
+  DE_chi2 <- function(lambda_vector, curve = curve){
+
+    DE_components <- decompose_OSLcurve(curve,
+                                        lambda_vector,
+                                        error.calculation = "none",
+                                        verbose = FALSE)
+
+    DE_curve <- simulate_OSLcurve(DE_components,
+                                  simulate.curve = TRUE,
+                                  template.curve = curve,
+                                  add.poisson.noise = FALSE)
+
+    residual <- (DE_curve$signal - curve$signal)^2 / (DE_curve$signal / M)
+
+    return(sum(residual))
+  }
+
   # TEST PARAMETER
   K <- 3
-  n.min <- c(0, 0, 0)
-  n.max <- c(10^6, 10^7, 10^8)
+ # n.min <- c(0, 0, 0)
+ # n.max <- c(10^6, 10^7, 10^8)
   l.min <- c(10^-1, 10^-2, 10^-3)
   l.max <- c(10^1, 10^0, 10^-1)
 
@@ -103,6 +121,16 @@ fit_OSLcurve <- function(
   best_fit <- 0
   fit.list <- list(NULL)
   results <- data.frame(NULL)
+
+  ##run differential evolution
+  DE_min <- DEoptim::DEoptim(
+    fn = DE_chi2,
+    lower = l.min,
+    upper = l.max)
+
+
+
+  return(DE_min)
 
   for (i in X) {
 
@@ -114,9 +142,6 @@ fit_OSLcurve <- function(
     #              weight = weight.Chi)
 
     # Use DEoptim for the genetic algorithm
-
-
-
 
 
 

@@ -33,6 +33,7 @@
 #' * 2019-03-04, DM: combining old functions (simulate_...) from post-bachelor-time (2014) to this one
 #' * 2019-03-06, DM: works now well with plot_OSLcurve
 #' * 2019-10-02, DM: added background component
+#' * 2020-07-24, DM: value rounding when curve simulated now optional; little tweaks to increase performance
 #'
 #' @section ToDo:
 #' * Check literature for exact noise model
@@ -40,7 +41,7 @@
 #' * correct and expand Roxygen help
 #' * Check handling of background component
 #'
-#' @section Last changed: 2019-10-02
+#' @section Last changed: 2020-07-24
 #'
 #' @author
 #' Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@@luminescence.de}
@@ -58,6 +59,7 @@ simulate_OSLcurve <- function(components,
                               channel.number = 400,
                               component.selection = NA,
                               simulate.curve = FALSE,
+                              round.values = TRUE,
                               add.poisson.noise = TRUE,
                               add.gaussian.noise = 0,
                               add.background = 0){
@@ -81,10 +83,11 @@ simulate_OSLcurve <- function(components,
 
     # build x-axis
     time <-  c(1:channel.number)*channel.width
-
-'    signal <- time
-    signal[] <- 0'
   }
+
+  # Create another time vector, which includes zero. You will see why
+  #time0 <- c(0, time[1:(length(time)-1)])
+  time0 <- c(0, time)
 
 
   # create a data table
@@ -118,7 +121,11 @@ simulate_OSLcurve <- function(components,
 
     } else {
 
-      component$A <- n * (exp(-lambda*(time - channel.width)) - exp(-lambda*time))
+      # Speed up things here by calculating just "exp(-lambda*time)" and subtracting
+      # it from
+      channel_probs <- exp(-lambda * time0)
+      component$A <- - n * diff(channel_probs)
+      #component$A <- n * (exp(-lambda*(time - channel.width)) - exp(-lambda*time))
     }
 
 
@@ -129,23 +136,21 @@ simulate_OSLcurve <- function(components,
 
   }
 
-'  #+++ non-first order kinetics +++
+  #+++ non-first order kinetics +++
 
     # decay formula:  f(t) = A * (1 + B * t)^C
     # therefore:      F(t) = (A  / ((C + 1) * B) * (1 + B * t)^(C + 1)
     #
     # parameters from Yukihara & McKeever (2011):
-    A <- (n0^b * f) / (N^(b - 1))
-    B <- (b - 1) * (n0 / N)^(b - 1) * f
-    C <- -b / (b - 1)
+ #   A <- (n0^b * f) / (N^(b - 1))
+ #   B <- (b - 1) * (n0 / N)^(b - 1) * f
+ #   C <- -b / (b - 1)
 
-    for(i in c(1:channels))
-    {
-      I1 <- -A / ((C + 1) * B) * (1 + B * (i - 1)*channel.time)^(C + 1)
-      I2 <- -A  / ((C + 1) * B) * (1 + B * i*channel.time)^(C + 1)
-
-      signal[i] <- I1 - I2
-    }'
+  #  for(i in c(1:channels))
+  #  {
+  #    I1 <- -A / ((C + 1) * B) * (1 + B * (i - 1)*channel.time)^(C + 1)
+   #   I2 <- -A  / ((C + 1) * B) * (1 + B * i*channel.time)^(C + 1)
+   #   signal[i] <- I1 - I2}
 
   ##============================================================================##
   ## Curve simulation
@@ -161,15 +166,20 @@ simulate_OSLcurve <- function(components,
       }
     }
 
-    stddev <- sqrt(channel.width) * add.gaussian.noise
-    offset <- add.background * channel.width
+    if ((add.gaussian.noise > 0) || (add.background != 0)) {
 
-    signal <- signal + rnorm(length(signal), mean = offset, sd = stddev)
+      stddev <- sqrt(channel.width) * add.gaussian.noise
+      offset <- add.background * channel.width
 
-    signal <- round(signal)
+      signal <- signal + rnorm(length(signal), mean = offset, sd = stddev)
+    }
+
+
+    if (round.values) {
+      signal <- round(signal)
+    }
 
     data$signal <- signal
-
   }
 
   ##============================================================================##

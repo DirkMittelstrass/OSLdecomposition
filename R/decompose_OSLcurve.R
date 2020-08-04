@@ -46,6 +46,7 @@
 #
 #' @section ToDo:
 #' * Update documentation (example, notes)
+#' * Substitute Cramers rule determinant equation with solve() to increase performance
 #'
 #' @section Last changed: 2020-07-20
 #'
@@ -75,7 +76,7 @@ decompose_OSLcurve <- function(
   ########## Input checks ###########
 
   if(is(curve, "RLum.Data.Curve") == FALSE & is(curve, "data.frame") == FALSE & is(curve, "matrix") == FALSE){
-    stop("[decompose_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")
+   stop("[decompose_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")
   }
 
   if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(get_RLum(curve))
@@ -202,10 +203,12 @@ decompose_OSLcurve <- function(
 
   if ((algorithm == "det")||(algorithm == "det+nls")) {
 
+
+    # ToDo: Substitute Cramers rule with solve()
     ### define matrices ###
 
     # Build denominator matrix
-      D <- matrix(0,K,K)
+      D <- matrix(0, K, K)
       for (i in X) {
         for (j in X) {
 
