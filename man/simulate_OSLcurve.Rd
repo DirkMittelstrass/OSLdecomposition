@@ -11,6 +11,7 @@ simulate_OSLcurve(
   channel.number = 400,
   component.selection = NA,
   simulate.curve = FALSE,
+  round.values = TRUE,
   add.poisson.noise = TRUE,
   add.gaussian.noise = 0,
   add.background = 0
@@ -53,6 +54,7 @@ Builds a CW-OSL curve from the parameters of its components or adds component co
 * 2019-03-04, DM: combining old functions (simulate_...) from post-bachelor-time (2014) to this one
 * 2019-03-06, DM: works now well with plot_OSLcurve
 * 2019-10-02, DM: added background component
+* 2020-07-24, DM: value rounding when curve simulated now optional; little tweaks to increase performance
 }
 
 \section{ToDo}{
@@ -64,7 +66,7 @@ Builds a CW-OSL curve from the parameters of its components or adds component co
 }
 
 \section{Last changed}{
- 2019-10-02
+ 2020-07-24
 }
 
 \examples{

@@ -15,20 +15,24 @@ decompose_OSLcurve(
 }
 \arguments{
 \item{curve}{\linkS4class{RLum.Data.Curve} or \link{data.frame} (\strong{required}):
-CW-OSL record. First column (x-axis) must contain time marks, Second column (y-axis) must contain signal values. Further columns will be ignored}
+CW-OSL record. \verb{$time} or first column (x-axis) for the measurement time (must have constand time intervals),
+\verb{$signal} or second column (y-axis) for the signal values. Further columns will be ignored}
 
-\item{components}{\link{data.frame} (\strong{required}):
-Template table containing the decay parameters of the OSL curve. One column must be named \emph{$lambda}.
-It is recommended to provide also the integration interval parameters (columns \emph{t.start, t.end, ch.start, ch.end}),
+\item{components}{\link{data.frame} or \link{numeric} vector (\strong{required}):
+Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by \link{fit_OSLcurve}.
+In case of a vector: It is recommended to use less than 7 parameters. The parameters will be sorted in decreasing order.
+In case of a data.frame. One column must be named \emph{$lambda}.
+It is recommended to provide also integration interval parameters (columns \emph{t.start, t.end, ch.start, ch.end}),
 which can be found by applying \link{calc_OSLintervals} on the global mean curve, calculated by \link{sum_OSLcurves}.
-If one or more column is missing, \link{calc_OSLintervals} is run automatically.}
+If one or more column is missing, a simple interval definition algorithm is run automatically (see \strong{Notes})..}
 
 \item{error.calculation}{(\emph{with default}):
-integral error estimation approach, either \strong{"empiric"} or \strong{"poisson"} or *\emph{numerical value};
+integral error estimation approach, either \strong{"empiric"} or \strong{"poisson"} or \link{numeric} value;
 Per default the data of \emph{curve$residual} provided by \link{simulate_OSLcurve} is used to calculate an \strong{empiric} standard error for each integral which will be processed in the error propagation formula.
 Alternatively the integral standard error can be calculated by assuming a \strong{poisson} distributed signal error, known as \emph{Shot noise}.
 This is suitable if the lack of data points on the x-axis circumvent an empiric error estimation, like with spatial or spectral resolved CCD measurements.
-Also the parameter can be set to a \strong{numerical value} which will be handled as standard deviation per channel and added to the poisson distributed \emph{Shot noise}}
+Also the parameter can be set to a \link{numeric} value; which will be handled as standard deviation per channel and added to the poisson distributed \emph{Shot noise}.
+If no error calculation is wished, set the argument to \strong{"none"}. This reduces the necessary computing time heavily.}
 }
 \value{
 The input table \strong{components} \link{data.frame} will be returned with added/overwritten columns: \emph{$n, $n.error, $n.residual, $I, $I.error}
@@ -54,27 +58,29 @@ It also estimates the standard deviation of the amplitudes by using the error pr
 \item 2019-09-25, DM: Merged function with decompose_OSLalternatively() and added algorithm argument
 \item 2019-09-25, DM: Deleted unnecessary stuff (negative.values.to.zero, offset, anticorrelation)
 \item 2019-10-02, DM: Added optional background fitting
-\item 2020-04-06, DM: Added 'initial.signal' data.frame column; cleaned print output
+\item 2020-04-06, DM: Added 'initial.signal' column in output data.frame; cleaned print output
+\item 2020-07-20, DM: Added algorithm for fast interval definition based on logarithmic means; More input data checks
 }
 }
 
 \section{ToDo}{
 
 \itemize{
-\item Update documentation
+\item Update documentation (example, notes)
+\item Substitute Cramers rule determinant equation with solve() to increase performance
+\item In some very rare cases, negative value for n.error are returned. Why?
 }
 }
 
 \section{Last changed}{
- 2020-04-18
+ 2020-07-20
 }
 
 \examples{
 
 }
 \references{
-Dirk Mittelstrass, Christoph Schmidt, Sebastian Kreutzer, ... .\emph{in preperation}. Algebraic CW-OSL
-signal component decomposition of quartz and its use for natural dose evaluation
+
 }
 \seealso{
 \link{calc_OSLintervals}, \link{fit_OSLcurve}, \link{sum_OSLcurves}

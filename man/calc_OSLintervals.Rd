@@ -56,9 +56,10 @@ The function provides the integration intervals for CW-OSL component separation 
 \section{ToDo}{
 
 \itemize{
-\item optional data.frame with result-matrix
-\item optional RLum.Data.Curve as input and error calculation as result-matrix
-\item more comments
+\item rename function into "optimise_OSLintervals" or similar
+\item replace own algorithm with DEoptim()
+\item optional RLum.Data.Curve as input template
+\item add more comments
 }
 }
 

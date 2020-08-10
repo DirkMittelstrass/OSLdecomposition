@@ -8,23 +8,26 @@
 #' @param verbose
 #'
 #' @section Changelog:
-#' * 2019-02-14 First version
-#' * 2019-03-15 Seperated 'decompose_OSLalternatively()'
-#' * 2019-04-29 Added Blucszs & Adamiec-like approach using numOSL::decomp (Peng et al. 2014)
-#' * 2019-05-14 Added "fit_OSLLifeTimes" approach from Luminescence package 0.9; Corrected and improved numOSL approach; Deleted nls.default approach
-#' * 2019-06-28 Deleted "fit_OSLLifeTimes" approach. Added stretched exponentials for testing. Added overview plot
-#' * 2019-10-07 Streamlined function; added optional background fitting
-#' * 2019-10-08 Seperated plotting to plot_PhotoCrosssections()
-#' * 2020-04-04 Extended output list (curve & arguments)
-#' * 2020-04-06 Extended print output and made some  tweaks. Replaced 'SAR.compatible' with 'fully.bleached'
-#' * 2020-05-05 Replaced 'fully.bleached' with 'bleaching.grade'
+#' * 2019-02-14, DM: First version
+#' * 2019-03-15, DM: Seperated 'decompose_OSLalternatively()'
+#' * 2019-04-29, DM: Added Blucszs & Adamiec-like approach using numOSL::decomp (Peng et al. 2014)
+#' * 2019-05-14, DM: Added "fit_OSLLifeTimes" approach from Luminescence package 0.9; Corrected and improved numOSL approach; Deleted nls.default approach
+#' * 2019-06-28, DM: Deleted "fit_OSLLifeTimes" approach. Added stretched exponentials for testing. Added overview plot
+#' * 2019-10-07, DM: Streamlined function; added optional background fitting
+#' * 2019-10-08, DM: Seperated plotting to plot_PhotoCrosssections()
+#' * 2020-04-04, DM: Extended output list (curve & arguments)
+#' * 2020-04-06, DM: Extended print output and made some  tweaks. Replaced 'SAR.compatible' with 'fully.bleached'
+#' * 2020-05-05, DM: Replaced bolean 'fully.bleached' with numeric 'bleaching.grade'
+#' * 2020-08-05, DM: Added DEoptim + nlsLM algorithm
+#' * 2020-08-10, DM: Optional parallel computing enabled
 #'
 #' @section ToDo:
-#' * ! Replace numOSL::decomp by own code. Then enable sigma.lambda calculation and replace "easy way" of intensity calculation !
 #' * Write documentation
-#' * Reconsider background value fitting
+#' * Reactivate optional background level fitting
+#' * Enable list of DE and LM control parameters as argument
+#' * Enable optional weighted fitting and give out reduced Chi²
 #'
-#' @section Last changed. 2020-05-07
+#' @section Last changed. 2020-08-10
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -35,20 +38,19 @@
 #' @examples
 fit_OSLcurve <- function(
   curve,
-  K.max = 5,
-  F.threshold = 50,
+  K.max = 3,
+  F.threshold = 150,
   stimulation.intensity = 30,
   stimulation.wavelength = 470,
-  weight.Chi = FALSE,
-  background.fitting = FALSE,
+  algorithm = "DE+LM", # "DE", "DE+LM", "numOSL"
+  parallel.computing = TRUE, # set to FALSE before release!
   verbose = TRUE,
-  output.complex = TRUE,
-  output.plot = TRUE
+  output.complex = TRUE
 ){
+  # measure computing time
+  time.start <- Sys.time() # Delete before release
 
   ################### Prepare input data ###########################
-
-  #library(numOSL)
 
   if(is(curve, "RLum.Data.Curve") == FALSE & is(curve, "data.frame") == FALSE){
     stop("[fit_CWCurve()] Input object is not of type 'RLum.Data.Curve' or 'data.frame'!", call. = FALSE)
@@ -68,10 +70,10 @@ fit_OSLcurve <- function(
 
   data <- data.frame(time = time, signal = signal)
 
-  channel.width <- time[2] - time[1]
+  channel_width <- time[2] - time[1]
 
-  # check if time beginns with zero and add channel.width if the case
-  if (time[1] == 0)  time <- time + channel.width
+  # check if time beginns with zero and add channel_width if the case
+  if (time[1] == 0)  time <- time + channel_width
 
 
   # check if any signal = 0 or smaller and set them to 0.1
@@ -81,119 +83,61 @@ fit_OSLcurve <- function(
     signal[signal <= 0] <- 0.1
   }
 
-  plot.data <- data.frame(NULL)
-  K.selected <- 0
-  x <- 1
+  # Some presets ...
+  K_selected <- 0
+  #x <- 1
+  X <- c(1:K.max)
+  RSS <- NA
+  RSS_old <- Inf
+  fittings <- list(NULL)
+  component_tables <- list(NULL)
+  F_table <- data.frame(NULL)
+  F_table_print <- data.frame(NULL)
+  plot_data <- data.frame(NULL)
+  lambda <- c(NULL)
+  info_text <- ""
 
   # supress warnings in the whole script
-  options( warn = -1 )
+  options(warn = -1)
 
-  ################### Genetic algorithm fitting ###########################
+  # prepare printed table
+  if (verbose) cat("Cycle \t", paste(paste0("       f_", X), collapse = "  "),
+                   "        RSS     F-value\n")
 
-  # minimisation function for DEoptim
-  DE_chi2 <- function(lambda_vector, curve = curve){
+  ###################### Subfunction for DE minimisation ###########################################
+  calc_RSS <- function(lambda_vector, curve = data, decompose_algorithm = "det"){
 
-    DE_components <- decompose_OSLcurve(curve,
+    # The linear part of HELA (see Bluszcz & Adamiec 2006) is performed by decompose_OSLcurve()
+    RSScomponents <- decompose_OSLcurve(curve,
                                         lambda_vector,
+                                        algorithm = decompose_algorithm,
                                         error.calculation = "none",
                                         verbose = FALSE)
 
-    DE_curve <- simulate_OSLcurve(DE_components,
-                                  simulate.curve = TRUE,
-                                  template.curve = curve,
-                                  add.poisson.noise = FALSE)
+    # Now add the residual curve to the input curve ...
+    curve <- simulate_OSLcurve(RSScomponents,
+                               template.curve = curve,
+                               simulate.curve = FALSE)
 
-    residual <- (DE_curve$signal - curve$signal)^2 / (DE_curve$signal / M)
+    # ... and calculate the residual sum of squares (RSS)
+    RSS <- sum(curve$residual^2)
+    if (is.na(RSS) || (RSS <= 0)) RSS <- Inf
+    return(RSS)}
 
-    return(sum(residual))
-  }
+  ###################### Reduced Chi² ###############################################################
+  calc_Chi2 <- function(components, curve = data, N_curves = M, detec_noise = 0, K = K){
 
-  # TEST PARAMETER
-  K <- 3
- # n.min <- c(0, 0, 0)
- # n.max <- c(10^6, 10^7, 10^8)
-  l.min <- c(10^-1, 10^-2, 10^-3)
-  l.max <- c(10^1, 10^0, 10^-1)
+    curve <- simulate_OSLcurve(components,
+                                    template.curve = curve)
 
-  X <- c(1:K.max)
+    RS <- curve$residual^2 * N_curves / (abs(curve$sum) + detec_noise)
+    Chi2 <- sum(RS) / (length(RS) - K * 2)
+    return(Chi2)}
 
-  Chi2_old <- Inf
-  best_fit <- 0
-  fit.list <- list(NULL)
-  results <- data.frame(NULL)
+  ###################### Photo-Ionisation Crosssections #############################################
+  build_component_table <- function(lambda_vector, lambda_err, curve = data){
 
-  ##run differential evolution
-  DE_min <- DEoptim::DEoptim(
-    fn = DE_chi2,
-    lower = l.min,
-    upper = l.max)
-
-
-
-  return(DE_min)
-
-  for (i in X) {
-
-
-    #fit <- decomp(cbind(time, signal),
-    #              ncomp = i,
-    #              constant = background.fitting,
-    #              plot = FALSE,
-    #              weight = weight.Chi)
-
-    # Use DEoptim for the genetic algorithm
-
-
-
-
-    fit.list[[i]] <- fit
-
-    # was fit sucessfull?
-    if (fit$message == 0) {
-
-      Chi2 <- fit$value
-      F_value <- 0.5*(Chi2_old - Chi2) / (Chi2 / (length(signal) - 2*i))
-
-      Chi2_old <- Chi2
-
-      if (F_value > F.threshold) K.selected <- i
-
-      # Add values to ploting table
-      plot.data <- rbind(plot.data,
-                         data.frame(lambda = fit$LMpars[,3],
-                                    lambda.low = fit$LMpars[,3],
-                                    lambda.up = fit$LMpars[,3],
-                                    name = factor(paste0("Fit with K = ", i)),
-                                    x = x))
-      x <- x + 1
-
-      # Build overview table
-      result_vector <- fit$LMpars[,3][X]
-      if (background.fitting == TRUE) result_vector <- c(result_vector, fit$constant[1])
-      result_vector <- c(result_vector, fit$value, fit$FOM, F_value)
-      results <- rbind(results, result_vector)
-
-    } else {
-
-      # leave loop and delete unused columns
-      results <- results[,-c(i:K.max)]
-      X <- X[-c(i:K.max)]
-      break
-    }
-  }
-
-  if ((K.selected == 0)||(nrow(results) == 0)) stop("no sucessful fit")
-
-  ###### Build component tables names and estimate photo-ionisation crosssections #####
-
-  C.list <- list(NULL)
-  for (k in 1:nrow(results)) {
-
-    lambda <- fit.list[[k]][["LMpars"]][,3]
-
-    #n <- NA[1:k]
-    n.error <- NA[1:k]
-    ##### Calc photoionisation crosssections ######
+    Y <- 1:length(lambda_vector)
 
     # Calc photon energy: E = h*v  [W*s^2 * s^-1 = W*s = J]
     E <-6.62606957e-34 * 299792458 * 10^9 / stimulation.wavelength
@@ -201,21 +145,18 @@ fit_OSLcurve <- function(
     # Calc photon flux of stimulation light: Flux = I / E  [W/cm^2 / W*s = 1/s*cm^2]
     Flux <- stimulation.intensity / (E * 1000)
 
-    # Calc crosssections: Sigma = lambda / Flux  [s^-1 / 1/s*cm^2 = cm^2]
-    cross.section <- lambda / Flux
+    # Calc cross-sections: Sigma = lambda / Flux  [s^-1 / 1/s*cm^2 = cm^2]
+    cross.section <- lambda_vector / Flux
     cross.relative <- round(cross.section / cross.section[1], digits=4)
 
-
-
     ### NAME COMPONENTS ###
-
     # default names:
-    name <- paste0("Component ",1:k)
+    name <- paste0("Component ", Y)
 
     if ((stimulation.wavelength >= 460) && (stimulation.wavelength <= 485)  ) {
 
       # Rename components according to literature
-      for (i in c(1:k)) {
+      for (i in Y) {
 
         c <- cross.section[i]
 
@@ -229,9 +170,7 @@ fit_OSLcurve <- function(
         if ((c > 1e-18) && (c < 1.85e-18)) name[i] <- "Slow1"
         if ((c > 1.1e-19) && (c < 4e-19)) name[i] <- "Slow2"
         if ((c > 1e-20) && (c < 4.67e-20)) name[i] <- "Slow3"
-        if ((c > 1e-21) && (c < 1e-20)) name[i] <- "Slow4"
-      }
-    }
+        if ((c > 1e-21) && (c < 1e-20)) name[i] <- "Slow4"}}
 
 
     # Check for double-naming
@@ -243,111 +182,263 @@ fit_OSLcurve <- function(
     # And again
     name[duplicated(name)] <- paste0(substr(name[duplicated(name)], 1, nchar(name[duplicated(name)]) - 2), ".c")
 
-
     # How much is the component bleached during stimulation?
-    bleaching.grade <- round(1 - exp(- lambda * max(time)), digits = 4)
+    bleaching.grade <- round(1 - exp(- lambda_vector * max(time)), digits = 4)
+
+    # Decay with zero or negative error had no correct error estimation
+    lambda_err[lambda_err <= 0] <- NA
 
     ##### Build result table #####
     components <- data.frame(name = name,
-                             lambda = lambda,
+                             lambda = lambda_vector,
+                             lambda.error = lambda_err,
                              cross.section = cross.section,
                              cross.relative = cross.relative,
                              bleaching.grade = bleaching.grade)
 
-    row.names(components) <- 1:k
+    row.names(components) <- Y
 
     # Go the easy way to extract additional information from the fitting
     components <- decompose_OSLcurve(curve = curve,
                                      components = components,
-                                     background.fitting = background.fitting,
                                      verbose = FALSE)
 
-    C.list[[k]] <- components
   } ### END building tables for the various cases ###
 
+
+
+  #----------------------------------------------------------------------------------------------------#
+  #------------------------------------- K = K + 1 cycle ----------------------------------------------#
+  #----------------------------------------------------------------------------------------------------#
+  for (K in X) {
+
+    lambda_error <- rep(0, K)
+
+    if (algorithm == "numOSL") {
+      ########################################### numOSL ##############################################
+      fit <- numOSL::decomp(cbind(time, signal),
+                            ncomp = K,
+                            plot = FALSE,
+                            weight = FALSE)
+
+      if (fit$message == 0){
+
+        lambda <- fit$LMpars[,3][1:K]
+        RSS <- fit$value
+        fit_sucessful <- TRUE
+      } else {
+        if (verbose) cat("Left loop. numOSL::decomp() fitting failed at K =", K, "\n")
+
+        # leave loop
+        break
+      }
+
+    } else {
+
+      ########################################### DEoptim ##############################################
+
+      # Divide the DE parameter space a the decay values of the previous cycle
+      # Additional constraints:
+      # - no negative values (decay >= 0)
+      # - no superfast decays, that the channel frequency couldn't resolve it (decay <= 3 / channel_width)
+      lower_lambda <- c(lambda, 0)
+      upper_lambda <- c(3 / channel_width, lambda)
+
+      # Perform differential evolution (DE). As minimisation function, use calc_RSS()
+      DE_min <- try(DEoptim::DEoptim(
+        fn = calc_RSS,
+        lower = lower_lambda,
+        upper = upper_lambda,
+        control = DEoptim::DEoptim.control(
+          NP = K * 15,
+          strategy = 2,
+          itermax = 100,
+          c = 0.2,
+          reltol = 1e-4,
+          steptol = 10,
+          parallelType = parallel.computing,
+          packages = c("OSLdecomposition"),
+          parVar = c("data"),
+          trace = FALSE)))
+
+      # Did the DE algorithm break?
+      if (attr(DE_min, "class") == "try-error") {
+        if (verbose) cat("Differential evolution failed at K =", K, ". Algorithm stopped.\n")
+
+        # leave loop and set flag to delete unused columns
+        fit_failed <- TRUE
+        break}
+
+      # Otherwise, extract results
+      fit <- list(NULL)
+      fit[["DE"]] <- DE_min
+      lambda <- DE_min$optim$bestmem
+      RSS <- DE_min$optim$bestval
+
+      ########################################### nlsLM ##############################################
+
+      if (algorithm == "DE+LM") {
+
+        # We need the signal intensities of the components as start values for the LM fitting
+        DE_components <- decompose_OSLcurve(data,
+                                            lambda,
+                                            algorithm = "det",
+                                            error.calculation = "none",
+                                            verbose = FALSE)
+        n <- DE_components$n
+
+        ### Create fit formula ###
+        n.names <- paste0("n.",1:K)
+        lambda.names <- paste0("lambda.",1:K)
+
+        # now creat the optimization formula
+        fit.formula <- as.formula(paste0("signal ~ ",
+                                         paste(n.names," * (exp(-", lambda.names," * (time - ", channel_width,")) - exp(-", lambda.names," * time))",
+                                               collapse=" + ")))
+
+        # Name the vectors to allow the correct value allocation
+        names(n) <- n.names
+        names(lambda) <- lambda.names
+
+        ### Apply LM algorithm  ###
+        LM_fit <- try(minpack.lm::nlsLM(fit.formula,
+                                        data = data,
+                                        start = c(n, lambda)),
+                      silent = TRUE)
+
+        if (attr(LM_fit, "class") == "try-error") {
+
+          if (verbose) cat("Levenberg-Marquardt fitting failed at K =", K, ". Differential evolution result are used:\n")
+
+        } else {
+
+          fit[["LM"]] <- LM_fit
+          lambda <- summary(LM_fit)$parameters[paste0("lambda.", 1:K),"Estimate"]
+          RSS <- LM_fit$m$deviance()
+          lambda_error <- summary(LM_fit)$parameters[paste0("lambda.", 1:K),"Std. Error"]}
+      }
+    }
+
+    # save the raw fitting objects
+    fittings[[K]] <- fit
+
+    # identify the components and build the Component table
+    component_tables[[K]] <- build_component_table(lambda, lambda_error)
+
+    # Add values to [plot_Photocrosssections()] ploting table
+    plot_data <- rbind(plot_data,
+                       data.frame(lambda = lambda,
+                                  lambda.low = lambda - lambda_error,
+                                  lambda.up = lambda + lambda_error,
+                                  name = factor(paste0("Fit with K = ", K)),
+                                  x = K))
+    #x <- x + 1
+
+    ### F-test ###
+    F_value <- 0.5*(RSS_old - RSS) / (RSS / (length(signal) - 2 * K))
+    RSS_old <- RSS
+
+    # Create live console output
+    table_row <- c(rep("          ", K.max),
+                   formatC(RSS, digits = 4, width = 10),
+                   formatC(F_value, digits = 4, width = 10))
+    table_row[1:length(lambda)] <- formatC(lambda, digits = 4, width = 10)
+    if (verbose) cat("K =", K, "\t", paste(table_row, collapse = "  "), "\n")
+
+    # Build output F-test table for [report_Step2.rmd] script
+    F_table_print <- rbind(F_table_print, table_row, stringsAsFactors = FALSE)
+    F_table <- rbind(F_table, (c(lambda[X], RSS, F_value)))
+
+    # Stop fitting if K - 1 was the correct model
+    if (F_value <= F.threshold) {
+      info_line <- paste0("Left loop because F-test value (F = ", formatC(F_value),
+                          ") fell below threshold value (F = ", F.threshold,")\n")
+      info_text <- paste0(info_text, info_line)
+      if (verbose) cat(info_line)
+      break}
+
+    # If the current iteration cycle succeded until this point, it must be the best fit so far. Therefore:
+    K_selected <- K
+
+    if (K == K.max) {
+      info_line <- paste0("Left loop because maximum number of allowed components K is reached\n")
+      info_text <- paste0(info_text, info_line)
+      if (verbose) cat(info_line)}
+
+  } #---------------------------------------- End cycle -----------------------------------------------
+
+  if ((K_selected == 0)||(nrow(F_table_print) == 0)) stop("[fit_OSLcurve] No sucessful fit")
+
+  # Give F tables approbiate headers
+  colnames(F_table) <- c(paste0("f_", X),"RSS","F-value")
+  colnames(F_table_print) <- c(paste0("f_", X),"RSS","F-value")
+
+  # Delete unused columns
+  if (nrow(F_table) < K.max) {
+    F_table <- F_table[,-c((nrow(F_table) + 1):K.max)]
+    F_table_print <- F_table_print[,-c((nrow(F_table) + 1):K.max)]}
+
   # Standard set of components is the on chosen by the F-test
-  components <- C.list[[K.selected]]
+  components <- component_tables[[K_selected]]
 
-  # Reduce amount of information in the table to avoid user irritation, also round some values
-  components <- subset(components, select = c(name, lambda, n, cross.section, initial.signal, bleaching.grade))
-  components$n <- round(components$n)
-  components$cross.section <- formatC(components$cross.section)
-
-  ##### Format F-tables #####
-  # create a better looking table for publishing purposes
-
-  if (background.fitting == TRUE) {
-
-    colnames(results) <- c(paste0("k_", X),"background","Chi2","FOM","F.value")
-  } else {
-
-    colnames(results) <- c(paste0("k_", X),"Chi2","FOM","F.value")
-  }
-
-  # Remove figure of merit (FOM). While it may be interesting, we don't use it.
-  results <- subset(results, select = -FOM)
-
-  results$Chi2 <- formatC(results$Chi2, digits = 4)
-  results$F.value <- formatC(results$F.value, digits = 4)
-
-  for (k in 1:nrow(results)) results[,k] <- round(results[,k], digits = 4)
-
-  results[is.na(results)] <- ""
-  results[results == "Inf"] <- ""
-
-  # Print F-table and Component table
+  ######### Further console output ######
   if (verbose) {
 
-    writeLines("F-test table:")
-    print(results)
-    writeLines(paste0("-->  ", K.selected,"-component model choosen"))
+    cat(paste0("->  ", K_selected,"-component model choosen"), "\n")
 
-    writeLines("")
-    writeLines("Signal component table:")
-    print(components)
+    cat("\nSignal component parameter:\n")
+    # Reduce amount of information in the table to avoid user irritation, also round some values
+    print_components <- subset(components,
+                               select = c(name, lambda, lambda.error,
+                                          n, n.error, cross.section, initial.signal, bleaching.grade))
+
+     for (col in 2:ncol(print_components)) {
+      print_components[,col] <- formatC(print_components[,col], digits = 4)}
+
+    print.data.frame(print_components, row.names = FALSE)
 
     # Give advice which components are suited for further analysis
     bleach <- components$bleaching.grade
     if (any(bleach < 0.99)) {
 
       if (sum(bleach < 0.99) == nrow(components)) {
-        writeLines("WARNING: No component was fully bleached during stimulation. Check your experimental settings!")
+        cat("WARNING: No component was fully bleached during stimulation. Check your experimental settings!\n")
 
       } else if (sum(bleach < 0.99)  == 1) {
 
-        writeLines(paste0(components$name[bleach < 0.99],
-                          " was not fully bleached during stimulation and is not recommended for further dose evaluation"))
+        cat(paste0(components$name[bleach < 0.99],
+                   " was not fully bleached during stimulation and is not recommended for further dose evaluation\n"))
       } else {
 
-        writeLines(paste0(paste(components$name[bleach < 0.99], collapse = ", "),
-                          " were not fully bleached during stimulation and are not recommended for further dose evaluation"))
-      }
-    }
+        cat(paste0(paste(components$name[bleach < 0.99], collapse = ", "),
+                   " were not fully bleached during stimulation and are not recommended for further dose evaluation\n"))}}
+
+     # print computing time
+    cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+
   }
 
-  ######################### Output #######################
+  ######################### Return values #######################
 
   if (output.complex) {
 
-    output <- list(curve = curve,
-                   K.selected = K.selected,
-                   components = components,
-                   F.test = results,
-                   fit.results = fit.list,
-                   case.tables = C.list,
-                   plot.data = plot.data,
+    output <- list(decay.rates = components$lambda,
+                   K.selected = K_selected,
+                   F.test = F_table,
+                   F.test.print = F_table_print,
+                   info.text = info_text,
+                   component.tables = component_tables,
+                   curve = curve,
+                   fit.results = fittings,
+                   plot.data = plot_data,
                    parameters = list(K.max = K.max,
                                      F.threshold = F.threshold,
                                      stimulation.intensity = stimulation.intensity,
                                      stimulation.wavelength = stimulation.wavelength,
-                                     weight.Chi = weight.Chi,
-                                     background.fitting = background.fitting))
-
+                                     algorithm = algorithm))
     invisible(output)
 
   } else {
-
-    invisible(components)
-  }
+    invisible(components)}
 
 }

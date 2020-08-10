@@ -48,6 +48,7 @@ See Bos and Wallinga (2012) for a detailed explanation and discussion
 * 2019-10-02, DM: Added background component support and some little tweaks
 * 2020-04-22, DM: Enabled hidden output
 * 2020-06-19, DM: Added pseudoLM-OSL diagrams
+* 2020-08-04, DM: Added subtitles and RSS info
 }
 
 \section{ToDo}{
@@ -56,13 +57,13 @@ See Bos and Wallinga (2012) for a detailed explanation and discussion
 * ! Put the ggplot building (or at least its style options) in its own sub-function !
 * When drawing components without curve, skip residual curve
 * Display fitting formula
-* Display residual square sum
 * Cut data set while zooming to improve performance
 * Debug residual curve zoom
 * Get rid of libraries 'scale' and 'ggpubr' to decrease dependencies
+* Change from library("XXX") to XXX::
 }
 
-\section{Last changed. 2020-06-19}{
+\section{Last changed. 2020-08-04}{
 NA
 }
 

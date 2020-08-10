@@ -17,7 +17,16 @@ knitr::opts_chunk$set(fig.width=10, fig.asp=.6, warning=FALSE, error=FALSE, echo
 
 # alternative simulations:
 
-
+V.list <- list(n.Fast = c(0, 1000, 3000, 10000),
+               n.Medium = c(0, 1000, 3000),
+               n.Slow1 = c(0, 3000, 10000),
+               n.Slow2 = c(10000, 30000, 100000),
+               Background = c(0),
+               Channels = c(100, 200, 400),
+               Channel.width = c(0.1, 0.2, 0.5),
+               Additions = c(500),
+               Chi.weight = c(FALSE),
+               Algorithm = c("DEoptim","numOSL","minpack.lm"))
 
 ```
 
@@ -31,16 +40,15 @@ knitr::opts_chunk$set(fig.width=10, fig.asp=.6, warning=FALSE, error=FALSE, echo
 lambda <- c(Fast = 2, Medium = 0.5, Slow1 = 0.1, Slow2 = 0.02)
 X <- 1:length(lambda)
 
-V.list <- list(n.Fast = c(0, 1000, 3000, 10000),
-               n.Medium = c(0, 1000, 3000),
-               n.Slow1 = c(0, 3000, 10000),
-               n.Slow2 = c(10000, 30000, 100000),
+V.list <- list(n.Fast = c(0, 5000),
+               n.Medium = c(3000),
+               n.Slow1 = c(0, 10000),
+               n.Slow2 = c(100000),
                Background = c(0),
-               Channels = c(100, 200, 400),
-               Channel.width = c(0.1, 0.2, 0.5),
+               Channels = c(200),
+               Channel.width = c(0.1),
                Additions = c(500),
-               Chi.weight = c(FALSE),
-               Algorithm = c("DEoptim","numOSL","minpack.lm"))
+               Algorithm = c("numOSL","DE","DE+LM"))
 # from earlier simulations, we showed that the impact of uncorrected background signals,
 # as well as from the number of additions is insignificant
 # it was also shown, that unweighted fitting (Chi² = RSS) leads to more precise
@@ -82,7 +90,7 @@ for (j in 1:N) {
   
   V.i[1] <- V.i[1] + 1
   
-  V.table <- rbind(V.table, V)
+  V.table <- rbind(V.table, V, stringsAsFactors = FALSE)
 }
 
 colnames(V.table) <- names(V.list)
@@ -138,11 +146,9 @@ for (j in 1:N) {
 
   # Fit global mean OSL curve
  C.fit <- fit_OSLcurve(Curve, 
-                       significance.threshold = 10,
-                       weight.Chi = as.logical(V$Chi.weight),
+                       F.threshold = -Inf,
                        verbose = FALSE,
-                       output.complex = TRUE,
-                       output.plot = FALSE)
+                       output.complex = TRUE)
 
  C.list[[j]]$output <- C.fit$F.test
 }

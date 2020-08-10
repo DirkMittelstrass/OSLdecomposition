@@ -9,7 +9,8 @@
 #' @section ToDo:
 #' * Documentation
 #' * Sometimes the red rectangle is not drawn (fit_OSLcurve(Batagai, K.max = 6)). Why?
-#' * literature values for other than just 470nm values
+#' * add literature values for other than just 470nm values
+#' * remove library(XXXX)
 #'
 #' @section Last changed. 2020-04-09
 #'

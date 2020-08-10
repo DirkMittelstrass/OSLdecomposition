@@ -34,9 +34,10 @@
 #' * 2019-10-02, DM: added Background-fitting interval determination
 #'
 #' @section ToDo:
-#' * optional data.frame with result-matrix
-#' * optional RLum.Data.Curve as input and error calculation as result-matrix
-#' * more comments
+#' * rename function into "optimise_OSLintervals" or similar
+#' * replace own algorithm with DEoptim()
+#' * optional RLum.Data.Curve as input template
+#' * add more comments
 #'
 #' @section Last changed: 2019-10-02
 #'

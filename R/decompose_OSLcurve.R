@@ -47,6 +47,7 @@
 #' @section ToDo:
 #' * Update documentation (example, notes)
 #' * Substitute Cramers rule determinant equation with solve() to increase performance
+#' * In some very rare cases, negative value for n.error are returned. Why?
 #'
 #' @section Last changed: 2020-07-20
 #'
