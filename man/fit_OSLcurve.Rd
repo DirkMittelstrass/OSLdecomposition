@@ -86,7 +86,7 @@ Fit global mean curve to get decay constants
 NA
 }
 
-\section{Last changed. 2020-08-10}{
+\section{Last changed. 2020-08-12}{
 NA
 }
 

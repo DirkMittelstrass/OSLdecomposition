@@ -27,7 +27,7 @@
 #' * Enable list of DE and LM control parameters as argument
 #' * Enable optional weighted fitting and give out reduced Chi²
 #'
-#' @section Last changed. 2020-08-10
+#' @section Last changed. 2020-08-12
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -207,12 +207,17 @@ fit_OSLcurve <- function(
 
 
 
+
+
+
   #----------------------------------------------------------------------------------------------------#
   #------------------------------------- K = K + 1 cycle ----------------------------------------------#
   #----------------------------------------------------------------------------------------------------#
+  computing_time <- Sys.time()
   for (K in X) {
 
     lambda_error <- rep(0, K)
+    fit <- list()
 
     if (algorithm == "numOSL") {
       ########################################### numOSL ##############################################
@@ -259,7 +264,8 @@ fit_OSLcurve <- function(
           parallelType = parallel.computing,
           packages = c("OSLdecomposition"),
           parVar = c("data"),
-          trace = FALSE)))
+          trace = FALSE)),
+        silent = TRUE)
 
       # Did the DE algorithm break?
       if (attr(DE_min, "class") == "try-error") {
@@ -270,7 +276,6 @@ fit_OSLcurve <- function(
         break}
 
       # Otherwise, extract results
-      fit <- list(NULL)
       fit[["DE"]] <- DE_min
       lambda <- DE_min$optim$bestmem
       RSS <- DE_min$optim$bestval
@@ -303,7 +308,9 @@ fit_OSLcurve <- function(
         ### Apply LM algorithm  ###
         LM_fit <- try(minpack.lm::nlsLM(fit.formula,
                                         data = data,
-                                        start = c(n, lambda)),
+                                        start = c(n, lambda),
+                                        control = minpack.lm::nls.lm.control(
+                                          maxiter = 30 + K * 20)),
                       silent = TRUE)
 
         if (attr(LM_fit, "class") == "try-error") {
@@ -318,6 +325,7 @@ fit_OSLcurve <- function(
           lambda_error <- summary(LM_fit)$parameters[paste0("lambda.", 1:K),"Std. Error"]}
       }
     }
+
 
     # save the raw fitting objects
     fittings[[K]] <- fit
@@ -369,13 +377,17 @@ fit_OSLcurve <- function(
 
   if ((K_selected == 0)||(nrow(F_table_print) == 0)) stop("[fit_OSLcurve] No sucessful fit")
 
+  # How long did the algorithm need?
+  computing_time <- as.numeric(difftime(Sys.time(), computing_time, units = "s"))
+
+
   # Give F tables approbiate headers
-  colnames(F_table) <- c(paste0("f_", X),"RSS","F-value")
-  colnames(F_table_print) <- c(paste0("f_", X),"RSS","F-value")
+  colnames(F_table) <- c(paste0("f_", X),"RSS","F_value")
+  colnames(F_table_print) <- c(paste0("f_", X),"RSS","F_value")
 
   # Delete unused columns
   if (nrow(F_table) < K.max) {
-    F_table <- F_table[,-c((nrow(F_table) + 1):K.max)]
+  #  F_table <- F_table[,-c((nrow(F_table) + 1):K.max)]
     F_table_print <- F_table_print[,-c((nrow(F_table) + 1):K.max)]}
 
   # Standard set of components is the on chosen by the F-test
@@ -435,7 +447,8 @@ fit_OSLcurve <- function(
                                      F.threshold = F.threshold,
                                      stimulation.intensity = stimulation.intensity,
                                      stimulation.wavelength = stimulation.wavelength,
-                                     algorithm = algorithm))
+                                     algorithm = algorithm,
+                                     computing.time.s = computing_time))
     invisible(output)
 
   } else {

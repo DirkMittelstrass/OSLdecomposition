@@ -82,7 +82,7 @@ simulate_OSLcurve <- function(components,
   } else  {
 
     # build x-axis
-    time <-  c(1:channel.number)*channel.width
+    time <- c(1:channel.number)*channel.width
   }
 
   # Create another time vector, which includes zero. You will see why
