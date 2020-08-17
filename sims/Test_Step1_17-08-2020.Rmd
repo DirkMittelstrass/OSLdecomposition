@@ -1,6 +1,6 @@
 ---
-title: "Step 1 perfomance tests"
-date: 2019-08-01
+title: "Step 1 perfomance tests (v2)"
+date: 2020-08-12
 output: html_notebook
 ---
 
@@ -27,28 +27,50 @@ V.list <- list(n.Fast = c(0, 1000, 3000, 10000, 30000),
                Additions = c(500),
                Algorithm = c(1,2,3))
 
+V.list <- list(n.Fast = c(0, 1000, 3000, 10000, 30000),
+               n.Medium = c(0, 1000, 3000, 10000),
+               n.Slow1 = c(0, 3000, 10000, 30000),
+               n.Slow2 = c(10000, 30000, 100000),
+               Background = c(0),
+               Channels = c(100, 200, 400),
+               Channel.width = c(0.1, 0.2, 0.5),
+               Additions = c(100, 400),
+               Algorithm = c(0, 1))
+
+
 ```
 
 
 1. Build List with vectors which shall be varied
 
+Lambda values are calculated from cross sections found by Durcan & Duller an assuming an stimulation intensity of 30 mW/cm² (typical for a Risö OSL/TL DA-15)
+
+Equation: 
+lambda = cross.section * flux
+flux = 30 / (6.62606957e-34 * (299792458 * 10^9 / 480) * 1000)
+
 
 ```{r}
 
 # ToDo, use more accurate lambda values
-lambda <- c(Fast = 2, Medium = 0.5, Slow1 = 0.1, Slow2 = 0.02)
-X <- 1:length(lambda)
-algorithm_names <- c("numOSL","DE","DE+LM")
+#lambda <- c(Fast = 2, Medium = 0.5, Slow1 = 0.1, Slow2 = 0.02)
 
-V.list <- list(n.Fast = c(0, 3000, 10000),
-               n.Medium = c(0, 3000, 10000),
-               n.Slow1 = c(0, 10000, 30000),
+# Calculated from Durcan & Duller, assuming an stimulation intensity of 30 mW/cm² (typical for a Risö OSL/TL DA-15)
+lambda <- c(Fast = 1.9, Medium = 0.3, Slow1 = 0.08, Slow2 = 0.02)
+
+X <- 1:length(lambda)
+
+#algorithm_names <- c("DE","DE+LM")
+
+V.list <- list(n.Fast = c(0, 1000, 3000, 10000),
+               n.Medium = c(0, 1000, 3000, 10000),
+               n.Slow1 = c(0, 3000, 10000, 30000),
                n.Slow2 = c(10000, 30000, 100000),
-               Background = c(0),
-               Channels = c(100, 200),
-               Channel.width = c(0.2),
-               Additions = c(300),
-               Algorithm = c(1, 2, 3))
+               Background = c(0, 30),
+               Channels = c(100, 200, 400),
+               Channel.width = c(0.1, 0.2, 0.5),
+               Additions = c(100, 400))
+
 # from earlier simulations, we showed that the impact of uncorrected background signals,
 # as well as from the number of additions is insignificant
 # it was also shown, that unweighted fitting (Chi² = RSS) leads to more precise
@@ -62,6 +84,7 @@ for (i in 1:length(V.list)) {
 
 N <- prod(V.max)
 cat("Number of scenarios:", N,"\n")
+cat("Estimated time:", N * 0.33 / 60,"h\n")
 
 ```
 
@@ -110,6 +133,8 @@ time.start <- Sys.time()
 C.list <- list(NULL)
 Curve <- data.frame(NULL)
 
+counter <- 500
+
 
 for (j in 1:N) {
 
@@ -142,16 +167,25 @@ for (j in 1:N) {
   Curve$signal <- Curve$signal / V$Additions
 
   # Fit global mean OSL curve
- C.fit <- fit_OSLcurve(Curve, 
+ C.fit <- try(fit_OSLcurve(Curve, 
                        K.max = 5,
                        F.threshold = 0,
                        verbose = FALSE,
-                       algorithm = algorithm_names[V$Algorithm],
-                       output.complex = TRUE)
-
- C.list[[j]]$output <- C.fit$F.test
- C.list[[j]]$time <- C.fit$parameters$computing.time.s
- C.list[[j]]$info <- C.fit$info.text
+                       output.complex = TRUE))
+ 
+ if (attr(DE_min, "class") == "try-error") {
+   
+   cat("Fitting failed at scenario:", j, "!\n")
+ }else{
+  C.list[[j]]$time <- C.fit$parameters$computing.time.s
+  C.list[[j]]$info <- C.fit$info.text
+  C.list[[j]]$output <- C.fit$F.test }
+ 
+ counter <- counter - 1
+ if (counter == 0) {
+   counter <- 300
+   cat(round(100*j/N), "% done after",difftime(Sys.time(), time.start, units = "h"), "h\n")
+ }
 }
 
 
@@ -164,6 +198,7 @@ difftime(Sys.time(), time.start)
 time comsumption: 
 40 min for 72 scenarios on the notebook (K.max = 3)
 1 h 30 min for 72 scenarios on the notebook (K.max = 5)
+7 h for 324 scenarios on the notebook (K.max = 5)
 
 4. Rearrange parameters and result data into one big table
 
@@ -238,14 +273,14 @@ R.table <- cbind(V.table, R.table)
 
 # delete rows with less components found than expected
 R.table <- R.table[!is.na(R.table$F),]
-cat("Cases with a sufficient number of components found: ", nrow(R.table), "of",N,"\n")
+cat("Cases with a sufficient number of components found: ", nrow(R.table), "of",N , "\n")
 
 
 
 # delete rows with insufficient fit quality
 for (i in 1:nrow(R.table)) {
   for (j in 1:3) {
-    if (!is.na(R.table[i,13+j]) && (R.table[i,13+j] > 0.1)) {
+    if (!is.na(R.table[i, 13 + j]) && (R.table[i, 13 + j] > 0.1)) {
       R.table[i,]$F <- NA
     }
   }
@@ -290,9 +325,15 @@ library(ggplot2)
 library(gridExtra)
 theme_set(theme_bw())
 
-  Dlot.1 <- rbind(data.frame(F.value = R.table[R.table$Algorithm==2,]$F,
+pre_selection_1 <- R.table$Channel.width * R.table$Channels
+selection_1 <- (R.table$Algorithm == 3) & (pre_selection_1 >= 40)
+
+pre_selection_2 <- R.table$Channel.width * R.table$Channels
+selection_2 <- (R.table$Algorithm == 3) & (pre_selection_2 <= 20)
+
+  Dlot.1 <- rbind(data.frame(F.value = R.table[selection_1,]$F,
                                F.line = factor("same_line")),
-                    data.frame(F.value = R.table[R.table$Algorithm==2,]$F.next,
+                    data.frame(F.value = R.table[selection_1,]$F.next,
                                F.line = factor("next_line")))
   
   Dlot.1$F.value <- log10(Dlot.1$F.value)
@@ -310,9 +351,9 @@ theme_set(theme_bw())
  
  ###################################################
  
-   Dlot.2 <- rbind(data.frame(F.value = R.table[R.table$Algorithm==3,]$F,
+   Dlot.2 <- rbind(data.frame(F.value = R.table[selection_2,]$F,
                                F.line = factor("same_line_weighted")),
-                    data.frame(F.value = R.table[R.table$Algorithm==3,]$F.next,
+                    data.frame(F.value = R.table[selection_2,]$F.next,
                                F.line = factor("next_line_weighted")))
   
   Dlot.2$F.value <- log10(Dlot.2$F.value)
@@ -336,16 +377,16 @@ theme_set(theme_bw())
  grid.arrange(Plot.1, Plot.2, layout_matrix = lay)
  
  # How many values were used?
- print(paste0("F with DE only: ", nrow(R.table[R.table$Algorithm==2,])))
- print(paste0("F.next with DE only: ", nrow(R.table[(R.table$Algorithm==2) & !is.na(R.table$F.next),])))
- print(paste0("F with LM: ", nrow(R.table[R.table$Algorithm==3,])))
-print(paste0("F.next  with LM: ", nrow(R.table[(R.table$Algorithm==3) & !is.na(R.table$F.next),])))
+ print(paste0("F with DE only: ", nrow(R.table[selection_1,])))
+ print(paste0("F.next with DE only: ", nrow(R.table[selection_1 & !is.na(R.table$F.next),])))
+ print(paste0("F with LM: ", nrow(R.table[selection_2,])))
+ print(paste0("F.next  with LM: ", nrow(R.table[selection_2 & !is.na(R.table$F.next),])))
 ```
 
 7. Create new result table
 
 ```{r}
-F.threshold <- 50
+F.threshold <- 150
 
 S.table <- data.frame(NULL)
 

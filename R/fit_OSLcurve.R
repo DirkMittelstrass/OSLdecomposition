@@ -1,4 +1,8 @@
-#' Fit global mean curve to get decay constants
+#' multi-exponential CW-OSL curve fitting
+#'
+#' Fitting function for measurements of multi-exponential decay signal with first order kinetics.
+#' This function is based on Bluszcz & Adamiec (2006) and was primarily developed for the analysis of quartz CW-OSL
+#' measurements for dating and dosimetry applications.
 #'
 #' @param curve
 #' @param K.max
@@ -6,6 +10,7 @@
 #' @param stimulation.intensity
 #' @param stimulation.wavelength
 #' @param verbose
+#' @param output.complex
 #'
 #' @section Changelog:
 #' * 2019-02-14, DM: First version
@@ -22,66 +27,87 @@
 #' * 2020-08-10, DM: Optional parallel computing enabled
 #'
 #' @section ToDo:
-#' * Write documentation
+#' * Complete documentation
 #' * Reactivate optional background level fitting
-#' * Enable list of DE and LM control parameters as argument
+#' * Introduce 'fit_OSLcurve.control' which forwards algorith parameters to DEoptim.control and nls.lm.control
 #' * Enable optional weighted fitting and give out reduced Chi²
 #'
-#' @section Last changed. 2020-08-12
+#' @section Last changed: 2020-08-17
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
 #'
+#' @seealso [RLum.OSL_decomposition], [sum_OSLcurves], [decompose_OSLcurve], [plot_OSLcurve],
+#' [plot_PhotoCrosssections], [minpack.lm::nlsLM], [DEoptim::DEoptim]
+#'
+#' @references
+#'
 #' @return
-#' @export
 #'
 #' @examples
+#'
+#' # Create curve with two components
+#' curve <- cbind(c(1, 2, 3, 4, 5, 6, 7, 8, 9), c(42, 20, 12, 7, 5, 4, 3.1, 2.4, 2))
+#'
+#' # Perform fitting
+#' components <- fit_OSLcurve(curve, F.threshold = 3)
+#'
+#' # Display results
+#' plot_OSLcurve(curve, components)
+#'
+#' @export
 fit_OSLcurve <- function(
   curve,
-  K.max = 3,
+  K.max = 5,
   F.threshold = 150,
   stimulation.intensity = 30,
   stimulation.wavelength = 470,
-  algorithm = "DE+LM", # "DE", "DE+LM", "numOSL"
-  parallel.computing = TRUE, # set to FALSE before release!
   verbose = TRUE,
-  output.complex = TRUE
+  output.complex = FALSE
 ){
-  # measure computing time
-  time.start <- Sys.time() # Delete before release
+
+  # Internal parameter (for later use in fit_OSLcurve.control)
+  parallel.computing <- FALSE
+  silent <- FALSE
+  LM <- TRUE
 
   ################### Prepare input data ###########################
 
-  if(is(curve, "RLum.Data.Curve") == FALSE & is(curve, "data.frame") == FALSE){
-    stop("[fit_CWCurve()] Input object is not of type 'RLum.Data.Curve' or 'data.frame'!", call. = FALSE)
-  }
+  if(!(is(curve, "RLum.Data.Curve") | is(curve, "data.frame") | is(curve, "matrix"))){
+    stop("[fit_CWCurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
+#
+#  if(is(curve, "RLum.Data.Curve") == TRUE){
 
-  if(is(curve, "RLum.Data.Curve") == TRUE){
+#    time <- curve@data[,1]
+#    signal <- curve@data[,2]
 
-    time <- curve@data[,1]
-    signal <- curve@data[,2]
+#  }else{
 
-  }else{
+    # set x and y values
+#    time <- curve$time
+#    signal <- curve$signal}
 
-    ##set x and y values
-    time <- curve$time
-    signal <- curve$signal
-  }
+  if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(Luminescence::get_RLum(curve))
 
-  data <- data.frame(time = time, signal = signal)
+  if (!("time" %in% colnames(curve)) ||
+      !("signal" %in% colnames(curve))) {
+    curve <- data.frame(time = curve[,1],
+                        signal = curve[,2])}
 
-  channel_width <- time[2] - time[1]
 
-  # check if time beginns with zero and add channel_width if the case
-  if (time[1] == 0)  time <- time + channel_width
+ # data <- data.frame(time = time, signal = signal)
 
+  channel_width <- curve$time[2] - curve$time[1]
+
+  # check if curve$time beginns with zero and add channel_width if the case
+  if (curve$time[1] == 0)  {
+    if (verbose) cat("Time axis begins with t_1 = 0, which is not allowed. All time values increased by", channel_width,"\n")
+    curve$time <- curve$time + channel_width}
 
   # check if any signal = 0 or smaller and set them to 0.1
-  if (any(signal <= 0)) {
-
-    if (verbose) warning("[fit_OSLcurve] Signal values equal or smaller than zero detected. Replaced with 0.1")
-    signal[signal <= 0] <- 0.1
-  }
+  if (any(curve$signal <= 0)) {
+    if (verbose) cat("One or more signal values are equal or smaller than zero: Replaced with 0.1\n")
+    curve$signal[curve$signal <= 0] <- 0.1}
 
   # Some presets ...
   K_selected <- 0
@@ -98,44 +124,44 @@ fit_OSLcurve <- function(
   info_text <- ""
 
   # supress warnings in the whole script
-  options(warn = -1)
+  if (silent) options(warn = -1)
 
   # prepare printed table
   if (verbose) cat("Cycle \t", paste(paste0("       f_", X), collapse = "  "),
                    "        RSS     F-value\n")
 
   ###################### Subfunction for DE minimisation ###########################################
-  calc_RSS <- function(lambda_vector, curve = data, decompose_algorithm = "det"){
+  calc_RSS <- function(lambda_vector, RSScurve = curve){
 
     # The linear part of HELA (see Bluszcz & Adamiec 2006) is performed by decompose_OSLcurve()
-    RSScomponents <- decompose_OSLcurve(curve,
+    RSScomponents <- decompose_OSLcurve(RSScurve,
                                         lambda_vector,
-                                        algorithm = decompose_algorithm,
+                                        algorithm = "det",
                                         error.calculation = "none",
                                         verbose = FALSE)
 
     # Now add the residual curve to the input curve ...
-    curve <- simulate_OSLcurve(RSScomponents,
-                               template.curve = curve,
+    RSScurve <- simulate_OSLcurve(RSScomponents,
+                               template.curve = RSScurve,
                                simulate.curve = FALSE)
 
     # ... and calculate the residual sum of squares (RSS)
-    RSS <- sum(curve$residual^2)
+    RSS <- sum(RSScurve$residual^2)
     if (is.na(RSS) || (RSS <= 0)) RSS <- Inf
     return(RSS)}
 
   ###################### Reduced Chi² ###############################################################
-  calc_Chi2 <- function(components, curve = data, N_curves = M, detec_noise = 0, K = K){
+  calc_Chi2 <- function(components, CHIcurve = curve, N_curves = M, detec_noise = 0, K = K){
 
-    curve <- simulate_OSLcurve(components,
-                                    template.curve = curve)
+    CHIcurve <- simulate_OSLcurve(components,
+                                    template.curve = CHIcurve)
 
-    RS <- curve$residual^2 * N_curves / (abs(curve$sum) + detec_noise)
+    RS <- CHIcurve$residual^2 * N_curves / (abs(curve$sum) + detec_noise)
     Chi2 <- sum(RS) / (length(RS) - K * 2)
     return(Chi2)}
 
   ###################### Photo-Ionisation Crosssections #############################################
-  build_component_table <- function(lambda_vector, lambda_err, curve = data){
+  build_component_table <- function(lambda_vector, lambda_err, BCTcurve = curve){
 
     Y <- 1:length(lambda_vector)
 
@@ -183,7 +209,7 @@ fit_OSLcurve <- function(
     name[duplicated(name)] <- paste0(substr(name[duplicated(name)], 1, nchar(name[duplicated(name)]) - 2), ".c")
 
     # How much is the component bleached during stimulation?
-    bleaching.grade <- round(1 - exp(- lambda_vector * max(time)), digits = 4)
+    bleaching.grade <- round(1 - exp(- lambda_vector * max(BCTcurve$time)), digits = 4)
 
     # Decay with zero or negative error had no correct error estimation
     lambda_err[lambda_err <= 0] <- NA
@@ -199,7 +225,7 @@ fit_OSLcurve <- function(
     row.names(components) <- Y
 
     # Go the easy way to extract additional information from the fitting
-    components <- decompose_OSLcurve(curve = curve,
+    components <- decompose_OSLcurve(curve = BCTcurve,
                                      components = components,
                                      verbose = FALSE)
 
@@ -219,119 +245,113 @@ fit_OSLcurve <- function(
     lambda_error <- rep(0, K)
     fit <- list()
 
-    if (algorithm == "numOSL") {
-      ########################################### numOSL ##############################################
-      fit <- numOSL::decomp(cbind(time, signal),
-                            ncomp = K,
-                            plot = FALSE,
-                            weight = FALSE)
+    ########################################### DEoptim ##############################################
 
-      if (fit$message == 0){
+    # Divide the DE parameter space a the decay values of the previous cycle
+    # Additional constraints:
+    # - no negative values (decay >= 0)
+    # - no superfast decays, that the channel frequency couldn't resolve it (decay <= 3 / channel_width)
+    lower_lambda <- c(lambda, 0)
+    upper_lambda <- c(4 / channel_width, lambda)
 
-        lambda <- fit$LMpars[,3][1:K]
-        RSS <- fit$value
-        fit_sucessful <- TRUE
+    # Perform differential evolution (DE). As minimisation function, use calc_RSS()
+    DE_min <- try(DEoptim::DEoptim(
+      fn = calc_RSS,
+      lower = lower_lambda,
+      upper = upper_lambda,
+      control = DEoptim::DEoptim.control(
+        NP = K * 15,
+        strategy = 2,
+        itermax = 100,
+        c = 0.2,
+        reltol = 1e-4,
+        steptol = 10,
+        parallelType = parallel.computing,
+        packages = c("OSLdecomposition"),
+        parVar = c("curve"),
+        trace = FALSE)),
+      silent = silent)
+
+    # Did the DE algorithm break?
+    if ((attr(DE_min, "class") == "try-error") | is.null(DE_min) |
+        (length(DE_min$optim$bestmem) < length(lower_lambda))) {
+
+      if (verbose & (attr(DE_min, "class") == "try-error")) cat(DE_min[1])
+      if (verbose) cat("-> Differential evolution failed at K =", K, ". Algorithm stopped.\n")
+
+      # leave loop
+      break}
+
+    # Otherwise, extract results
+    fit[["DE"]] <- DE_min
+    lambda <- DE_min$optim$bestmem
+    RSS <- DE_min$optim$bestval
+
+    ########################################### nlsLM ##############################################
+
+    if (LM) {
+
+      # We need the signal intensities of the components as start values for the LM fitting
+      DE_components <- decompose_OSLcurve(curve,
+                                          lambda,
+                                          algorithm = "det",
+                                          error.calculation = "none",
+                                          verbose = FALSE)
+      n <- DE_components$n
+
+      ### Create fit formula ###
+      n.names <- paste0("n.",1:K)
+      lambda.names <- paste0("lambda.",1:K)
+
+      # now creat the optimization formula
+      fit.formula <- as.formula(paste0("signal ~ ",
+                                       paste(n.names," * (exp(-", lambda.names," * (time - ", channel_width,")) - exp(-", lambda.names," * time))",
+                                             collapse=" + ")))
+
+      # Name the vectors to allow the correct value allocation
+      names(n) <- n.names
+      names(lambda) <- lambda.names
+
+      ### Apply LM algorithm  ###
+      LM_fit <- try(minpack.lm::nlsLM(fit.formula,
+                                      data = curve,
+                                      start = c(n, lambda),
+                                      control = minpack.lm::nls.lm.control(
+                                        maxiter = 50 + K * 20)),
+                    silent = silent)
+
+      if (attr(LM_fit, "class") == "try-error") {
+
+        if (verbose) cat(LM_fit[1])
+        if (verbose) cat("-> Levenberg-Marquardt fitting failed at K =", K, ". Differential evolution result are used:\n")
+
       } else {
-        if (verbose) cat("Left loop. numOSL::decomp() fitting failed at K =", K, "\n")
 
-        # leave loop
-        break
-      }
-
-    } else {
-
-      ########################################### DEoptim ##############################################
-
-      # Divide the DE parameter space a the decay values of the previous cycle
-      # Additional constraints:
-      # - no negative values (decay >= 0)
-      # - no superfast decays, that the channel frequency couldn't resolve it (decay <= 3 / channel_width)
-      lower_lambda <- c(lambda, 0)
-      upper_lambda <- c(3 / channel_width, lambda)
-
-      # Perform differential evolution (DE). As minimisation function, use calc_RSS()
-      DE_min <- try(DEoptim::DEoptim(
-        fn = calc_RSS,
-        lower = lower_lambda,
-        upper = upper_lambda,
-        control = DEoptim::DEoptim.control(
-          NP = K * 15,
-          strategy = 2,
-          itermax = 100,
-          c = 0.2,
-          reltol = 1e-4,
-          steptol = 10,
-          parallelType = parallel.computing,
-          packages = c("OSLdecomposition"),
-          parVar = c("data"),
-          trace = FALSE)),
-        silent = TRUE)
-
-      # Did the DE algorithm break?
-      if (attr(DE_min, "class") == "try-error") {
-        if (verbose) cat("Differential evolution failed at K =", K, ". Algorithm stopped.\n")
-
-        # leave loop and set flag to delete unused columns
-        fit_failed <- TRUE
-        break}
-
-      # Otherwise, extract results
-      fit[["DE"]] <- DE_min
-      lambda <- DE_min$optim$bestmem
-      RSS <- DE_min$optim$bestval
-
-      ########################################### nlsLM ##############################################
-
-      if (algorithm == "DE+LM") {
-
-        # We need the signal intensities of the components as start values for the LM fitting
-        DE_components <- decompose_OSLcurve(data,
-                                            lambda,
-                                            algorithm = "det",
-                                            error.calculation = "none",
-                                            verbose = FALSE)
-        n <- DE_components$n
-
-        ### Create fit formula ###
-        n.names <- paste0("n.",1:K)
-        lambda.names <- paste0("lambda.",1:K)
-
-        # now creat the optimization formula
-        fit.formula <- as.formula(paste0("signal ~ ",
-                                         paste(n.names," * (exp(-", lambda.names," * (time - ", channel_width,")) - exp(-", lambda.names," * time))",
-                                               collapse=" + ")))
-
-        # Name the vectors to allow the correct value allocation
-        names(n) <- n.names
-        names(lambda) <- lambda.names
-
-        ### Apply LM algorithm  ###
-        LM_fit <- try(minpack.lm::nlsLM(fit.formula,
-                                        data = data,
-                                        start = c(n, lambda),
-                                        control = minpack.lm::nls.lm.control(
-                                          maxiter = 30 + K * 20)),
-                      silent = TRUE)
-
-        if (attr(LM_fit, "class") == "try-error") {
-
-          if (verbose) cat("Levenberg-Marquardt fitting failed at K =", K, ". Differential evolution result are used:\n")
-
-        } else {
-
-          fit[["LM"]] <- LM_fit
-          lambda <- summary(LM_fit)$parameters[paste0("lambda.", 1:K),"Estimate"]
-          RSS <- LM_fit$m$deviance()
-          lambda_error <- summary(LM_fit)$parameters[paste0("lambda.", 1:K),"Std. Error"]}
-      }
+        fit[["LM"]] <- LM_fit
+        lambda <- summary(LM_fit)$parameters[paste0("lambda.", 1:K),"Estimate"]
+        RSS <- LM_fit$m$deviance()
+        lambda_error <- summary(LM_fit)$parameters[paste0("lambda.", 1:K),"Std. Error"]}
     }
+
 
 
     # save the raw fitting objects
     fittings[[K]] <- fit
 
     # identify the components and build the Component table
-    component_tables[[K]] <- build_component_table(lambda, lambda_error)
+    component_table <- try(build_component_table(lambda, lambda_error),
+                                 silent = silent)
+
+    if (attr(component_table, "class") == "try-error") {
+
+      if (verbose) cat(component_table[1])
+      break
+
+    } else {
+      component_tables[[K]] <- component_table}
+
+
+
 
     # Add values to [plot_Photocrosssections()] ploting table
     plot_data <- rbind(plot_data,
@@ -343,7 +363,7 @@ fit_OSLcurve <- function(
     #x <- x + 1
 
     ### F-test ###
-    F_value <- 0.5*(RSS_old - RSS) / (RSS / (length(signal) - 2 * K))
+    F_value <- 0.5*(RSS_old - RSS) / (RSS / (length(curve$signal) - 2 * K))
     RSS_old <- RSS
 
     # Create live console output
@@ -425,14 +445,17 @@ fit_OSLcurve <- function(
         cat(paste0(paste(components$name[bleach < 0.99], collapse = ", "),
                    " were not fully bleached during stimulation and are not recommended for further dose evaluation\n"))}}
 
-     # print computing time
-    cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+   # print computing time
+   # cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
   }
 
   ######################### Return values #######################
 
   if (output.complex) {
+
+    algorithm <- "DE"
+    if (LM) algorithm <- "DE+LM"
 
     output <- list(decay.rates = components$lambda,
                    K.selected = K_selected,
@@ -453,5 +476,4 @@ fit_OSLcurve <- function(
 
   } else {
     invisible(components)}
-
 }

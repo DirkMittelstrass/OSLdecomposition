@@ -1,4 +1,4 @@
-#' CW-OSL decomposition
+#' multi-exponential CW-OSL decomposition
 #'
 #' The function calculates the CW-OSL component amplitudes by a determinant-based algorithm.
 #' It also estimates the standard deviation of the amplitudes by using the error propagation method.
@@ -31,25 +31,25 @@
 #' * autumn 2013   : added empiric error estimation, shown in germanLED Freiberg 2013
 #' * 2014-11-??, SK: formated into Rluminecence package standard
 #' * 2014-11-07, DM: Binomial error propagation added
-#' * 2018-05-01, DM: added interval time arguments and many little tweaks
-#' * 2018-05-04, DM: added residuals for n values (necessary for slow component dosimetry)
-#' * 2018-06-22, DM: added deconvolution of data sets with 1 or 2 components
-#' * 2018-06-22, DM: added negative.values.to.zero and set it on TRUE as default (on request of C. Schmidt)
+#' * 2018-05-04, DM: added residuals for n values (necessary for slow component dosimetry) and many little tweaks
+#' * 2018-06-22, DM: added decomposition of data sets with just 1 or 2 components
+#' * 2018-06-22, DM: added negative.values.to.zero and set it on TRUE as default (on request of C. Schmidt) (later removed)
 #' * 2018-07-05, DM: overworked error estimation; replaced binomial with poisson error approach; added auto-switch to poisson if integral length = 1; integrated background.noise into error
 #' * 2019-03-29, DM: Rewritten function for several purposes: 1. working now with any number of components  2. shorter and more elegant code 3. data format more suitable for markdown/shiny applications.
-#' * 2019-09-09, DM: Added anticorrelating covariance terms into error estimation
+#' * 2019-09-09, DM: Added anticorrelating covariance terms into error estimation (later removed)
 #' * 2019-09-25, DM: Merged function with decompose_OSLalternatively() and added algorithm argument
-#' * 2019-09-25, DM: Deleted unnecessary stuff (negative.values.to.zero, offset, anticorrelation)
+#' * 2019-09-25, DM: Deleted unnecessary functions (negative.values.to.zero, offset, anticorrelation)
 #' * 2019-10-02, DM: Added optional background fitting
 #' * 2020-04-06, DM: Added 'initial.signal' column in output data.frame; cleaned print output
 #' * 2020-07-20, DM: Added algorithm for fast interval definition based on logarithmic means; More input data checks
 #
 #' @section ToDo:
 #' * Update documentation (example, notes)
-#' * Substitute Cramers rule determinant equation with solve() to increase performance
-#' * In some very rare cases, negative value for n.error are returned. Why?
+#' * Replace Cramers rule equations with 'solve()' to increase performance
+#' * In some very rare cases, negative values for n.error are returned. Why?
+#' * Test and expand interval determination algorithm in case of very few (N ~ K) data points
 #'
-#' @section Last changed: 2020-07-20
+#' @section Last changed: 2020-08-17
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -58,9 +58,7 @@
 #'
 #' @references
 #'
-#' @keywords OSL CWOSL CW-OSL deconvolution decomposition component components
-#'
-#' @md
+#' @return
 #' @export
 #'
 #' @examples
@@ -76,11 +74,11 @@ decompose_OSLcurve <- function(
 
   ########## Input checks ###########
 
-  if(is(curve, "RLum.Data.Curve") == FALSE & is(curve, "data.frame") == FALSE & is(curve, "matrix") == FALSE){
+  if(!(is(curve, "RLum.Data.Curve") | is(curve, "data.frame") | is(curve, "matrix"))){
    stop("[decompose_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")
   }
 
-  if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(get_RLum(curve))
+  if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(Luminescence::get_RLum(curve))
 
   if (!("time" %in% colnames(curve)) ||
       !("signal" %in% colnames(curve))) {

@@ -1,7 +1,7 @@
 Package: OSLdecomposition
 Type: Package
 Title: Identify and separate CW-OSL signal components
-Version: 0.8.11
+Version: 0.8.17
 Authors@R: person("Dirk", "Mittelstrass", email = "dirk.mittelstrass@luminescence.de", role = c("aut", "cre"))
 Description: Decomposition of continous wave optically stimulated luminescence (CW-OSL) measurements into its signal components for dosimetry purposes
 Depends: R (>= 3.6.3)
