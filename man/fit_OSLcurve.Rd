@@ -11,7 +11,8 @@ fit_OSLcurve(
   stimulation.intensity = 30,
   stimulation.wavelength = 470,
   verbose = TRUE,
-  output.complex = FALSE
+  output.complex = FALSE,
+  parallel.computing = FALSE
 )
 }
 \arguments{
@@ -50,7 +51,7 @@ measurements for dating and dosimetry applications.
 }
 
 \section{Last changed}{
- 2020-08-17
+ 2020-08-18
 }
 
 \examples{

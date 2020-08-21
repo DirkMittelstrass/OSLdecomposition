@@ -32,7 +32,7 @@
 #' * Introduce 'fit_OSLcurve.control' which forwards algorith parameters to DEoptim.control and nls.lm.control
 #' * Enable optional weighted fitting and give out reduced Chi²
 #'
-#' @section Last changed: 2020-08-17
+#' @section Last changed: 2020-08-18
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -63,12 +63,13 @@ fit_OSLcurve <- function(
   stimulation.intensity = 30,
   stimulation.wavelength = 470,
   verbose = TRUE,
-  output.complex = FALSE
+  output.complex = FALSE,
+  parallel.computing = FALSE
 ){
 
   # Internal parameter (for later use in fit_OSLcurve.control)
-  parallel.computing <- FALSE
-  silent <- FALSE
+  #parallel.computing <- TRUE
+  silent <- TRUE
   LM <- TRUE
 
   ################### Prepare input data ###########################
@@ -273,10 +274,10 @@ fit_OSLcurve <- function(
       silent = silent)
 
     # Did the DE algorithm break?
-    if ((attr(DE_min, "class") == "try-error") | is.null(DE_min) |
+    if ((is(DE_min)[1] == "try-error") | is.null(DE_min) |
         (length(DE_min$optim$bestmem) < length(lower_lambda))) {
 
-      if (verbose & (attr(DE_min, "class") == "try-error")) cat(DE_min[1])
+      if (verbose & (is(DE_min)[1] == "try-error")) cat(DE_min[1])
       if (verbose) cat("-> Differential evolution failed at K =", K, ". Algorithm stopped.\n")
 
       # leave loop
@@ -320,18 +321,17 @@ fit_OSLcurve <- function(
                                         maxiter = 50 + K * 20)),
                     silent = silent)
 
-      if (attr(LM_fit, "class") == "try-error") {
+      if (is(LM_fit)[1] == "try-error") {
 
-        if (verbose) cat(LM_fit[1])
-        if (verbose) cat("-> Levenberg-Marquardt fitting failed at K =", K, ". Differential evolution result are used:\n")
+        #if (verbose) cat(LM_fit[1])
+        if (verbose) cat("Levenberg-Marquardt fitting failed at K =", K, ". Differential evolution result:\n")
 
       } else {
 
         fit[["LM"]] <- LM_fit
         lambda <- summary(LM_fit)$parameters[paste0("lambda.", 1:K),"Estimate"]
         RSS <- LM_fit$m$deviance()
-        lambda_error <- summary(LM_fit)$parameters[paste0("lambda.", 1:K),"Std. Error"]}
-    }
+        lambda_error <- summary(LM_fit)$parameters[paste0("lambda.", 1:K),"Std. Error"]}}
 
 
 
@@ -342,7 +342,7 @@ fit_OSLcurve <- function(
     component_table <- try(build_component_table(lambda, lambda_error),
                                  silent = silent)
 
-    if (attr(component_table, "class") == "try-error") {
+    if (is(component_table)[1] == "try-error") {
 
       if (verbose) cat(component_table[1])
       break
@@ -395,7 +395,7 @@ fit_OSLcurve <- function(
 
   } #---------------------------------------- End cycle -----------------------------------------------
 
-  if ((K_selected == 0)||(nrow(F_table_print) == 0)) stop("[fit_OSLcurve] No sucessful fit")
+  if ((K_selected == 0) | (nrow(F_table_print) == 0)) stop("[fit_OSLcurve] No sucessful fit")
 
   # How long did the algorithm need?
   computing_time <- as.numeric(difftime(Sys.time(), computing_time, units = "s"))
@@ -464,6 +464,7 @@ fit_OSLcurve <- function(
                    info.text = info_text,
                    component.tables = component_tables,
                    curve = curve,
+                   components = components,
                    fit.results = fittings,
                    plot.data = plot_data,
                    parameters = list(K.max = K.max,

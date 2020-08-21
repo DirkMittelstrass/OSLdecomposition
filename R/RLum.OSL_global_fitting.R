@@ -1,6 +1,6 @@
 #' Identifies CW-OSL signal components in RLum.Analysis data sets
 #'
-#' @last_changed 2020-05-24
+#' @last_changed 2020-08-19
 #'
 #' @param object
 #' @param max_components
@@ -15,7 +15,7 @@
 #' @examples
 
 RLum.OSL_global_fitting <- function(object,
-                     max_components = 3,
+                     max_components = 5,
                      record_type = "OSL",
                      F_threshold = 150,
                      stimulation_intensity = 35,
@@ -30,8 +30,7 @@ RLum.OSL_global_fitting <- function(object,
   # - add file directory argument
   # - add background fitting functionality
 
-  library(Luminescence)
-
+  # Get name of the input object
   object_name <- deparse(substitute(object))
 
   # define new list object to safely ignore incompatible list elements
@@ -90,9 +89,7 @@ RLum.OSL_global_fitting <- function(object,
                          F.threshold = F_threshold,
                          stimulation.intensity = stimulation_intensity,
                          stimulation.wavelength = stimulation_wavelength,
-                         background.fitting = FALSE,
                          verbose = verbose,
-                         output.plot = FALSE,
                          output.complex = TRUE)
 
   # Add 'record_type' to the argument list
@@ -104,7 +101,6 @@ RLum.OSL_global_fitting <- function(object,
     if(("rmarkdown" %in% rownames(installed.packages())) && ("kableExtra" %in% rownames(installed.packages()))) {
 
       if(verbose) cat("STEP 1.3 ----- Create report -----\n")
-      library(rmarkdown)
 
       time.start <- Sys.time()
 
