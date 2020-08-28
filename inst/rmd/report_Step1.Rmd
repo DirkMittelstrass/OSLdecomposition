@@ -206,7 +206,7 @@ Here, *N* is the number data points (channels) of the global average curve and *
 
 ```{r step1_F-test_table}
 
-F_table <- fit_data$F.test
+F_table <- fit_data$F.test.print
 row_index <- c(1:nrow(F_table))
 F_table <- cbind(data.frame(K = row_index), F_table)
 

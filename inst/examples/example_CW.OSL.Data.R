@@ -1,4 +1,4 @@
-# the following three lines load necessary functions which will be integrated in Luminescence in the future 
+# the following three lines load necessary functions which will be integrated in Luminescence in the future
 .LuminescenceEnv <- new.env(parent = emptyenv())
 source(system.file("beta", "analyse_SAR.CWOSL_beta.R", package = "OSLdecomposition"))
 source(system.file("beta", "calc_OSLLxTxDecomposed.R", package = "OSLdecomposition"))
@@ -28,7 +28,7 @@ OSLdata_fitted <- RLum.OSL_global_fitting(OSLdata_corrected,
 
 # In the second step, a very robust algorithm uses the decay constants to decompose
 # every CW-OSL record into its signal components, see OSLdata_decomposed[[...]]@records[[...]]@info[["COMPONENTS"]]
-OSLdata_decomposed <- RLum.OSL_decomposition(OSLdata_fitted)
+OSLdata_decomposed <- RLum.OSL_decomposition(OSLdata_fitted, K = 3)
 
 # The De's for specific signal components can be calculated without the need of
 # defining integration intervals
@@ -40,3 +40,7 @@ De_late_background <- analyse_SAR.CWOSL_beta(OSLdata, 1, 14, 800, 1000, plot = F
 plot_KDE(list(De_late_background,   # black
               De_fast_component,    # red
               De_medium_component)) # green
+
+plot_RadialPlot(list(De_late_background,    # black
+                     De_fast_component,     # red
+                     De_medium_component))  # green

@@ -1,22 +1,28 @@
 #' Decomposes CW-OSL curves in RLum.Analysis data sets into its signal components
 #'
-#' @last_changed 2020-05-24
+#' @last_changed 2020-08-07
 #'
 #' @param object
+#' Object returned by [RLum.OSL_global_fitting()]
+#'
+#' @param K
+#' Number of components. If not defined, 'K.selected' from the object returned by [RLum.OSL_global_fitting()] is used
+#'
 #' @param record_type
 #' @param decay_rates
-#' If not defined, the decay rates are taken from object$OSL_decomponents$case.tables[[object$OSL_decomponents$K.selected]].
-#' Therefore, the number of components can be changed by altering object$OSL_decomponents$K.selected
+#' (optional) user-defined component decay rates
 #'
 #' @param error_calculation
 #' @param report
 #' @param verbose
+
 #'
 #' @return
 #' @examples
 
 RLum.OSL_decomposition <- function(
   object,
+  K = NA,
   record_type = "OSL",
   decay_rates = NULL,
   error_calculation = "empiric",   # "poisson", "empiric", "nls", numeric value
@@ -28,12 +34,11 @@ RLum.OSL_decomposition <- function(
   # - collect warnings from [decompose_OSLcurve()] and others and display them bundled with record-index at the end
 
 
-  ### currently HIDDEN PARAMETERS ###
-  algorithm <- "det+nls" # "det", "nls", "det+nls"
+  # hidden parameters
   background_fitting <- FALSE
+  algorithm <- "det+nls" # "det", "nls", "det+nls"
 
-  library(Luminescence)
-
+  # get name of the input object
   object_name <- deparse(substitute(object))
 
   # define new list object to safely ignore incompatible list elements
@@ -80,7 +85,10 @@ RLum.OSL_decomposition <- function(
   if (is.null(decay_rates)) {
 
     if ("OSL_COMPONENTS" %in% names(data_set_overhang)) {
-      component_table <- data_set_overhang$OSL_COMPONENTS$case.tables[[data_set_overhang$OSL_COMPONENTS$K.selected]]
+
+      if (is.na(K)) K <- data_set_overhang$OSL_COMPONENTS$K.selected
+
+      component_table <- data_set_overhang$OSL_COMPONENTS$component.tables[[K]]
       global_curve <- data_set_overhang$OSL_COMPONENTS$curve
 
     } else {
@@ -120,37 +128,28 @@ RLum.OSL_decomposition <- function(
   ################################ STEP 2.1: Integration intervals ################################
   if (verbose) cat("STEP 2.1 ----- Define signal bin intervals -----\n")
 
-  # Check if the integration intervals are given
-  if (!("t.start" %in% colnames(component_table)) ||
-      !("t.end" %in% colnames(component_table)) ||
-      !("ch.start" %in% colnames(component_table)) ||
-      !("ch.end" %in% colnames(component_table))) {
+  time.start <- Sys.time()
 
+  if (is.null(global_curve)) {
+    cat(record_type, "curve template necessary but not given. Obtain and use global average curve:\n[sum_OSLcurves()]: ")
+    global_curve <- sum_OSLcurves(data_set,
+                                  record_type = record_type,
+                                  output.plot = FALSE,
+                                  verbose = verbose)
+
+    if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
     time.start <- Sys.time()
-
-    if (is.null(global_curve)) {
-      cat(record_type, "curve template necessary but not given. Obtain and use global average curve:\n[sum_OSLcurves()]: ")
-      global_curve <- sum_OSLcurves(data_set,
-                                    record_type = record_type,
-                                    output.plot = FALSE,
-                                    verbose = verbose)
-
-      if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
-      time.start <- Sys.time()
-    }
-
-    if (verbose) cat("Iterate minimum denominator determinant:\n[calc_OSLintervals()]: ")
-    component_table <- calc_OSLintervals(component_table,
-                                         global_curve,
-                                         background.fitting = background_fitting,
-                                         verbose = verbose)
-
-    if(verbose)  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-
-  } else {
-
-    if(verbose) cat("Integration intervals are already given. Step skipped\n\n")
   }
+
+  if (verbose) cat("Iterate minimum denominator determinant:\n[optimise_OSLintervals()]: ")
+  component_table <- optimise_OSLintervals(component_table,
+                                           global_curve,
+                                           background.fitting = background_fitting,
+                                           verbose = verbose)
+
+  if(verbose)  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+
+
 
   ################################ STEP 2.2: Decomposition  ################################
 
@@ -225,7 +224,6 @@ RLum.OSL_decomposition <- function(
 
       if(verbose) cat("STEP 2.3 ----- Create report -----\n")
       if(verbose) cat("This process can take a few minutes...\n")
-      library(rmarkdown)
 
       time.start <- Sys.time()
 

@@ -68,15 +68,24 @@ NA
 }
 
 \examples{
-test.components <- data.frame(name = c("fast","medium","slow"), lambda = c(1.5,0.5,0.1), n = c(1000,1000,10000))
-test.curve <- simulate_OSLcurve(test.components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 20)
-plot_OSLcurve(test.curve, test.components, display = "detailed")
+
+# Set some reasonable parameter for a weak quartz CW-OSL decay
+components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.1), n = c(1000, 1000, 10000))
+
+# Simulate the CW-OSL curve and add some signal noise
+curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
+
+# Display the simulated curve
+plot_OSLcurve(curve, components)
 
 }
 \references{
 Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components, Radiation Measurements, 47(9), 752–758, doi:10.1016/j.radmeas.2012.01.013, 2012.
 
 Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves, Radiation Measurements, 32(2), 141–145, doi:10.1016/S1350-4487(99)00247-4, 2000.
+
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
 }
 \author{
 Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}

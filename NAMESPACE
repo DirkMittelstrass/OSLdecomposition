@@ -1,5 +1,5 @@
 
-export(calc_OSLintervals)
+export(optimise_OSLintervals)
 export(decompose_OSLcurve)
 export(fit_OSLcurve)
 export(plot_OSLcurve)

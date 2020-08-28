@@ -158,7 +158,7 @@ plot_PhotoCrosssections <- function(
 
   # rotate diagramm and delete unnecessary visual elements
   p <- p + coord_flip() +
-    ylab(expression("photoionisation cross-section (cm²)")) +
+    ylab(expression("photoionisation cross-section (cm^2)")) +
     theme(panel.border = element_blank(),
           axis.title.y = element_blank(),
           axis.text = element_text(colour = "black", size = 10),

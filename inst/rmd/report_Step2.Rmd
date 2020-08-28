@@ -21,6 +21,10 @@ Report of the [Mittelstraß *et al.* (2019)](#disclaimer) Step 2 analysis of the
 
 Last_changed <-"2020-05-21" 
 
+# ToDo's:
+# * Bug: The barplots sort the columns alphabetically
+
+
 ### Planned further features:
 #
 # * Change tab headers #{{j}} to record$sequence based nummeration

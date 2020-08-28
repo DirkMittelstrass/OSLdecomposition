@@ -41,13 +41,15 @@
 #' [plot_PhotoCrosssections], [minpack.lm::nlsLM], [DEoptim::DEoptim]
 #'
 #' @references
+#' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
 #'
 #' @return
 #'
 #' @examples
 #'
 #' # Create curve with two components
-#' curve <- cbind(c(1, 2, 3, 4, 5, 6, 7, 8, 9), c(42, 20, 12, 7, 5, 4, 3.1, 2.4, 2))
+#' curve <- cbind(X = c(1, 2, 3, 4, 5, 6, 7, 8, 9), Y = c(42, 20, 12, 7, 5, 4, 3.1, 2.4, 2))
 #'
 #' # Perform fitting
 #' components <- fit_OSLcurve(curve, F.threshold = 3)
@@ -68,8 +70,7 @@ fit_OSLcurve <- function(
 ){
 
   # Internal parameter (for later use in fit_OSLcurve.control)
-  #parallel.computing <- TRUE
-  silent <- TRUE
+  silent <- TRUE # don't display warnings or not-fatal errors
   LM <- TRUE
 
   ################### Prepare input data ###########################
@@ -90,7 +91,7 @@ fit_OSLcurve <- function(
 
   if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(Luminescence::get_RLum(curve))
 
-  if (!("time" %in% colnames(curve)) ||
+  if (!("time" %in% colnames(curve)) |
       !("signal" %in% colnames(curve))) {
     curve <- data.frame(time = curve[,1],
                         signal = curve[,2])}
@@ -251,9 +252,9 @@ fit_OSLcurve <- function(
     # Divide the DE parameter space a the decay values of the previous cycle
     # Additional constraints:
     # - no negative values (decay >= 0)
-    # - no superfast decays, that the channel frequency couldn't resolve it (decay <= 3 / channel_width)
+    # - no superfast decays, that the channel frequency couldn't resolve it (decay <= 2 / channel_width)
     lower_lambda <- c(lambda, 0)
-    upper_lambda <- c(4 / channel_width, lambda)
+    upper_lambda <- c(2 / channel_width, lambda)
 
     # Perform differential evolution (DE). As minimisation function, use calc_RSS()
     DE_min <- try(DEoptim::DEoptim(
@@ -274,10 +275,9 @@ fit_OSLcurve <- function(
       silent = silent)
 
     # Did the DE algorithm break?
-    if ((is(DE_min)[1] == "try-error") | is.null(DE_min) |
-        (length(DE_min$optim$bestmem) < length(lower_lambda))) {
+    if (is(DE_min)[1] == "try-error"){
 
-      if (verbose & (is(DE_min)[1] == "try-error")) cat(DE_min[1])
+      #if (verbose & (is(DE_min)[1] == "try-error")) cat(DE_min[1])
       if (verbose) cat("-> Differential evolution failed at K =", K, ". Algorithm stopped.\n")
 
       # leave loop

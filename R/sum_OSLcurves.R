@@ -18,6 +18,11 @@
 #'
 #' @param output.plot [logical] (*with default*):
 #' returns a plot of the created superposition curve
+#' @param plot.first
+#' @param plot.global
+#' @param verbose
+#' @param title
+#' @param return.plot
 #'
 #' @return
 #' A [data.frame] is returned, containing the created mean curve
@@ -37,16 +42,18 @@
 #' @section Last changed: 2020-04-20
 #'
 #' @author
-#' Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@@luminescence.de}
+#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
 #'
-#' @seealso [calc_CWOSLcomponents], [analyse_SAR.CWOSL.deconvolved], [calc_deconvolution.intervals]
+#' @seealso [fit_OSLcurve], [RLum.OSL_correction], [RLum.OSL_global_fitting]
 #'
 #' @references
-#' Dirk Mittelstrass, Christoph Schmidt, Sebastian Kreutzer, ... .*in preperation*. Algebraic CW-OSL
-#' signal component decomposition of quartz and its use for dose evaluation within the R luminescence package
+#' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
 #'
-#' @md
 #' @export
+#'
+#' @examples
+#'
 
 sum_OSLcurves <- function(
   object,

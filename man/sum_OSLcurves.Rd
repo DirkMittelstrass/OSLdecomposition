@@ -18,23 +18,25 @@ sum_OSLcurves(
 )
 }
 \arguments{
-\item{object}{\linkS4class{RLum.Analysis} or \href{RLum.Analysis}{list} (\strong{required}):
+\item{object}{[RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
 data set of one or multiple aliquots containing containing luminescence measurements}
 
-\item{record_type}{\link{character} (\emph{with default}):
+\item{record_type}{[character] (*with default*):
 record type ("OSL","TL","IRSL") which shall be summed up}
 
-\item{aliquot_selection}{\link{c} (\emph{optional}):
-vector specifying which items (aliquots) of a list of \linkS4class{RLum.Analysis} objects shall be combined}
+\item{aliquot_selection}{[c] (*optional*):
+vector specifying which items (aliquots) of a list of [RLum.Analysis-class] objects shall be combined}
 
-\item{offset_value}{\link{numeric} (\emph{with default}):
+\item{offset_value}{[numeric] (*with default*):
 signal offset (background) which will be substracted from each record before combining}
 
-\item{output.plot}{\link{logical} (\emph{with default}):
+\item{output.plot}{[logical] (*with default*):
 returns a plot of the created superposition curve}
+
+\item{return.plot}{}
 }
 \value{
-A \link{data.frame} is returned, containing the created mean curve
+A [data.frame] is returned, containing the created mean curve
 }
 \description{
 The function adds up RLum records of one specific type
@@ -43,35 +45,34 @@ at sets of records with low signal-to-noise ratio
 }
 \section{Changelog}{
 
-\itemize{
-\item 2018-05-23, DM: first version
-\item 2019-03-15, DM: rewritten for ggplots and new data format, renamend into sum_OSLcurves
-}
+* 2018-05-23, DM: first version
+* 2019-03-15, DM: rewritten for ggplots and new data format, renamend into sum_OSLcurves
 }
 
 \section{ToDo}{
 
-\itemize{
-\item add more options for record selection (e.g. dose)
-\item interpolate x-axis if it doesn't match
-\item accept data.frames as input objects
-\item test if first value is zero
-\item add legend to plot
-\item add info box with number of OSL curves to plot
-}
+* add more options for record selection (e.g. dose)
+* interpolate x-axis if it doesn't match
+* accept data.frames as input objects
+* test if first value is zero
+* add legend to plot
+* add info box with number of OSL curves to plot
 }
 
 \section{Last changed}{
  2020-04-20
 }
 
+\examples{
+
+}
 \references{
-Dirk Mittelstrass, Christoph Schmidt, Sebastian Kreutzer, ... .\emph{in preperation}. Algebraic CW-OSL
-signal component decomposition of quartz and its use for dose evaluation within the R luminescence package
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
 }
 \seealso{
-\link{calc_CWOSLcomponents}, \link{analyse_SAR.CWOSL.deconvolved}, \link{calc_deconvolution.intervals}
+[fit_OSLcurve], [RLum.OSL_correction], [RLum.OSL_global_fitting]
 }
 \author{
-Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
 }

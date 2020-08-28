@@ -1,4 +1,9 @@
-#' Builds a CW-OSL curve from the parameters of its components or adds component columns to an existing curve
+#' Calculates component decay signals and can simulate CW-OSL curves
+#'
+#' The function builds a CW-OSL curve from the parameters of its components
+#' or adds component columns to an existing curve. This is used to calculate residual signals in
+#' [fit_OSLcurve] and [decompose_OSLcurve], display component curves with [plot_OSLcurve] and was used to
+#' perform simulations.
 #'
 #' @param components [data.frame] (**required**):
 #' Table with the component parameters. It needs the rows "lambda" and "n" containing numeric values
@@ -27,31 +32,40 @@
 #' @return
 #'
 #' **CW-OSL curve**
-#' A [data.frame] with the X = time and Y = signal
+#' A [data.frame] with X = $time and Y = $signal
 #'
 #' @section Changelog:
-#' * 2019-03-04, DM: combining old functions (simulate_...) from post-bachelor-time (2014) to this one
-#' * 2019-03-06, DM: works now well with plot_OSLcurve
+#' * 2019-03-04, DM: combined old code fragments from 2014 to this function
+#' * 2019-03-06, DM: works now well with [plot_OSLcurve]
 #' * 2019-10-02, DM: added background component
 #' * 2020-07-24, DM: value rounding when curve simulated now optional; little tweaks to increase performance
 #'
 #' @section ToDo:
 #' * Check literature for exact noise model
 #' * Add not-first-order case
-#' * correct and expand Roxygen help
-#' * Check handling of background component
+#' * expand Roxygen comments
 #'
-#' @section Last changed: 2020-07-24
+#' @section Last changed: 2020-08-27
 #'
 #' @author
-#' Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@@luminescence.de}
+#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
+#'
+#' @references
+#' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
 #'
 #' @export
 #'
 #' @examples
-#' components <- data.frame(name = c("fast","medium","slow"), lambda = c(1.5,0.5,0.1), n = c(1000,1000,10000))
-#' curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 20)
-#' plot(curve)
+#'
+#' # Set some reasonable parameter for a weak quartz CW-OSL decay
+#' components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.1), n = c(1000, 1000, 10000))
+#'
+#' # Simulate the CW-OSL curve and add some signal noise
+#' curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
+#'
+#' # Display the simulated curve
+#' plot_OSLcurve(curve, components)
 #'
 simulate_OSLcurve <- function(components,
                               template.curve = NULL,
@@ -82,8 +96,7 @@ simulate_OSLcurve <- function(components,
   } else  {
 
     # build x-axis
-    time <- c(1:channel.number)*channel.width
-  }
+    time <- c(1:channel.number)*channel.width}
 
   # Create another time vector, which includes zero. You will see why
   #time0 <- c(0, time[1:(length(time)-1)])
@@ -115,8 +128,7 @@ simulate_OSLcurve <- function(components,
         component$A <- rep(0, length(time))
       } else {
 
-        component$A <- rep(n * channel.width, length(time))
-      }
+        component$A <- rep(n * channel.width, length(time))}
 
 
     } else {
@@ -132,9 +144,7 @@ simulate_OSLcurve <- function(components,
     data$sum <- data$sum + component$A
 
     colnames(component) <- components[i,]$name
-    data <- cbind(data, component)
-
-  }
+    data <- cbind(data, component)}
 
   #+++ non-first order kinetics +++
 
@@ -161,28 +171,20 @@ simulate_OSLcurve <- function(components,
     signal <- data$sum
 
     if (add.poisson.noise == TRUE){
-      for (i in c(1:length(signal))){
-        signal[i] <- rpois(1, signal[i])
-      }
-    }
+      for (i in c(1:length(signal))) signal[i] <- rpois(1, signal[i])}
 
     if ((add.gaussian.noise > 0) || (add.background != 0)) {
 
       stddev <- sqrt(channel.width) * add.gaussian.noise
       offset <- add.background * channel.width
 
-      signal <- signal + rnorm(length(signal), mean = offset, sd = stddev)
-    }
+      signal <- signal + rnorm(length(signal), mean = offset, sd = stddev)}
 
-
-    if (round.values) {
-      signal <- round(signal)
-    }
+    if (round.values) signal <- round(signal)
 
     data$signal <- signal
-  }
 
-  ##============================================================================##
+  } ##============================================================================##
 
   ### Build residual curve
   data$residual <- data$signal - data$sum

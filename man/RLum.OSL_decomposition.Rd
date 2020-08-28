@@ -6,6 +6,7 @@
 \usage{
 RLum.OSL_decomposition(
   object,
+  K = NA,
   record_type = "OSL",
   decay_rates = NULL,
   error_calculation = "empiric",
@@ -14,8 +15,11 @@ RLum.OSL_decomposition(
 )
 }
 \arguments{
-\item{decay_rates}{If not defined, the decay rates are taken from object$OSL_decomponents$case.tables[[object$OSL_decomponents$K.selected]].
-Therefore, the number of components can be changed by altering object$OSL_decomponents$K.selected}
+\item{object}{Object returned by [RLum.OSL_global_fitting()]}
+
+\item{K}{Number of components. If not defined, 'K.selected' from the object returned by [RLum.OSL_global_fitting()] is used}
+
+\item{decay_rates}{(optional) user-defined component decay rates}
 
 \item{verbose}{}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate_OSLcurve.R
 \name{simulate_OSLcurve}
 \alias{simulate_OSLcurve}
-\title{Builds a CW-OSL curve from the parameters of its components or adds component columns to an existing curve}
+\title{Calculates component decay signals and can simulate CW-OSL curves}
 \usage{
 simulate_OSLcurve(
   components,
@@ -44,15 +44,18 @@ background caused signal offset in **cts/s**}
 }
 \value{
 **CW-OSL curve**
-A [data.frame] with the X = time and Y = signal
+A [data.frame] with X = $time and Y = $signal
 }
 \description{
-Builds a CW-OSL curve from the parameters of its components or adds component columns to an existing curve
+The function builds a CW-OSL curve from the parameters of its components
+or adds component columns to an existing curve. This is used to calculate residual signals in
+[fit_OSLcurve] and [decompose_OSLcurve], display component curves with [plot_OSLcurve] and was used to
+perform simulations.
 }
 \section{Changelog}{
 
-* 2019-03-04, DM: combining old functions (simulate_...) from post-bachelor-time (2014) to this one
-* 2019-03-06, DM: works now well with plot_OSLcurve
+* 2019-03-04, DM: combined old code fragments from 2014 to this function
+* 2019-03-06, DM: works now well with [plot_OSLcurve]
 * 2019-10-02, DM: added background component
 * 2020-07-24, DM: value rounding when curve simulated now optional; little tweaks to increase performance
 }
@@ -61,20 +64,29 @@ Builds a CW-OSL curve from the parameters of its components or adds component co
 
 * Check literature for exact noise model
 * Add not-first-order case
-* correct and expand Roxygen help
-* Check handling of background component
+* expand Roxygen comments
 }
 
 \section{Last changed}{
- 2020-07-24
+ 2020-08-27
 }
 
 \examples{
-components <- data.frame(name = c("fast","medium","slow"), lambda = c(1.5,0.5,0.1), n = c(1000,1000,10000))
-curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 20)
-plot(curve)
+
+# Set some reasonable parameter for a weak quartz CW-OSL decay
+components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.1), n = c(1000, 1000, 10000))
+
+# Simulate the CW-OSL curve and add some signal noise
+curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
+
+# Display the simulated curve
+plot_OSLcurve(curve, components)
 
 }
+\references{
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+}
 \author{
-Dirk Mittelstrass, TU Dresden (Germany), \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
 }

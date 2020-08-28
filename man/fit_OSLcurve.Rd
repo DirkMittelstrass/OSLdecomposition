@@ -57,7 +57,7 @@ measurements for dating and dosimetry applications.
 \examples{
 
 # Create curve with two components
-curve <- cbind(c(1, 2, 3, 4, 5, 6, 7, 8, 9), c(42, 20, 12, 7, 5, 4, 3.1, 2.4, 2))
+curve <- cbind(X = c(1, 2, 3, 4, 5, 6, 7, 8, 9), Y = c(42, 20, 12, 7, 5, 4, 3.1, 2.4, 2))
 
 # Perform fitting
 components <- fit_OSLcurve(curve, F.threshold = 3)
@@ -67,7 +67,8 @@ plot_OSLcurve(curve, components)
 
 }
 \references{
-
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
 }
 \seealso{
 [RLum.OSL_decomposition], [sum_OSLcurves], [decompose_OSLcurve], [plot_OSLcurve],
