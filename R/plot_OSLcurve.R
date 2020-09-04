@@ -1,62 +1,50 @@
-#' Advanced plot function for decomposed OSL curves and component data
+#' Advanced plot function for CW-OSL curves and CW-OSL signal components
 #'
 #' @param curve
 #' @param components
 #' @param display
 #' Choices: "detailed" (default), "components", "raw" ,"compare_lin", "compare_log", "lin-log"
 #'
-#' @param zoom
-#' @param algorithm
-#' @param hide_plot
+#' @param show.intervals
+#' Draws vertical lines into the residual plot showing the signal bin intervals for Step 2 CW-OSL decomposition
+#'
+#' @param title
+#' Plot title
+#'
+#' @param hide.plot
 #' If true, plot is not drawn but can be catched by 'A <- plot_OSLcurve(...)'
 #' and displayed later by 'grid.arrange(A)'
 #'
-#' @param title
+#' @param filename
+#' Filename or path to save the diagram as file. If just a name is chosen, the file is
+#' saved in the working directory. The graphic type is chosen according to the file ending.
+#' Allowed are .pdf, .eps, .svg (vector graphics) and .jpg, .png, .bmp (pixel graphics)
+#' and more, see [ggplot2::ggsave]
 #'
 #' @section Notes:
 #'
-#' pseudoLM-OSL curves are created using the transformation described in Bulur (2000):
-#'
-#' $$ I_{LM}(t') = \frac{t'}{P}I_{CW}(t)  $$
-#' $$ t' = \sqrt{2Pt} $$
-#'
-#' The stimulation ramp duration $P$ is double the continous stimulation duration $t_{CW}$:
-#'
-#' $$ P = 2t_{CW}$$
-#'
-#' See Bos and Wallinga (2012) for a detailed explanation and discussion
+#' pseudoLM-OSL curves are created using the transformation described by Bulur (2000).
+#' The stimulation ramp duration is chosen double the CW-OSL duration.
+#' See also Bos and Wallinga (2012) for a detailed explanation and discussion
 #'
 #' @references
 #' Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components, Radiation Measurements, 47(9), 752–758, doi:10.1016/j.radmeas.2012.01.013, 2012.
 #'
 #' Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves, Radiation Measurements, 32(2), 141–145, doi:10.1016/S1350-4487(99)00247-4, 2000.
 #'
-#' @section Changelog:
-#' * 2019-03-06, DM: First reasonable version
-#' * 2019-04-03, DM: Rebuild whole function
-#' * 2019-05-03, DM: Checks now curve format; added x-axis zoom
-#' * 2019-10-02, DM: Added background component support and some little tweaks
-#' * 2020-04-22, DM: Enabled hidden output
-#' * 2020-06-19, DM: Added pseudoLM-OSL diagrams
-#' * 2020-08-04, DM: Added subtitles and RSS info
 #'
-#' @section ToDo:
-#' * REFACTORIZE CODE
-#' * ! Put the ggplot building (or at least its style options) in its own sub-function !
-#' * When drawing components without curve, skip residual curve
-#' * Display fitting formula
-#' * Cut data set while zooming to improve performance
-#' * Debug residual curve zoom
-#' * Get rid of libraries 'scale' and 'ggpubr' to decrease dependencies
-#' * Change from library("XXX") to XXX::
-#'
-#'
-#' @section Last changed. 2020-08-04
+#' @section Last changed. 2020-09-03
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
 #'
 #' @references
+#' Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components,
+#' Radiation Measurements, 47(9), 752–758, doi:10.1016/j.radmeas.2012.01.013, 2012.
+#'
+#' Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves,
+#' Radiation Measurements, 32(2), 141–145, doi:10.1016/S1350-4487(99)00247-4, 2000.
+#'
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
 #' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
 #'
@@ -65,7 +53,7 @@
 #' @examples
 #'
 #' # Set some reasonable parameter for a weak quartz CW-OSL decay
-#' components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.1), n = c(1000, 1000, 10000))
+#' components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.02), n = c(1000, 1000, 10000))
 #'
 #' # Simulate the CW-OSL curve and add some signal noise
 #' curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
@@ -73,15 +61,37 @@
 #' # Display the simulated curve
 #' plot_OSLcurve(curve, components)
 #'
+#' # Decompose the simulated curve with some slightly wrong parameters
+#'
 plot_OSLcurve <- function(curve = NULL,
                           components,
                           display = "detailed",
-                          zoom = 1,
-                          algorithm = "",
-                          hide_plot = FALSE,
-                          title = NULL
-                          ){
+                          show.intervals = FALSE,
+                          title = NULL,
+                          hide.plot = FALSE,
+                          filename = NULL){
 
+#' Changelog:
+#' * 2019-03-06, DM: First reasonable version
+#' * 2019-04-03, DM: Rebuild whole function
+#' * 2019-10-02, DM: Added background component support and some little tweaks
+#' * 2020-04-22, DM: Enabled hidden output to draw later
+#' * 2020-06-19, DM: Added pseudoLM-OSL diagrams
+#' * 2020-08-04, DM: Added subtitles and RSS info
+#' * 2020-09-02, DM: Added graphic saving with [ggplot2::ggsave]
+#'
+#' ToDo:
+#' * REFACTORIZE CODE
+#' * ! Put the ggplot building (or at least its style options) in its own sub-function !
+#' * Add input checks and data conversions from [decompose_OSLcurve]
+#' * When drawing components without curve, skip residual curve
+#' * Display fitting formula
+#' * Get rid of libraries 'scale' and 'ggpubr' to decrease dependencies
+#' * Change from library("XXX") to XXX::
+
+
+  # Hidden parameters
+  zoom <- 1
 
   library(gridExtra)
   library(ggplot2)
@@ -92,7 +102,7 @@ plot_OSLcurve <- function(curve = NULL,
 
   # Set color and line themes
   theme_set(theme_minimal())
-  graph.colors <- c("darkgrey", "black","red3","green3","blue3","darkorchid","gold","brown","pink")
+  graph.colors <- c("darkgrey", "black","red3","green3","royalblue3","darkorchid","gold","brown","pink")
   graph.sizes <- c(1, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
   graph.shapes <-  c(16, 32, 32, 32, 32, 32, 32, 32, 32)
   graph.lines <- c("blank", "solid","solid","solid","solid","solid","solid","solid","solid")
@@ -218,8 +228,8 @@ plot_OSLcurve <- function(curve = NULL,
     # if the intervals are given, draw them into the residual curve
     res.intervals <- list(NULL)
     if (("t.start" %in% colnames(components))
-        && (zoom == 1)
-        && ((algorithm == "det")||(algorithm == "det+nls"))) {
+        & (zoom == 1)
+        & show.intervals) {
 
       for (i in c(1:nrow(components))) {
 
@@ -290,7 +300,7 @@ plot_OSLcurve <- function(curve = NULL,
         scale_size_manual(values = graph.sizes, labels = graph.labels, guide = FALSE) +
         scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
         scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
-        ylab("signal (cts)") + xlab("time (s)")  +
+        ylab("Signal (cts)") + xlab("Time (s)")  +
         text_format
 
 
@@ -318,14 +328,15 @@ plot_OSLcurve <- function(curve = NULL,
           scale_size_manual(values = graph.sizes, labels = graph.labels, guide = FALSE) +
           scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
           scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
-          ylab("signal (cts)") + xlab("time (s)")  +
+          ylab("Signal (cts)") + xlab("Time (s)")  +
           text_format
 
       }
       ######################## TABLE #########################################################
 
       if (!is.null(components) ) {
-              # Table styles can be found at:
+
+        # Table styles can be found at:
       # https://rpkgs.datanovia.com/ggpubr/reference/ggtexttable.html
 
       p.colnames <- c("      ",
@@ -472,6 +483,10 @@ plot_OSLcurve <- function(curve = NULL,
     plot_object <- arrangeGrob(p.lin, nrow = 1, top = title)
   }
 
-  if (!hide_plot) grid.arrange(plot_object)
+  if (!is.null(filename)) {
+    try(ggplot2::ggsave(filename, plot = plot_object, units = "cm"), silent = FALSE)
+  }
+
+  if (!hide.plot) grid.arrange(plot_object)
   invisible(plot_object)
 }

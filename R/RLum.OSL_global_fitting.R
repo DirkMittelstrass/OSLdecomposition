@@ -1,6 +1,6 @@
 #' Identifies CW-OSL signal components in RLum.Analysis data sets
 #'
-#' @last_changed 2020-08-19
+#' @last_changed 2020-09-03
 #'
 #' @param object
 #' @param max_components
@@ -9,6 +9,7 @@
 #' @param stimulation_intensity
 #' @param stimulation_wavelength
 #' @param report
+#' @param image_format
 #' @param verbose
 #'
 #' @return
@@ -21,6 +22,7 @@ RLum.OSL_global_fitting <- function(object,
                      stimulation_intensity = 35,
                      stimulation_wavelength = 470,
                      report = TRUE,
+                     image_format = "pdf",
                      verbose = TRUE){
 
   ### ToDo:
@@ -29,6 +31,9 @@ RLum.OSL_global_fitting <- function(object,
   # - add file name argument
   # - add file directory argument
   # - add background fitting functionality
+
+  # Hidden parameters
+  report_format <- "html"
 
   # Get name of the input object
   object_name <- deparse(substitute(object))
@@ -108,7 +113,6 @@ RLum.OSL_global_fitting <- function(object,
       # then, it will be installed with the package
       try({
 
-        report_format <- "html"
         # for test purposes only:
         # rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step1.Rmd"
         rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")

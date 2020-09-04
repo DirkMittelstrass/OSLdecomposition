@@ -19,7 +19,7 @@ Report of the [Mittelstraß *et al.* (2019)](#disclaimer) Step 2 analysis of the
 
 ```{r step2_setup, include=FALSE}
 
-Last_changed <-"2020-05-21" 
+Last_changed <-"2020-09-03" 
 
 # ToDo's:
 # * Bug: The barplots sort the columns alphabetically
@@ -55,7 +55,7 @@ knitr::opts_chunk$set(fig.width=7,
 ## set ggplot design 
 # (just for directly plotted diagrams. sub-function plot are not affected)
 theme_set(theme_minimal())
-graph_colors <- c("red3","green3","blue3","darkorchid","gold","brown","pink")
+graph_colors <- c("red3","green3","royalblue3","darkorchid","gold","brown","pink")
 
 # Not every list element in the data set may contain the selected record_type
 # so we have to collect the data indices in a seperate list
@@ -251,10 +251,10 @@ dynamic_code <- c(
     "```{r tab_{{j}}_OSL_plots}\n", 
     "record_1 <- data_set[[record[[{{j}}]]$sequence]]@records[[record[[{{j}}]]$index[1]]]\n",
     "plot_1 <- plot_OSLcurve(record_1, record_1@info$COMPONENTS,
-                             display = \"compare_lin\", hide_plot = TRUE)\n",
+                             display = \"compare_lin\", hide.plot = TRUE)\n",
     "record_2 <- data_set[[record[[{{j}}]]$sequence]]@records[[record[[{{j}}]]$index[2]]]\n",
     "plot_2 <- plot_OSLcurve(record_2, record_2@info$COMPONENTS,
-                             display = \"compare_lin\", hide_plot = TRUE)\n",
+                             display = \"compare_lin\", hide.plot = TRUE)\n",
     "grid.arrange(plot_1, plot_2, layout_matrix = t(matrix(c(1,2))))\n",
     "```\n",
     "<i><b>Figure 2.`r {{j}}`:</b> Signal components and residual curve of first two `r record_type` records.<br>",
