@@ -1,18 +1,14 @@
 #' Plot comparison of the global OSL curve photo-crosssections with literature values
 #'
 #' @param fit.list
+#' @param stimulation.intensity
+#' @param stimulation.wavelength
+#' @param K.selected
+#' @param title
+#' @param hide.plot
+#' @param filename
 #'
-#' @section Changelog:
-#' * 2019-10-08 Seperated from fit_OSLcurve()
-#' * 2020-04-09 Changed from decay rates to photoionisation cross-sections; cleaned code
-#'
-#' @section ToDo:
-#' * Documentation
-#' * Sometimes the red rectangle is not drawn (fit_OSLcurve(Batagai, K.max = 6)). Why?
-#' * add literature values for other than just 470nm values
-#' * remove library(XXXX)
-#'
-#' @section Last changed. 2020-04-09
+#' @section Last changed. 2020-09-13
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -22,23 +18,59 @@
 #'
 #' @examples
 #'
+#' # Set some reasonable parameter for a weak quartz CW-OSL decay
+#' components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(2, 0.5, 0.02), n = c(1e6, 1e6, 1e7))
+#'
+#' # Simulate the CW-OSL curve and add some signal noise
+#' curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
+#'
+#' # Perform nonlinear regression at the simulated curve
+#' fit_results <- fit_OSLcurve(curve, output.complex = TRUE)
+#'
+#' # Plot the fitting iterations and set them into context
+#' plot_PhotoCrosssections(fit_results)
+#'
+#' # How to create figures meant for publication:
+#' # Open new graphics device to set image dimensions manually and save image as vector graphics
+#' dev.new(width = 10, height = 3, unit = "cm", noRStudioGD = TRUE)
+#' plot_PhotoCrosssections(fit_results, filename = paste0(getwd(), "//plot.pdf"))
+#' dev.off()
+#'
 plot_PhotoCrosssections <- function(
   fit.list,
-  stimulation.intensity,
-  stimulation.wavelength,
-  title = NULL
+  stimulation.intensity = NULL,
+  stimulation.wavelength = NULL,
+  K.selected = NULL,
+  title = NULL,
+  hide.plot = FALSE,
+  filename = NULL
 ){
 
+  #' Changelog:
+  #' * 2019-10-08 Seperated from fit_OSLcurve()
+  #' * 2020-04-09 Changed from decay rates to photoionisation cross-sections; cleaned code
+  #' * 2020-09-13 Added: K.selected, hide.plot, filename and auto-finding simulation parameters
+  #'
+  #' ToDo:
+  #' * Documentation
+  #' * Sometimes the red rectangle is not drawn (fit_OSLcurve(Batagai, K.max = 6)). Why?
+  #' * add literature values for other than just 470nm values
+  #' * remove library(XXXX)
+  #' * Replace 'reverselog_trans' to get rid of library(scales)
+  #' * Add argument ggsave.control() to give direct control about image saving
+
   ##### Load graphic libraries and set output theme #####
-  library(gridExtra)
- # library(scales)
   library(ggplot2)
+  library(scales)
   theme_set(theme_bw())
+
+  if (is.null(stimulation.intensity)) stimulation.intensity <- fit.list$parameters$stimulation.intensity
+
+  if (is.null(stimulation.wavelength)) stimulation.wavelength <- fit.list$parameters$stimulation.wavelength
 
   # supress warnings in the whole script
   options( warn = -1 )
 
-  K <- fit.list$K.selected
   plot_data <- fit.list$plot.data
   x <- nrow(fit.list$F.test)
 
@@ -152,9 +184,11 @@ plot_PhotoCrosssections <- function(
   }
 
   # Draw red rectangle which indicates the selected case
-  p <- p + geom_rect(mapping = aes(xmin = K - 0.5, xmax = K + 0.5,
-                                   ymin = ymin, ymax = ymax),
-                     colour = "red", size = 1, fill = NA)
+  if (!is.null(K.selected)) {
+    p <- p + geom_rect(mapping = aes(xmin = K.selected - 0.5, xmax = K.selected + 0.5,
+                                     ymin = ymin, ymax = ymax),
+                       colour = "red", size = 1, fill = NA)}
+
 
   # rotate diagramm and delete unnecessary visual elements
   p <- p + coord_flip() +
@@ -166,6 +200,13 @@ plot_PhotoCrosssections <- function(
           axis.ticks.x = element_blank(),
           panel.grid.major.y = element_blank())
 
+  # save plot as file
+  if (!is.null(filename)) {
+    try(ggplot2::ggsave(filename, plot = p, units = "cm"), silent = FALSE)}
+
   # show plot
-  grid.arrange(p, nrow = 1, top = title)
+  if (!hide.plot) gridExtra::grid.arrange(p, nrow = 1, top = title)
+
+  # return plot object
+  invisible(p)
 }

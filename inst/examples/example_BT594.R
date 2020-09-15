@@ -18,7 +18,7 @@ BT594 <- RLum.OSL_global_fitting(BT594, stimulation_intensity = 50, report = TRU
 BT594 <- RLum.OSL_decomposition(BT594, K = 3, report = TRUE)
 
 # Components can also be selected by their name
-results_decomposed <- analyse_SAR.CWOSL_beta(BT594, OSL.component = "fast")
+results_decomposed <- analyse_SAR.CWOSL_beta(BT594, OSL.component = "fast", plot = FALSE)
 
 results_late_background <- analyse_SAR.CWOSL_beta(BT594, 1, 3, 80, 100, plot = FALSE)
 

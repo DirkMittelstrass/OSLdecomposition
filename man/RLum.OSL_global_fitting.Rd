@@ -12,6 +12,7 @@ RLum.OSL_global_fitting(
   stimulation_intensity = 35,
   stimulation_wavelength = 470,
   report = TRUE,
+  image_format = "pdf",
   verbose = TRUE
 )
 }

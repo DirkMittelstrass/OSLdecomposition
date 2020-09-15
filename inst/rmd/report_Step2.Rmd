@@ -12,6 +12,8 @@ params:
   dec_data: !r list(NULL)
   data_set: !r list(NULL)
   object_name: !r c("")
+  image_format: !r c("png")
+  image_path: !r c(NULL)
 ---
 Report of the [Mittelstraß *et al.* (2019)](#disclaimer) Step 2 analysis of the data set **`r object_name`** performed with the function `RLum.OSL_decomposition()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` executed at `r Sys.time()`.
 
@@ -37,7 +39,6 @@ Last_changed <-"2020-09-03"
 #     simple example:
 #     pairs(subset(results, select = c("n.1", "n.2", "n.3", "IRR_TIME")))
 
-library(numOSL)
 library(knitr)
 library(ggplot2)
 library(gridExtra)

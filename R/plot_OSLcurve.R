@@ -12,8 +12,8 @@
 #' Plot title
 #'
 #' @param hide.plot
-#' If true, plot is not drawn but can be catched by 'A <- plot_OSLcurve(...)'
-#' and displayed later by 'grid.arrange(A)'
+#' If true, plot is not drawn but can be catched by 'A <- plot_OSLcurve(...)' or saved as file.
+#' If catched, the plot ca be displayed later for example by [gridExtra::grid.arrange]
 #'
 #' @param filename
 #' Filename or path to save the diagram as file. If just a name is chosen, the file is
@@ -33,7 +33,7 @@
 #' Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves, Radiation Measurements, 32(2), 141–145, doi:10.1016/S1350-4487(99)00247-4, 2000.
 #'
 #'
-#' @section Last changed. 2020-09-03
+#' @section Last changed. 2020-09-13
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -53,15 +53,13 @@
 #' @examples
 #'
 #' # Set some reasonable parameter for a weak quartz CW-OSL decay
-#' components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.02), n = c(1000, 1000, 10000))
+#' components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(2, 0.5, 0.02), n = c(1000, 1000, 10000))
 #'
 #' # Simulate the CW-OSL curve and add some signal noise
 #' curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
 #'
 #' # Display the simulated curve
 #' plot_OSLcurve(curve, components)
-#'
-#' # Decompose the simulated curve with some slightly wrong parameters
 #'
 plot_OSLcurve <- function(curve = NULL,
                           components,
@@ -86,14 +84,16 @@ plot_OSLcurve <- function(curve = NULL,
 #' * Add input checks and data conversions from [decompose_OSLcurve]
 #' * When drawing components without curve, skip residual curve
 #' * Display fitting formula
-#' * Get rid of libraries 'scale' and 'ggpubr' to decrease dependencies
+#' * Get rid of library 'ggpubr' to decrease dependencies
 #' * Change from library("XXX") to XXX::
+#' * Add argument ggsave.control() to give direct control about image saving
+#' * Add table column for the lambda error
 
 
   # Hidden parameters
   zoom <- 1
 
-  library(gridExtra)
+  #library(gridExtra)
   library(ggplot2)
   library(ggpubr)
   library(scales)
@@ -423,7 +423,7 @@ plot_OSLcurve <- function(curve = NULL,
     lay <- cbind(c(1,1,2))
 
     # use grid function from gridExtra package to display linear and log plot side by side
-    plot_object <- arrangeGrob(p.lin, p.res, layout_matrix = lay, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.lin, p.res, layout_matrix = lay, top = title)
 
   } else if (display == "detailed") {
 
@@ -449,7 +449,7 @@ plot_OSLcurve <- function(curve = NULL,
                   ,ncol = 2)
 
     #grid.arrange(p.lin, p.res, p.log, p.tab, layout_matrix = lay, top = title)
-    plot_object <- arrangeGrob(p.lin, p.res, p.LM, p.tab, layout_matrix = lay, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.lin, p.res, p.LM, p.tab, layout_matrix = lay, top = title)
 
   } else if (display == "compare_lin") {
 
@@ -458,7 +458,7 @@ plot_OSLcurve <- function(curve = NULL,
                  c(2),
                  c(3))
 
-    plot_object <- arrangeGrob(p.lin, p.res, p.tab, layout_matrix = lay, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.lin, p.res, p.tab, layout_matrix = lay, top = title)
 
   } else if (display == "compare_log") {
 
@@ -467,7 +467,7 @@ plot_OSLcurve <- function(curve = NULL,
                  c(2),
                  c(3))
 
-    plot_object <- arrangeGrob(p.log, p.res, p.tab, layout_matrix = lay, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.log, p.res, p.tab, layout_matrix = lay, top = title)
 
   } else if (display == "lin-log") {
 
@@ -476,17 +476,19 @@ plot_OSLcurve <- function(curve = NULL,
                  c(1,1,1,3),
                  c(2,2,2,3))
 
-    plot_object <- arrangeGrob(p.linlog, p.res, p.tab, layout_matrix = lay, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.linlog, p.res, p.tab, layout_matrix = lay, top = title)
 
 
   } else {
-    plot_object <- arrangeGrob(p.lin, nrow = 1, top = title)
-  }
+    plot_object <- gridExtra::arrangeGrob(p.lin, nrow = 1, top = title)}
 
+  # save plot as file
   if (!is.null(filename)) {
-    try(ggplot2::ggsave(filename, plot = plot_object, units = "cm"), silent = FALSE)
-  }
+    try(ggplot2::ggsave(filename, plot = plot_object, units = "cm"), silent = FALSE)}
 
-  if (!hide.plot) grid.arrange(plot_object)
+  # show plot
+  if (!hide.plot) gridExtra::grid.arrange(plot_object)
+
+  # return plot object
   invisible(plot_object)
 }

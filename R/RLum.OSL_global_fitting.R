@@ -114,14 +114,22 @@ RLum.OSL_global_fitting <- function(object,
       try({
 
         # for test purposes only:
-        # rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step1.Rmd"
+        #rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step1.Rmd"
         rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
-        output_file <- paste0(getwd(), "/", "report_Step1.", report_format)
+
+        output_path <- getwd()
+        output_file <- paste0(output_path, "/", "report_Step1.", report_format)
+        image_path <- paste0(output_path, "/report_figures/")
+
+        if (!(dir.exists(image_path))) dir.create(image_path)
+        cat("Save", toupper(image_format), "images to:", image_path, "\n")
 
         rmarkdown::render(rmd_path,
                           params = list(fit_data = fit_data,
                                         data_set = data_set,
-                                        object_name = object_name),
+                                        object_name = object_name,
+                                        image_format = image_format,
+                                        image_path = image_path),
                           output_file = output_file,
                           output_format = paste0(report_format,"_document"),
                           quiet = TRUE)
@@ -132,7 +140,7 @@ RLum.OSL_global_fitting <- function(object,
         try({
 
           browseURL(output_file)
-          cat("Open", toupper(report_format), "report in the systems standard browser\n")})
+          cat("Open", toupper(report_format), "report in your systems standard browser\n")})
 
         if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")})
 

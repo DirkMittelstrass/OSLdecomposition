@@ -6,13 +6,16 @@
 \usage{
 plot_PhotoCrosssections(
   fit.list,
-  stimulation.intensity,
-  stimulation.wavelength,
-  title = NULL
+  stimulation.intensity = NULL,
+  stimulation.wavelength = NULL,
+  K.selected = NULL,
+  title = NULL,
+  hide.plot = FALSE,
+  filename = NULL
 )
 }
 \arguments{
-\item{fit.list}{}
+\item{filename}{}
 }
 \value{
 
@@ -20,26 +23,42 @@ plot_PhotoCrosssections(
 \description{
 Plot comparison of the global OSL curve photo-crosssections with literature values
 }
-\section{Changelog}{
-
-* 2019-10-08 Seperated from fit_OSLcurve()
-* 2020-04-09 Changed from decay rates to photoionisation cross-sections; cleaned code
-}
-
-\section{ToDo}{
-
-* Documentation
-* Sometimes the red rectangle is not drawn (fit_OSLcurve(Batagai, K.max = 6)). Why?
-* add literature values for other than just 470nm values
-* remove library(XXXX)
-}
-
-\section{Last changed. 2020-04-09}{
+\section{Last changed. 2020-09-13}{
 NA
 }
 
 \examples{
 
+# Set some reasonable parameter for a weak quartz CW-OSL decay
+components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(2, 0.5, 0.02), n = c(1e6, 1e6, 1e7))
+
+# Simulate the CW-OSL curve and add some signal noise
+curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
+
+# Perform nonlinear regression at the simulated curve
+fit_results <- fit_OSLcurve(curve, output.complex = TRUE)
+
+# Plot the fitting iterations and set them into context
+plot_PhotoCrosssections(fit_results)
+
+# How to create figures meant for publication:
+# Open new graphics device to set image dimensions manually and save image as vector graphics
+dev.new(width = 10, height = 3, unit = "cm", noRStudioGD = TRUE)
+plot_PhotoCrosssections(fit_results, filename = paste0(getwd(), "//plot.pdf"))
+dev.off()
+
+Changelog:
+* 2019-10-08 Seperated from fit_OSLcurve()
+* 2020-04-09 Changed from decay rates to photoionisation cross-sections; cleaned code
+* 2020-09-13 Added: K.selected, hide.plot, filename and auto-finding simulation parameters
+
+ToDo:
+* Documentation
+* Sometimes the red rectangle is not drawn (fit_OSLcurve(Batagai, K.max = 6)). Why?
+* add literature values for other than just 470nm values
+* remove library(XXXX)
+* Replace 'reverselog_trans' to get rid of library(scales)
+* Add argument ggsave.control() to give direct control about image saving
 }
 \author{
 Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}

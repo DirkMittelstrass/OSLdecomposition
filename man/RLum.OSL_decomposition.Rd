@@ -6,18 +6,19 @@
 \usage{
 RLum.OSL_decomposition(
   object,
-  K = NA,
+  K = 3,
   record_type = "OSL",
   decay_rates = NULL,
   error_calculation = "empiric",
   report = TRUE,
+  image_format = "pdf",
   verbose = TRUE
 )
 }
 \arguments{
 \item{object}{Object returned by [RLum.OSL_global_fitting()]}
 
-\item{K}{Number of components. If not defined, 'K.selected' from the object returned by [RLum.OSL_global_fitting()] is used}
+\item{K}{Number of components. If not defined K = 3 is selected}
 
 \item{decay_rates}{(optional) user-defined component decay rates}
 

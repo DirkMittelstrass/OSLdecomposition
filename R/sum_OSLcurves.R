@@ -27,17 +27,6 @@
 #' @return
 #' A [data.frame] is returned, containing the created mean curve
 #'
-#' @section Changelog:
-#' * 2018-05-23, DM: first version
-#' * 2019-03-15, DM: rewritten for ggplots and new data format, renamend into sum_OSLcurves
-#'
-#' @section ToDo:
-#' * add more options for record selection (e.g. dose)
-#' * interpolate x-axis if it doesn't match
-#' * accept data.frames as input objects
-#' * test if first value is zero
-#' * add legend to plot
-#' * add info box with number of OSL curves to plot
 #'
 #' @section Last changed: 2020-04-20
 #'
@@ -49,8 +38,7 @@
 #' @references
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
 #' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
-#'
-#' @export
+
 #'
 #' @examples
 #'
@@ -68,9 +56,18 @@ sum_OSLcurves <- function(
   return.plot = FALSE
 ){
 
-  ##============================================================================##
-  # Function Setup and Input check
-  ##============================================================================##
+  #' Changelog:
+  #' * 2018-05-23, DM: first version
+  #' * 2019-03-15, DM: rewritten for ggplots and new data format, renamend into sum_OSLcurves
+  #'
+  #'  ToDo:
+  #' * add more options for record selection (e.g. dose)
+  #' * interpolate x-axis if it doesn't match
+  #' * accept list of data.frames as input objects
+  #' * test if first value is zero
+  #' * add legend to plot
+  #' * add info box with number of OSL curves to plot
+  #' * Add ggsave() capabilities
 
   library(Luminescence)
 

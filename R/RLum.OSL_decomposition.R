@@ -1,12 +1,12 @@
 #' Decomposes CW-OSL curves in RLum.Analysis data sets into its signal components
 #'
-#' @last_changed 2020-08-07
+#' @last_changed 2020-09-13
 #'
 #' @param object
 #' Object returned by [RLum.OSL_global_fitting()]
 #'
 #' @param K
-#' Number of components. If not defined, 'K.selected' from the object returned by [RLum.OSL_global_fitting()] is used
+#' Number of components. If not defined K = 3 is selected
 #'
 #' @param record_type
 #' @param decay_rates
@@ -14,19 +14,20 @@
 #'
 #' @param error_calculation
 #' @param report
+#' @param image_format
 #' @param verbose
-
 #'
 #' @return
 #' @examples
 
 RLum.OSL_decomposition <- function(
   object,
-  K = NA,
+  K = 3,
   record_type = "OSL",
   decay_rates = NULL,
   error_calculation = "empiric",   # "poisson", "empiric", "nls", numeric value
   report = TRUE,
+  image_format = "pdf",
   verbose = TRUE
 ){
   ### ToDo's
@@ -86,7 +87,7 @@ RLum.OSL_decomposition <- function(
 
     if ("OSL_COMPONENTS" %in% names(data_set_overhang)) {
 
-      if (is.na(K)) K <- data_set_overhang$OSL_COMPONENTS$K.selected
+      if (!is.numeric(K)) K <- data_set_overhang$OSL_COMPONENTS$K.selected
 
       component_table <- data_set_overhang$OSL_COMPONENTS$component.tables[[K]]
       global_curve <- data_set_overhang$OSL_COMPONENTS$curve
@@ -233,14 +234,22 @@ RLum.OSL_decomposition <- function(
 
         report_format <- "html"
         # for test purposes:
-        # rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
+        #rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
         rmd_path <- system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")
-        output_file <- paste0(getwd(), "/", "report_Step2.", report_format)
+
+        output_path <- getwd()
+        output_file <- paste0(output_path, "/", "report_Step2.", report_format)
+        image_path <- paste0(output_path, "/report_figures/")
+
+        if (!(dir.exists(image_path))) dir.create(image_path)
+        cat("Save", toupper(image_format), "images to:", image_path, "\n")
 
         rmarkdown::render(rmd_path,
                           params = list(dec_data = dec_data,
                                         data_set = data_set,
-                                        object_name = object_name),
+                                        object_name = object_name,
+                                        image_format = image_format,
+                                        image_path = image_path),
                           output_file = output_file,
                           output_format = paste0(report_format,"_document"),
                           quiet = TRUE)
@@ -250,7 +259,7 @@ RLum.OSL_decomposition <- function(
         # ToDo: Replace the following try() outside the big try
         try({
           browseURL(output_file)
-          cat("Open", toupper(report_format), "report in the systems standard browser\n")})
+          cat("Open", toupper(report_format), "report in your systems standard browser\n")})
 
         if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")})
 

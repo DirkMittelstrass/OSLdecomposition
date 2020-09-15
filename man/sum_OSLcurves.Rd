@@ -43,29 +43,10 @@ The function adds up RLum records of one specific type
 it is useful to create background records and enable component fitting
 at sets of records with low signal-to-noise ratio
 }
-\section{Changelog}{
-
-* 2018-05-23, DM: first version
-* 2019-03-15, DM: rewritten for ggplots and new data format, renamend into sum_OSLcurves
-}
-
-\section{ToDo}{
-
-* add more options for record selection (e.g. dose)
-* interpolate x-axis if it doesn't match
-* accept data.frames as input objects
-* test if first value is zero
-* add legend to plot
-* add info box with number of OSL curves to plot
-}
-
 \section{Last changed}{
  2020-04-20
 }
 
-\examples{
-
-}
 \references{
 Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
 Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
