@@ -31,32 +31,6 @@
 #' @return
 #' The input table **components** [data.frame] will be returned with added or overwritten columns: *$n, $n.error, $n.residual, $I, $I.error*
 #'
-#' @section Changelog:
-#' * winter 2012/13: first basic version, used for Bachelor thesis DM
-#' * autumn 2013   : added empiric error estimation, shown in germanLED Freiberg 2013
-#' * 2014-11-??, SK: formated into Rluminecence package standard
-#' * 2014-11-07, DM: Binomial error propagation added
-#' * 2018-05-04, DM: added residuals for n values (necessary for slow component dosimetry) and many little tweaks
-#' * 2018-06-22, DM: added decomposition of data sets with just 1 or 2 components
-#' * 2018-06-22, DM: added negative.values.to.zero and set it on TRUE as default (on request of C. Schmidt) (later removed)
-#' * 2018-07-05, DM: overworked error estimation; replaced binomial with poisson error approach; added auto-switch to poisson if integral length = 1; integrated background.noise into error
-#' * 2019-03-29, DM: Rewritten function for several purposes: 1. working now with any number of components  2. shorter and more elegant code 3. data format more suitable for markdown/shiny applications.
-#' * 2019-09-09, DM: Added anticorrelating covariance terms into error estimation (later removed)
-#' * 2019-09-25, DM: Merged function with decompose_OSLalternatively() and added algorithm argument
-#' * 2019-09-25, DM: Deleted unnecessary functions (negative.values.to.zero, offset, anticorrelation)
-#' * 2019-10-02, DM: Added optional background fitting
-#' * 2020-04-06, DM: Added 'initial.signal' column in output data.frame; cleaned print output
-#' * 2020-07-20, DM: Added algorithm for fast interval definition based on logarithmic means; More input data checks
-#' * 2020-08-27, DM: Replaced [nls] function in the optional refinement fitting with the more robust [minpack.lm::nlsLM]
-#'
-#' @section ToDo:
-#' * Update documentation (example, notes)
-#' * Enable the input of a list of curves
-#' * Replace Cramers rule equations with 'solve()' to increase performance
-#' * In some very rare cases, negative values for n.error are returned. How can that happen?
-#' * Test and expand interval determination algorithm in case of very few (N ~ K) data points
-#' * Enhance Auto-interval finder to work when 'background.fitting = TRUE'
-#'
 #' @section Last changed: 2020-08-27
 #'
 #' @author
@@ -67,8 +41,6 @@
 #' @references
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
 #' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
-#'
-#' @export
 #'
 #' @examples
 #'
@@ -93,6 +65,8 @@
 #' components <- decompose_OSLcurve(curve, components, background.fitting = TRUE)
 #' plot_OSLcurve(curve, components)
 #'
+#' @md
+#' @export
 decompose_OSLcurve <- function(
   curve,
   components,
@@ -101,6 +75,32 @@ decompose_OSLcurve <- function(
   error.calculation = "empiric",   # "poisson", "empiric", "nls", numeric value
   verbose = TRUE
 ){
+
+  #' Changelog:
+  #' * winter 2012/13: first basic version, used for Bachelor thesis DM
+  #' * autumn 2013   : added empiric error estimation, shown in germanLED Freiberg 2013
+  #' * 2014-11-??, SK: formated into Rluminecence package standard
+  #' * 2014-11-07, DM: Binomial error propagation added
+  #' * 2018-05-04, DM: added residuals for n values (necessary for slow component dosimetry) and many little tweaks
+  #' * 2018-06-22, DM: added decomposition of data sets with just 1 or 2 components
+  #' * 2018-06-22, DM: added negative.values.to.zero and set it on TRUE as default (on request of C. Schmidt) (later removed)
+  #' * 2018-07-05, DM: overworked error estimation; replaced binomial with poisson error approach; added auto-switch to poisson if integral length = 1; integrated background.noise into error
+  #' * 2019-03-29, DM: Rewritten function for several purposes: 1. working now with any number of components  2. shorter and more elegant code 3. data format more suitable for markdown/shiny applications.
+  #' * 2019-09-09, DM: Added anticorrelating covariance terms into error estimation (later removed)
+  #' * 2019-09-25, DM: Merged function with decompose_OSLalternatively() and added algorithm argument
+  #' * 2019-09-25, DM: Deleted unnecessary functions (negative.values.to.zero, offset, anticorrelation)
+  #' * 2019-10-02, DM: Added optional background fitting
+  #' * 2020-04-06, DM: Added 'initial.signal' column in output data.frame; cleaned print output
+  #' * 2020-07-20, DM: Added algorithm for fast interval definition based on logarithmic means; More input data checks
+  #' * 2020-08-27, DM: Replaced [nls] function in the optional refinement fitting with the more robust [minpack.lm::nlsLM]
+  #'
+  #' ToDo:
+  #' * Update documentation (example, notes)
+  #' * Enable the input of a list of curves
+  #' * Replace Cramers rule equations with 'solve()' to increase performance
+  #' * In some very rare cases, negative values for n.error are returned. How can that happen?
+  #' * Test and expand interval determination algorithm in case of very few (N ~ K) data points
+  #' * Enhance Auto-interval finder to work when 'background.fitting = TRUE'
 
   # Hidden parameters
   silent <- TRUE # don't display warnings or not-fatal errors

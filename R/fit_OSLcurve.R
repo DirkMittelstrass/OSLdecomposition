@@ -1,36 +1,30 @@
 #' multi-exponential CW-OSL curve fitting
 #'
-#' Fitting function for measurements of multi-exponential decay signal with first order kinetics.
-#' This function is based on Bluszcz & Adamiec (2006) and was primarily developed for the analysis of quartz CW-OSL
+#' Fitting function for CW-OSL measurements. A multi-exponential decaying signal is assumed with
+#' each signal component following first order kinetics.
+#' This function is based on Bluszcz & Adamiec (2006) and is especially suited for the analysis of quartz CW-OSL
 #' measurements for dating and dosimetry applications.
 #'
-#' @param curve
-#' @param K.max
-#' @param F.threshold
+#'
+#'
+#' @param curve [RLum.Data.Curve-class] or [data.frame] or [matrix] (**required**):
+#' CW-OSL record or average CW-OSL curve created by [sum_OSLcurves]. If no column `$time` exists, the first column is defined
+#' as measurement time (x-axis). Time intervals must be constant. If no column `$signal` exists, the second column is defined
+#' as signal values (y-axis). Further columns will be ignored
+#'
+#' @param K.max [numeric] (*with default*):
+#' Maximum number of components *K*. The computing time increases exponentially with the component number,
+#' *K* < 7 is recommended.
+#'
+#' @param F.threshold [numeric] (*with default*):
+#'
+#'
+#'
 #' @param stimulation.intensity
 #' @param stimulation.wavelength
 #' @param verbose
 #' @param output.complex
-#'
-#' @section Changelog:
-#' * 2019-02-14, DM: First version
-#' * 2019-03-15, DM: Seperated 'decompose_OSLalternatively()'
-#' * 2019-04-29, DM: Added Blucszs & Adamiec-like approach using numOSL::decomp (Peng et al. 2014)
-#' * 2019-05-14, DM: Added "fit_OSLLifeTimes" approach from Luminescence package 0.9; Corrected and improved numOSL approach; Deleted nls.default approach
-#' * 2019-06-28, DM: Deleted "fit_OSLLifeTimes" approach. Added stretched exponentials for testing. Added overview plot
-#' * 2019-10-07, DM: Streamlined function; added optional background fitting
-#' * 2019-10-08, DM: Seperated plotting to plot_PhotoCrosssections()
-#' * 2020-04-04, DM: Extended output list (curve & arguments)
-#' * 2020-04-06, DM: Extended print output and made some  tweaks. Replaced 'SAR.compatible' with 'fully.bleached'
-#' * 2020-05-05, DM: Replaced bolean 'fully.bleached' with numeric 'bleaching.grade'
-#' * 2020-08-05, DM: Added DEoptim + nlsLM algorithm
-#' * 2020-08-10, DM: Optional parallel computing enabled
-#'
-#' @section ToDo:
-#' * Complete documentation
-#' * Reactivate optional background level fitting
-#' * Introduce 'fit_OSLcurve.control' which forwards algorith parameters to DEoptim.control and nls.lm.control
-#' * Enable optional weighted fitting and give out reduced Chi²
+#' @param parallel.computing
 #'
 #' @section Last changed: 2020-08-18
 #'
@@ -57,6 +51,7 @@
 #' # Display results
 #' plot_OSLcurve(curve, components)
 #'
+#' @md
 #' @export
 fit_OSLcurve <- function(
   curve,
@@ -68,6 +63,26 @@ fit_OSLcurve <- function(
   output.complex = FALSE,
   parallel.computing = FALSE
 ){
+
+  #' Changelog:
+  #' * 2019-02-14, DM: First version
+  #' * 2019-03-15, DM: Seperated 'decompose_OSLalternatively()'
+  #' * 2019-04-29, DM: Added Blucszs & Adamiec-like approach using numOSL::decomp (Peng et al. 2014)
+  #' * 2019-05-14, DM: Added "fit_OSLLifeTimes" approach from Luminescence package 0.9; Corrected and improved numOSL approach; Deleted nls.default approach
+  #' * 2019-06-28, DM: Deleted "fit_OSLLifeTimes" approach. Added stretched exponentials for testing. Added overview plot
+  #' * 2019-10-07, DM: Streamlined function; added optional background fitting
+  #' * 2019-10-08, DM: Seperated plotting to plot_PhotoCrosssections()
+  #' * 2020-04-04, DM: Extended output list (curve & arguments)
+  #' * 2020-04-06, DM: Extended print output and made some  tweaks. Replaced 'SAR.compatible' with 'fully.bleached'
+  #' * 2020-05-05, DM: Replaced bolean 'fully.bleached' with numeric 'bleaching.grade'
+  #' * 2020-08-05, DM: Added DEoptim + nlsLM algorithm
+  #' * 2020-08-10, DM: Optional parallel computing enabled
+  #'
+  #' ToDo:
+  #' * Complete documentation
+  #' * Reactivate optional background level fitting
+  #' * Introduce 'fit_OSLcurve.control' which forwards algorith parameters to DEoptim.control and nls.lm.control
+  #' * Enable optional weighted fitting and give out reduced Chi²
 
   # Internal parameter (for later use in fit_OSLcurve.control)
   silent <- TRUE # don't display warnings or not-fatal errors
