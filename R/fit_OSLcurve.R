@@ -1,11 +1,66 @@
-#' multi-exponential CW-OSL curve fitting
+#' Multi-exponential CW-OSL curve fitting
 #'
-#' Fitting function for CW-OSL measurements. A multi-exponential decaying signal is assumed with
-#' each signal component following first order kinetics.
-#' This function is based on Bluszcz & Adamiec (2006) and is especially suited for the analysis of quartz CW-OSL
-#' measurements for dating and dosimetry applications.
+#' Fitting function for multi-exponential decaying CW-OSL measurements,
+#' based on the algorithm described by Bluszcz & Adamiec (2006).
+#'
+#' The function assumes multiple exponentially decaying signal components with first order kinetics:
+#'
+#' \deqn{I(t) = n_1 \lambda_1 exp(-\lambda_1 t) + n_2 \lambda_2 exp(-\lambda_2 t) + ... + n_K \lambda_K exp(-\lambda_K t)}
+#'
+#' with \eqn{I(t)} the CW-OSL signal, \eqn{n} the signal component intensity,
+#' \eqn{\lambda} the signal component decay constant and \eqn{K} the number of signal components.
+#' For actual fitting, the integrated version of this formula is used, see Mittelstrass et al. (2021) for details.
+#'
+#' The fitting algorithm is an implementation of the *hybrid evolutionary-linear algorithm* (HELA)
+#' by Bluszcz & Adamiec (2006). See there or Mittelstrass et al. (2021) for details.
+#' The differential evolution part of HELA is performed by [DEoptim::DEoptim].
+#' The linear regression part of HELA is performed by [decompose_OSLcurve].
+#' The parameter refinement by Levenberg-Marquardt fitting is performed by [minpack.lm::nlsLM].
+#'
+#' **F-test**
+#'
+#' Bluszcz & Adamiec (2006) suggest the use of an F-test to determine the correct number of signal components.
+#' This function compares the residual square sum (*RSS_K*) value of each
+#' fitting with the *RSS_{K-1}* value of the previous fitting and calculates
+#' an *Improvement-in-fitting-quality* criterion:
+#'
+#' \deqn{F_K = {(RSS_{K-1} - RSS_K)/2} / {RSS_K(N - 2K)}}
+#'
+#' Here, *N* is the number data points (channels) of the measurement and *K* is the number of OSL components
+#' in the fitting model. If *F_K* falls below the threshold value (`F.threshold`), the fitting model
+#' with *K* components is apparently not significantly better than the *K* - 1 model of the previous fitting cycle.
+#' Thus, the *K* - 1 model will be recommended as fitting solution.
 #'
 #'
+#' **Photo-ionisation cross-sections**
+#'
+#' While the function is suited for the analysis of a wide variety of multi-exponential decay problems,
+#' it is target to CW-OSL measurements of quartz under SAR protocol conditions (470 nm stimulation at 125 °C).
+#' To simplify the assignemt of the found components to OSL components found in published literature,
+#' photo-ionisation cross-sections are calculated using the `stimulation.wavelength` \lambda~stim~  and
+#' `stimulation.intensity` \eqn{\Phi_{stim}}:
+#'
+#' \deqn{\sigma_k=\lambda_k {hc / \Phi_{stim}\lambda_{stim}}}
+#'
+#' with \eqn{\sigma_k} the photo-ionisation cross-section of component *k* in cm^2,
+#' \eqn{\lambda_k} the CW-OSL decay constant in s^-1, *h* the Planck constant and *c* the speed of light.
+#'
+#' If a `stimulation.intensity` larger or equal than 460 nm and lower or equal than 485 nm is defined,
+#' the components are names automatically. They are named according to value ranges approximated from the
+#' cross-sections published by Durcan and Duller (2011), Jain et al. (2003) and Singarayer and Bailey (2003).
+#' For the Ultrafast and the Slow4 component, no consistent literature values could be found, so their range
+#' is guessed freely:
+#'
+#' \tabular{lll}{
+#'  **Component** \tab **Lower limit (cm^2)** \tab **Upper limit (cm^2)**\cr
+#'  Ultrafast \tab 1e-16 \tab 1e-15 \cr
+#'  Fast \tab 1.9e-17 \tab 3.1e-17 \cr
+#'  Medium \tab 3e-18 \tab 9e-18 \cr
+#'  Slow1 \tab 1e-18 \tab 1.85e-18 \cr
+#'  Slow2 \tab 1.1e-19 \tab 4e-19 \cr
+#'  Slow3 \tab 1e-20 \tab 4.67e-20 \cr
+#'  Slow4 \tab 1e-21 \tab 1e-20
+#' }
 #'
 #' @param curve [RLum.Data.Curve-class] or [data.frame] or [matrix] (**required**):
 #' CW-OSL record or average CW-OSL curve created by [sum_OSLcurves]. If no column `$time` exists, the first column is defined
@@ -14,31 +69,84 @@
 #'
 #' @param K.max [numeric] (*with default*):
 #' Maximum number of components *K*. The computing time increases exponentially with the component number,
-#' *K* < 7 is recommended.
+#' *K* < 7 is recommended
 #'
 #' @param F.threshold [numeric] (*with default*):
+#' If the F-value is lower than this threshold, the fitting procedure stops and the the K - 1 fitting is returned
 #'
+#' @param stimulation.intensity [numeric] (*with default*):
+#' Intensity of optical stimulation in mW / cm². Used to calculate the photo-ionisation cross-sections.
 #'
+#' @param stimulation.wavelength [numeric] (*with default*):
+#' Wavelength of optical stimulation in nm. Used to calculate the photo-ionisation cross-sections.
+#' If a wavelength between 465 and 480 nm is chosen, the photo-ionisation cross-sections are set into
+#' relation with literature values to name the signal components
 #'
-#' @param stimulation.intensity
-#' @param stimulation.wavelength
-#' @param verbose
-#' @param output.complex
-#' @param parallel.computing
+#' @param verbose [logical] (*with default*):
+#' enables console text output
 #'
-#' @section Last changed: 2020-08-18
+#' @param output.complex [logical] (*with default*):
+#' enables in detail data output. See section **Value** for further information
+#'
+#' @param parallel.computing [logical] (*with default*):
+#' enables the use of multiple CPU cores. This speeds up the execution significantly
+#' but may need administrator rights and/or a firewall exception.
+#' Look at [DEoptim::DEoptim.control] for further information
+#'
+#' @section Last updates:
+#'
+#' 2020-08-05, Rewrote function to use [DEoptim::DEoptim] and [minpack.lm::nlsLM] (**This update may changed analysis results**)
+#'
+#' 2020-10-27, Completed roxygen documentation (*minor update*)
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
+#'
+#' Please cite the package the following way:
+#'
+#' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
 #'
 #' @seealso [RLum.OSL_decomposition], [sum_OSLcurves], [decompose_OSLcurve], [plot_OSLcurve],
 #' [plot_PhotoCrosssections], [minpack.lm::nlsLM], [DEoptim::DEoptim]
 #'
 #' @references
-#' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+#'
+#' Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL decay curves. Radiation Measurements 41, 886–891. [https://doi.org/10.1016/j.radmeas.2006.05.016]
+#'
+#' Durcan, J.A., Duller, G.A.T., 2011. The fast ratio: A rapid measure for testing the dominance of the fast component in the initial OSL signal from quartz. Radiation Measurements 46, 1065–1072. [https://doi.org/10.1016/j.radmeas.2011.07.016]
+#'
+#' Jain, M., Murray, A.S., Bøtter-Jensen, L., 2003. Characterisation of blue-light stimulated luminescence components in different quartz samples: implications for dose measurement. Radiation Measurements 37, 441–449.
+#'
+#' Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
+#'
+#' Singarayer, J.S., Bailey, R.M., 2003. Further investigations of the quartz optically stimulated luminescence components using linear modulation.
+#' Radiation Measurements, Proceedings of the 10th international Conference on Luminescence and Electron-Spin Resonance Dating (LED 2002) 37, 451–458. [https://doi.org/10.1016/S1350-4487(03)00062-3]
+#'
 #'
 #' @return
+#'
+#' If `output.complex = FALSE`, a [data.frame] is returned. It contains the signal decay rates
+#' and signal intensities of the best suiting fitting. The fitting was either chosen by the F-test or
+#' the last sucessful fitting iteration.
+#'
+#' If `output.complex = TRUE`, a [list] of objects is returned:
+#'
+#' \tabular{lll}{
+#'  **Element** \tab **Type** \tab **Description**\cr
+#'  `decay.rates` \tab `numeric` \tab [vector] of the best suiting decay rates \cr
+#'  `K.selected` \tab `numeric` \tab number of components of the best suiting fitting \cr
+#'  `F.test` \tab `data.frame` \tab table containing the F-test parameter and the decay rates of each fitting model \cr
+#'  `F.test.print` \tab `data.frame` \tab the same table as above, but formated for pretty console and report output \cr
+#'  `info.text` \tab `character` \tab collected messages from the algorithms \cr
+#'  `component.tables` \tab `list` \tab result [data.frame]s for all tested models \cr
+#'  `curve` \tab `data.frame` \tab fitted time-signal-curve \cr
+#'  `components` \tab `data.frame` \tab best suiting fitting; same object as `output.complex = FALSE` returns \cr
+#'  `fit.results` \tab `list` \tab [list] of [nls] objects for all tested models \cr
+#'  `plot.data` \tab `data.frame` \tab factorized results for overview plotting with [plot_PhotoCrosssections] \cr
+#'  `parameters` \tab `list` \tab function arguments and the needed computing time
+#' }
+#'
 #'
 #' @examples
 #'
@@ -77,9 +185,10 @@ fit_OSLcurve <- function(
   #' * 2020-05-05, DM: Replaced bolean 'fully.bleached' with numeric 'bleaching.grade'
   #' * 2020-08-05, DM: Added DEoptim + nlsLM algorithm
   #' * 2020-08-10, DM: Optional parallel computing enabled
+  #' * 2020-10-26, DM: Roxygen documentation
   #'
   #' ToDo:
-  #' * Complete documentation
+  #' * Enhance documentation with more algorithm info and some F.threshold recommendation
   #' * Reactivate optional background level fitting
   #' * Introduce 'fit_OSLcurve.control' which forwards algorith parameters to DEoptim.control and nls.lm.control
   #' * Enable optional weighted fitting and give out reduced Chi²
@@ -92,17 +201,6 @@ fit_OSLcurve <- function(
 
   if(!(is(curve, "RLum.Data.Curve") | is(curve, "data.frame") | is(curve, "matrix"))){
     stop("[fit_CWCurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
-#
-#  if(is(curve, "RLum.Data.Curve") == TRUE){
-
-#    time <- curve@data[,1]
-#    signal <- curve@data[,2]
-
-#  }else{
-
-    # set x and y values
-#    time <- curve$time
-#    signal <- curve$signal}
 
   if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(Luminescence::get_RLum(curve))
 
@@ -110,9 +208,6 @@ fit_OSLcurve <- function(
       !("signal" %in% colnames(curve))) {
     curve <- data.frame(time = curve[,1],
                         signal = curve[,2])}
-
-
- # data <- data.frame(time = time, signal = signal)
 
   channel_width <- curve$time[2] - curve$time[1]
 

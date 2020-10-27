@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit_OSLcurve.R
 \name{fit_OSLcurve}
 \alias{fit_OSLcurve}
-\title{multi-exponential CW-OSL curve fitting}
+\title{Multi-exponential CW-OSL curve fitting}
 \usage{
 fit_OSLcurve(
   curve,
@@ -16,42 +16,128 @@ fit_OSLcurve(
 )
 }
 \arguments{
-\item{output.complex}{}
+\item{curve}{\linkS4class{RLum.Data.Curve} or \link{data.frame} or \link{matrix} (\strong{required}):
+CW-OSL record or average CW-OSL curve created by \link{sum_OSLcurves}. If no column \verb{$time} exists, the first column is defined
+as measurement time (x-axis). Time intervals must be constant. If no column \verb{$signal} exists, the second column is defined
+as signal values (y-axis). Further columns will be ignored}
+
+\item{K.max}{\link{numeric} (\emph{with default}):
+Maximum number of components \emph{K}. The computing time increases exponentially with the component number,
+\emph{K} < 7 is recommended}
+
+\item{F.threshold}{\link{numeric} (\emph{with default}):
+If the F-value is lower than this threshold, the fitting procedure stops and the the K - 1 fitting is returned}
+
+\item{stimulation.intensity}{\link{numeric} (\emph{with default}):
+Intensity of optical stimulation in mW / cm². Used to calculate the photo-ionisation cross-sections.}
+
+\item{stimulation.wavelength}{\link{numeric} (\emph{with default}):
+Wavelength of optical stimulation in nm. Used to calculate the photo-ionisation cross-sections.
+If a wavelength between 465 and 480 nm is chosen, the photo-ionisation cross-sections are set into
+relation with literature values to name the signal components}
+
+\item{verbose}{\link{logical} (\emph{with default}):
+enables console text output}
+
+\item{output.complex}{\link{logical} (\emph{with default}):
+enables in detail data output. See section \strong{Value} for further information}
+
+\item{parallel.computing}{\link{logical} (\emph{with default}):
+enables the use of multiple CPU cores. This speeds up the execution significantly
+but may need administrator rights and/or a firewall exception.
+Look at \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further information}
 }
 \value{
+If \code{output.complex = FALSE}, a \link{data.frame} is returned. It contains the signal decay rates
+and signal intensities of the best suiting fitting. The fitting was either chosen by the F-test or
+the last sucessful fitting iteration.
 
+If \code{output.complex = TRUE}, a \link{list} of objects is returned:
+
+\tabular{lll}{
+\strong{Element} \tab \strong{Type} \tab \strong{Description}\cr
+\code{decay.rates} \tab \code{numeric} \tab \link{vector} of the best suiting decay rates \cr
+\code{K.selected} \tab \code{numeric} \tab number of components of the best suiting fitting \cr
+\code{F.test} \tab \code{data.frame} \tab table containing the F-test parameter and the decay rates of each fitting model \cr
+\code{F.test.print} \tab \code{data.frame} \tab the same table as above, but formated for pretty console and report output \cr
+\code{info.text} \tab \code{character} \tab collected messages from the algorithms \cr
+\code{component.tables} \tab \code{list} \tab result \link{data.frame}s for all tested models \cr
+\code{curve} \tab \code{data.frame} \tab fitted time-signal-curve \cr
+\code{components} \tab \code{data.frame} \tab best suiting fitting; same object as \code{output.complex = FALSE} returns \cr
+\code{fit.results} \tab \code{list} \tab \link{list} of \link{nls} objects for all tested models \cr
+\code{plot.data} \tab \code{data.frame} \tab factorized results for overview plotting with \link{plot_PhotoCrosssections} \cr
+\code{parameters} \tab \code{list} \tab function arguments and the needed computing time
+}
 }
 \description{
-Fitting function for measurements of multi-exponential decay signal with first order kinetics.
-This function is based on Bluszcz & Adamiec (2006) and was primarily developed for the analysis of quartz CW-OSL
-measurements for dating and dosimetry applications.
+Fitting function for multi-exponential decaying CW-OSL measurements,
+based on the algorithm described by Bluszcz & Adamiec (2006).
 }
-\section{Changelog}{
+\details{
+The function assumes multiple exponentially decaying signal components with first order kinetics:
 
-* 2019-02-14, DM: First version
-* 2019-03-15, DM: Seperated 'decompose_OSLalternatively()'
-* 2019-04-29, DM: Added Blucszs & Adamiec-like approach using numOSL::decomp (Peng et al. 2014)
-* 2019-05-14, DM: Added "fit_OSLLifeTimes" approach from Luminescence package 0.9; Corrected and improved numOSL approach; Deleted nls.default approach
-* 2019-06-28, DM: Deleted "fit_OSLLifeTimes" approach. Added stretched exponentials for testing. Added overview plot
-* 2019-10-07, DM: Streamlined function; added optional background fitting
-* 2019-10-08, DM: Seperated plotting to plot_PhotoCrosssections()
-* 2020-04-04, DM: Extended output list (curve & arguments)
-* 2020-04-06, DM: Extended print output and made some  tweaks. Replaced 'SAR.compatible' with 'fully.bleached'
-* 2020-05-05, DM: Replaced bolean 'fully.bleached' with numeric 'bleaching.grade'
-* 2020-08-05, DM: Added DEoptim + nlsLM algorithm
-* 2020-08-10, DM: Optional parallel computing enabled
+\deqn{I(t) = n_1 \lambda_1 exp(-\lambda_1 t) + n_2 \lambda_2 exp(-\lambda_2 t) + ... + n_K \lambda_K exp(-\lambda_K t)}
+
+with \eqn{I(t)} the CW-OSL signal, \eqn{n} the signal component intensity,
+\eqn{\lambda} the signal component decay constant and \eqn{K} the number of signal components.
+For actual fitting, the integrated version of this formula is used, see Mittelstrass et al. (2021) for details.
+
+The fitting algorithm is an implementation of the \emph{hybrid evolutionary-linear algorithm} (HELA)
+by Bluszcz & Adamiec (2006). See there or Mittelstrass et al. (2021) for details.
+The differential evolution part of HELA is performed by \link[DEoptim:DEoptim]{DEoptim::DEoptim}.
+The linear regression part of HELA is performed by \link{decompose_OSLcurve}.
+The parameter refinement by Levenberg-Marquardt fitting is performed by \link[minpack.lm:nlsLM]{minpack.lm::nlsLM}.
+
+\strong{F-test}
+
+Bluszcz & Adamiec (2006) suggest the use of an F-test to determine the correct number of signal components.
+This function compares the residual square sum (\emph{RSS_K}) value of each
+fitting with the \emph{RSS_{K-1}} value of the previous fitting and calculates
+an \emph{Improvement-in-fitting-quality} criterion:
+
+\deqn{F_K = {(RSS_{K-1} - RSS_K)/2} / {RSS_K(N - 2K)}}
+
+Here, \emph{N} is the number data points (channels) of the measurement and \emph{K} is the number of OSL components
+in the fitting model. If \emph{F_K} falls below the threshold value (\code{F.threshold}), the fitting model
+with \emph{K} components is apparently not significantly better than the \emph{K} - 1 model of the previous fitting cycle.
+Thus, the \emph{K} - 1 model will be recommended as fitting solution.
+
+\strong{Photo-ionisation cross-sections}
+
+While the function is suited for the analysis of a wide variety of multi-exponential decay problems,
+it is target to CW-OSL measurements of quartz under SAR protocol conditions (470 nm stimulation at 125 °C).
+To simplify the assignemt of the found components to OSL components found in published literature,
+photo-ionisation cross-sections are calculated using the \code{stimulation.wavelength} \lambda~stim~  and
+\code{stimulation.intensity} \eqn{\Phi_{stim}}:
+
+\deqn{\sigma_k=\lambda_k {hc / \Phi_{stim}\lambda_{stim}}}
+
+with \eqn{\sigma_k} the photo-ionisation cross-section of component \emph{k} in cm^2,
+\eqn{\lambda_k} the CW-OSL decay constant in s^-1, \emph{h} the Planck constant and \emph{c} the speed of light.
+
+If a \code{stimulation.intensity} larger or equal than 460 nm and lower or equal than 485 nm is defined,
+the components are names automatically. They are named according to value ranges approximated from the
+cross-sections published by Durcan and Duller (2011), Jain et al. (2003) and Singarayer and Bailey (2003).
+For the Ultrafast and the Slow4 component, no consistent literature values could be found, so there range
+is guessed freely:
+
+\tabular{lcc}{
+**Component ** \tab **Lower limit (cm^2) ** \tab **Upper limit (cm^2) **\cr
+Ultrafast \tab 1e-16 \tab 1e-15 \cr
+Fast \tab 1.9e-17 \tab 3.1e-17 \cr
+Medium \tab 3e-18 \tab 9e-18 \cr
+Slow1 \tab 1e-18 \tab 1.85e-18 \cr
+Slow2 \tab 1.1e-19 \tab 4e-19 \cr
+Slow3 \tab 1e-20 \tab 4.67e-20 \cr
+Slow4 \tab 1e-21 \tab 1e-20
 }
-
-\section{ToDo}{
-
-* Complete documentation
-* Reactivate optional background level fitting
-* Introduce 'fit_OSLcurve.control' which forwards algorith parameters to DEoptim.control and nls.lm.control
-* Enable optional weighted fitting and give out reduced Chi²
 }
+\section{Last updates}{
 
-\section{Last changed}{
- 2020-08-18
+
+2020-08-05, Rewrote function to use \link[DEoptim:DEoptim]{DEoptim::DEoptim} and \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} (\strong{This update changes results})
+
+2020-10-26, Completed roxygen documentation (\emph{minor update})
 }
 
 \examples{
@@ -67,13 +153,26 @@ plot_OSLcurve(curve, components)
 
 }
 \references{
-Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL decay curves. Radiation Measurements 41, 886–891. https://doi.org/10.1016/j.radmeas.2006.05.016
+
+Durcan, J.A., Duller, G.A.T., 2011. The fast ratio: A rapid measure for testing the dominance of the fast component in the initial OSL signal from quartz. Radiation Measurements 46, 1065–1072. https://doi.org/10.1016/j.radmeas.2011.07.016
+
+Jain, M., Murray, A.S., Bøtter-Jensen, L., 2003. Characterisation of blue-light stimulated luminescence components in different quartz samples: implications for dose measurement. Radiation Measurements 37, 441–449.
+
+Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
+
+Singarayer, J.S., Bailey, R.M., 2003. Further investigations of the quartz optically stimulated luminescence components using linear modulation.
+Radiation Measurements, Proceedings of the 10th international Conference on Luminescence and Electron-Spin Resonance Dating (LED 2002) 37, 451–458. https://doi.org/10.1016/S1350-4487(03)00062-3
 }
 \seealso{
-[RLum.OSL_decomposition], [sum_OSLcurves], [decompose_OSLcurve], [plot_OSLcurve],
-[plot_PhotoCrosssections], [minpack.lm::nlsLM], [DEoptim::DEoptim]
+\link{RLum.OSL_decomposition}, \link{sum_OSLcurves}, \link{decompose_OSLcurve}, \link{plot_OSLcurve},
+\link{plot_PhotoCrosssections}, \link[minpack.lm:nlsLM]{minpack.lm::nlsLM}, \link[DEoptim:DEoptim]{DEoptim::DEoptim}
 }
 \author{
 Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+
+Please cite the package the following way:
+
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
 }

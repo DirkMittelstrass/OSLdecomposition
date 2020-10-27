@@ -1,8 +1,55 @@
-#' multi-exponential CW-OSL decomposition
+#' Multi-exponential CW-OSL decomposition
+#'
+#' Function for determing the signal component amplitudes of a multi-exponential decay curve if
+#' the signal component decay parameters are already given. Thus, this function decomposes CW-OSL
+#' curve with known components of unknown intensity.
+#'
+#' The function assumes multiple exponentially decaying signal components with first order kinetics:
+#'
+#' \deqn{I(t) = n_1 \lambda_1 exp(-\lambda_1 t) + n_2 \lambda_2 exp(-\lambda_2 t) + ... + n_K \lambda_K exp(-\lambda_K t)}
+#'
+#' with \eqn{I(t)} the CW-OSL signal, \eqn{n} the signal component intensity,
+#' \eqn{\lambda} the signal component decay constant and \eqn{K} the number of signal components.
+#' For the actual decomposition procedure, the integrated version of this formula is used, see Mittelstrass et al. (2021) for details.
+#'
+#' **Decomposition algorithm**
+#'
+#' The calculation procedure depends on the function argument `algorithm`:
+#'
+#' **Case:** `algorithm = "det"` (default)
 #'
 #' The function calculates the CW-OSL component intensities by building an equation system
-#' and solving it by a determinant-based algorithm (Cramers rule).
+#' which is then solved by a determinant-based approach (Cramers rule). This purely analytical
+#' approach, gives the algorithm 100 % robustness, even if the measurement consists just of noise
+#' or obviously the wrong model is used. There are also 'false minima' events.
+#'
+#' The signal intensity error is calculated by applying the *propagation of uncertainty* method on Cramers rule.
+#' The result is a highly accurate
+#'
+#'
 #' It also estimates the standard deviation of the amplitudes by using the error propagation method applied at Cramers rule.
+#'
+#' **Case:** `algorithm = "det+nls"`
+#'
+#'
+#' **Case:** `algorithm = "nls"`
+#'
+#'
+#' All three methods were extensively tested by Mittelstrass (2019).
+#'
+#' \tabular{lll}{
+#'  **Characteristics** \tab **det** \tab **det+nls** \tab **nls** \cr
+#'  Intensity accuracy \tab +++ \tab +++ \tab +++ \cr
+#'  Intensity precision \tab ++ \tab +++ \tab +++ \cr
+#'  Error estimation accuracy \tab +++ \tab ++ \tab + \cr
+#'  Computing speed \tab ++ \tab + \tab ++ \cr
+#'  Success rate \tab 100 % \tab 100 % \tab >99.9 %
+#' }
+#'
+#'
+#'
+#'
+#'
 #'
 #' @param curve [RLum.Data.Curve-class] or [data.frame] or [matrix] (**required**):
 #' CW-OSL record. `$time` or first column (x-axis) for the measurement time (must have constant time intervals),
@@ -13,10 +60,16 @@
 #' In case of a vector: It is recommended to use less than 7 parameters. The parameters will be sorted in decreasing order.
 #' In case of a data.frame. One column must be named *$lambda*.
 #' It is recommended to provide also integration interval parameters (columns *t.start, t.end, ch.start, ch.end*),
-#' which can be found by applying [optimise_OSLintervals] on the global mean curve, calculated by [sum_OSLcurves].
+#' which can be found by applying [optimise_OSLintervals] to the global mean curve, calculated by [sum_OSLcurves].
 #' If one or more column is missing, a simple interval definition algorithm is run automatically (see **Notes**)..
 #'
-#' @param error.calculation (*with default*):
+#' @param background.fitting [logical] (*with default*):
+#'
+#'
+#' @param algorithm [character] string (*with default*):
+#' Choice of curve decomposition approach. Either `"det"` or `"det+nls"` or `"nls"`, see **Details**.
+#'
+#' @param error.calculation [character] string (*with default*):
 #' integral error estimation approach, either **"empiric"** or **"poisson"** or [numeric] value;
 #' Per default the data of *curve$residual* provided by [simulate_OSLcurve] is used to calculate an **empiric** standard error for each integral which will be processed in the error propagation formula.
 #' Alternatively the integral standard error can be calculated by assuming a **poisson** distributed signal error, known as *Shot noise*.
@@ -24,33 +77,42 @@
 #' Also the parameter can be set to a [numeric] value; which will be handled as standard deviation per channel and added to the poisson distributed *Shot noise*.
 #' If no error calculation is wished, set the argument to **"none"**. This reduces the necessary computing time heavily.
 #'
-#' @param background.fitting
-#' @param algorithm
-#' @param verbose
+#' @param verbose [logical] (*with default*):
+#' enables console text output
 #'
 #' @return
 #' The input table **components** [data.frame] will be returned with added or overwritten columns: *$n, $n.error, $n.residual, $I, $I.error*
 #'
-#' @section Last changed: 2020-08-27
+#' @section Last updates:
+#'
+#' 2020-08-27, DM: Replaced [nls] function in the `algorithm = "nls"` or `"det+nls"` cases
+#' with the more robust [minpack.lm::nlsLM] (**This update may changed analysis results**)
+#'
+#' 2020-10-28, Completed roxygen documentation (*minor update*)
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
 #'
-#' @seealso [fit_OSLcurve], [optimise_OSLintervals], [RLum.OSL_decomposition], [minpack.lm::nlsLM]
+#' Please cite the package the following way:
 #'
-#' @references
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
 #' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
 #'
+#' @seealso [fit_OSLcurve], [optimise_OSLintervals], [RLum.OSL_decomposition], [minpack.lm::nlsLM]
+#'
+#' @references
+#'
+#' Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
+#'
 #' @examples
 #'
-#' # Set some reasonable parameter for a weak quartz CW-OSL decay
+#' # Set arbitrary but reasonable parameter for a weak quartz CW-OSL decay
 #' components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.1), n = c(1000, 1000, 10000))
 #'
 #' # Simulate the CW-OSL curve and add some signal noise and some detection background
 #' curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 40)
 #'
-#' # Let us decompose the simulated curve
+#' # Decompose the simulated curve
 #' components <- decompose_OSLcurve(curve, components)
 #'
 #' # Display the component separation results
@@ -95,9 +157,9 @@ decompose_OSLcurve <- function(
   #' * 2020-08-27, DM: Replaced [nls] function in the optional refinement fitting with the more robust [minpack.lm::nlsLM]
   #'
   #' ToDo:
-  #' * Update documentation (example, notes)
   #' * Enable the input of a list of curves
-  #' * Replace Cramers rule equations with 'solve()' to increase performance
+  #' * Replace Cramers rule equations with 'solve()' to increase performance and to increase precision if a
+  #'   determinant converges towards zero
   #' * In some very rare cases, negative values for n.error are returned. How can that happen?
   #' * Test and expand interval determination algorithm in case of very few (N ~ K) data points
   #' * Enhance Auto-interval finder to work when 'background.fitting = TRUE'

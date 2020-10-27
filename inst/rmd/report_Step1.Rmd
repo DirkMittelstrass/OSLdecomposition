@@ -256,7 +256,7 @@ http://luminescence.de/OSLdecomp_talk.pdf <br>
 
 There, you can find a full description of the method and the algorithms involved, as well as some simulation-based performance tests. 
 
-It is allowed and encouraged to add the HTML file of this report to the electronical supplement of your publication.  
+It is allowed and encouraged to add this HTML report to the electronical supplement of your publication.  
 
 
 ## References {#ref}

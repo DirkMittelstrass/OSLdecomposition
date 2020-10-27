@@ -14,66 +14,39 @@ decompose_OSLcurve(
 )
 }
 \arguments{
-\item{curve}{[RLum.Data.Curve-class] or [data.frame] or [matrix] (**required**):
-CW-OSL record. `$time` or first column (x-axis) for the measurement time (must have constant time intervals),
-`$signal` or second column (y-axis) for the signal values. Further columns will be ignored}
+\item{curve}{\linkS4class{RLum.Data.Curve} or \link{data.frame} or \link{matrix} (\strong{required}):
+CW-OSL record. \verb{$time} or first column (x-axis) for the measurement time (must have constant time intervals),
+\verb{$signal} or second column (y-axis) for the signal values. Further columns will be ignored}
 
-\item{components}{[data.frame] or [numeric] vector (**required**):
-Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by [fit_OSLcurve].
+\item{components}{\link{data.frame} or \link{numeric} vector (\strong{required}):
+Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by \link{fit_OSLcurve}.
 In case of a vector: It is recommended to use less than 7 parameters. The parameters will be sorted in decreasing order.
-In case of a data.frame. One column must be named *$lambda*.
-It is recommended to provide also integration interval parameters (columns *t.start, t.end, ch.start, ch.end*),
-which can be found by applying [optimise_OSLintervals] on the global mean curve, calculated by [sum_OSLcurves].
-If one or more column is missing, a simple interval definition algorithm is run automatically (see **Notes**)..}
+In case of a data.frame. One column must be named \emph{$lambda}.
+It is recommended to provide also integration interval parameters (columns \emph{t.start, t.end, ch.start, ch.end}),
+which can be found by applying \link{optimise_OSLintervals} on the global mean curve, calculated by \link{sum_OSLcurves}.
+If one or more column is missing, a simple interval definition algorithm is run automatically (see \strong{Notes})..}
 
-\item{error.calculation}{(*with default*):
-integral error estimation approach, either **"empiric"** or **"poisson"** or [numeric] value;
-Per default the data of *curve$residual* provided by [simulate_OSLcurve] is used to calculate an **empiric** standard error for each integral which will be processed in the error propagation formula.
-Alternatively the integral standard error can be calculated by assuming a **poisson** distributed signal error, known as *Shot noise*.
+\item{algorithm}{}
+
+\item{error.calculation}{(\emph{with default}):
+integral error estimation approach, either \strong{"empiric"} or \strong{"poisson"} or \link{numeric} value;
+Per default the data of \emph{curve$residual} provided by \link{simulate_OSLcurve} is used to calculate an \strong{empiric} standard error for each integral which will be processed in the error propagation formula.
+Alternatively the integral standard error can be calculated by assuming a \strong{poisson} distributed signal error, known as \emph{Shot noise}.
 This is suitable if the lack of data points on the x-axis circumvent an empiric error estimation, like with spatial or spectral resolved CCD measurements.
-Also the parameter can be set to a [numeric] value; which will be handled as standard deviation per channel and added to the poisson distributed *Shot noise*.
-If no error calculation is wished, set the argument to **"none"**. This reduces the necessary computing time heavily.}
+Also the parameter can be set to a \link{numeric} value; which will be handled as standard deviation per channel and added to the poisson distributed \emph{Shot noise}.
+If no error calculation is wished, set the argument to \strong{"none"}. This reduces the necessary computing time heavily.}
 
-\item{verbose}{}
+\item{verbose}{\link{logical} (\emph{with default}):
+enables text output}
 }
 \value{
-The input table **components** [data.frame] will be returned with added or overwritten columns: *$n, $n.error, $n.residual, $I, $I.error*
+The input table \strong{components} \link{data.frame} will be returned with added or overwritten columns: \emph{$n, $n.error, $n.residual, $I, $I.error}
 }
 \description{
 The function calculates the CW-OSL component intensities by building an equation system
 and solving it by a determinant-based algorithm (Cramers rule).
 It also estimates the standard deviation of the amplitudes by using the error propagation method applied at Cramers rule.
 }
-\section{Changelog}{
-
-* winter 2012/13: first basic version, used for Bachelor thesis DM
-* autumn 2013   : added empiric error estimation, shown in germanLED Freiberg 2013
-* 2014-11-??, SK: formated into Rluminecence package standard
-* 2014-11-07, DM: Binomial error propagation added
-* 2018-05-04, DM: added residuals for n values (necessary for slow component dosimetry) and many little tweaks
-* 2018-06-22, DM: added decomposition of data sets with just 1 or 2 components
-* 2018-06-22, DM: added negative.values.to.zero and set it on TRUE as default (on request of C. Schmidt) (later removed)
-* 2018-07-05, DM: overworked error estimation; replaced binomial with poisson error approach; added auto-switch to poisson if integral length = 1; integrated background.noise into error
-* 2019-03-29, DM: Rewritten function for several purposes: 1. working now with any number of components  2. shorter and more elegant code 3. data format more suitable for markdown/shiny applications.
-* 2019-09-09, DM: Added anticorrelating covariance terms into error estimation (later removed)
-* 2019-09-25, DM: Merged function with decompose_OSLalternatively() and added algorithm argument
-* 2019-09-25, DM: Deleted unnecessary functions (negative.values.to.zero, offset, anticorrelation)
-* 2019-10-02, DM: Added optional background fitting
-* 2020-04-06, DM: Added 'initial.signal' column in output data.frame; cleaned print output
-* 2020-07-20, DM: Added algorithm for fast interval definition based on logarithmic means; More input data checks
-* 2020-08-27, DM: Replaced [nls] function in the optional refinement fitting with the more robust [minpack.lm::nlsLM]
-}
-
-\section{ToDo}{
-
-* Update documentation (example, notes)
-* Enable the input of a list of curves
-* Replace Cramers rule equations with 'solve()' to increase performance
-* In some very rare cases, negative values for n.error are returned. How can that happen?
-* Test and expand interval determination algorithm in case of very few (N ~ K) data points
-* Enhance Auto-interval finder to work when 'background.fitting = TRUE'
-}
-
 \section{Last changed}{
  2020-08-27
 }
@@ -104,10 +77,10 @@ plot_OSLcurve(curve, components)
 }
 \references{
 Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
 }
 \seealso{
-[fit_OSLcurve], [optimise_OSLintervals], [RLum.OSL_decomposition], [minpack.lm::nlsLM]
+\link{fit_OSLcurve}, \link{optimise_OSLintervals}, \link{RLum.OSL_decomposition}, \link[minpack.lm:nlsLM]{minpack.lm::nlsLM}
 }
 \author{
 Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
