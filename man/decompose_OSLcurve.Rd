@@ -14,7 +14,7 @@ decompose_OSLcurve(
 )
 }
 \arguments{
-\item{curve}{\linkS4class{RLum.Data.Curve} or \link{data.frame} or \link{matrix} (\strong{required}):
+\item{curve}{\link{data.frame} or \link{matrix} or \linkS4class{RLum.Data.Curve} (\strong{required}):
 CW-OSL record. \verb{$time} or first column (x-axis) for the measurement time (must have constant time intervals),
 \verb{$signal} or second column (y-axis) for the signal values. Further columns will be ignored}
 
@@ -35,12 +35,12 @@ It can also cause implausible slow component results if the measurement duration
 \item{algorithm}{\link{character} string (\emph{with default}):
 Choice of curve decomposition approach. Either \code{"det"} or \code{"det+nls"} or \code{"nls"}, see section \strong{Details}.}
 
-\item{verbose}{\link{logical} (\emph{with default}):
-enables console text output}
-
-\item{error.estimation[character]}{string (\emph{with default}):
+\item{error.estimation}{\link{character} string (\emph{with default}):
 integral error estimation approach, either \code{"empiric"} or \code{"poisson"} or a \link{numeric} value or \code{"none"}.
 Argument has no effect if \code{algorithm = "nls"}.}
+
+\item{verbose}{\link{logical} (\emph{with default}):
+enables console text output}
 }
 \value{
 The input table \strong{components} \link{data.frame} will be returned with added or overwritten

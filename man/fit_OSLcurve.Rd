@@ -43,9 +43,9 @@ enables console text output}
 enables in detail data output. See section \strong{Value} for further information}
 
 \item{parallel.computing}{\link{logical} (\emph{with default}):
-enables the use of multiple CPU cores. This speeds up the execution significantly
+enables the use of multiple CPU cores. This increases the execution speed significantly
 but may need administrator rights and/or a firewall exception.
-Look at \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further information}
+See \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further information}
 }
 \value{
 If \code{output.complex = FALSE}, a \link{data.frame} is returned. It contains the signal decay rates

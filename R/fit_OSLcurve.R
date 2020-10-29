@@ -89,9 +89,9 @@
 #' enables in detail data output. See section **Value** for further information
 #'
 #' @param parallel.computing [logical] (*with default*):
-#' enables the use of multiple CPU cores. This speeds up the execution significantly
+#' enables the use of multiple CPU cores. This increases the execution speed significantly
 #' but may need administrator rights and/or a firewall exception.
-#' Look at [DEoptim::DEoptim.control] for further information
+#' See [DEoptim::DEoptim.control] for further information
 #'
 #' @section Last updates:
 #'

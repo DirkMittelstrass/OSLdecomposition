@@ -102,7 +102,7 @@
 #'
 #'
 #'
-#' @param curve [RLum.Data.Curve-class] or [data.frame] or [matrix] (**required**):
+#' @param curve [data.frame] or [matrix] or [RLum.Data.Curve-class] (**required**):
 #' CW-OSL record. `$time` or first column (x-axis) for the measurement time (must have constant time intervals),
 #' `$signal` or second column (y-axis) for the signal values. Further columns will be ignored
 #'

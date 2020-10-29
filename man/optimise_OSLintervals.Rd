@@ -12,59 +12,65 @@ optimise_OSLintervals(
   channel.number = NA,
   t.start = 0,
   t.end = NA,
-  verbose = TRUE
+  verbose = TRUE,
+  parallel.computing = FALSE
 )
 }
 \arguments{
-\item{components}{\link{data.frame} (\strong{required}):
-Table containing the decay constants of the signal components}
+\item{components}{\link{data.frame} or \link{numeric} vector (\strong{required}):
+Table or vector containing the decay constants of the signal components.
+A \link{data.frame} must contain a column \verb{$lambda}. Usually the \link{data.frame} is provided
+by \link{fit_OSLcurve}}
 
-\item{curve}{\link{data.frame} (\emph{optional}):
-OSL signal curve. The x-axis (time axis) will be used ot define channel.width and channel.number}
+\item{curve}{\link{data.frame} or \link{matrix} or \linkS4class{RLum.Data.Curve} (\emph{optional}):
+OSL signal curve which serves as time axis template.
+Input curve will just be used to define \code{channel.width} and \code{channel.number}}
 
 \item{channel.width}{\link{numeric} (\emph{optional}):
-channel width in seconds. Necessary if \emph{curve} is not given}
+channel width in seconds. Necessary if \code{curve} is not given}
 
-\item{channel.number}{\link{integer} (\emph{optional}):
-number of channels resp. data points. Necessary if \emph{curve} is not given}
+\item{channel.number}{\link{numeric} (\emph{optional}):
+number of channels resp. data points. Necessary if \code{curve} is not given}
 
 \item{t.start}{\link{numeric} (\emph{with default}):
-starting point of the first interval, per default the start of the measurement}
+starting time of the first interval, per default the start of the measurement}
 
 \item{t.end}{\link{numeric} (\emph{optional}):
-end point of the last interval, per default the end of the measurement}
+end time of the last interval, per default the end of the measurement}
+
+\item{verbose}{\link{logical} (\emph{with default}):
+enables console text output}
+
+\item{parallel.computing}{\link{logical} (\emph{with default}):
+enables the use of multiple CPU cores. This increases the execution speed significantly
+but may need administrator rights and/or a firewall exception.
+See \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further information}
 }
 \value{
 The input table \emph{components} \link{data.frame} will be returned with four additional columns:
 \emph{$t.start}, \emph{$t.end} defining the interval borders in time; \emph{$ch.start}, \emph{$ch.end} defining the intervals as channels
 }
 \description{
-The function optimises the integration intervals for CW-OSL component separation with \link{decompose_OSLcurve}.
+Function defines integration intervals for CW-OSL component separation with \link{decompose_OSLcurve}.
+The iterative optimisation process aims for minimum cross-correlation between the signal components.
 }
-\section{Changelog}{
+\details{
+The precision of the component seperation with \link{decompose_OSLcurve} and the impact of
+eventual systematic decay rate errors on the component seperation depend on the integration interval definition.
+This function minimises the influence of an under/over-estimated decay rate to the
+signal intensity calculation of other component. This is done by maximizing the denominator
+determinant in Cramers rule, see Mittelstrass (2019) for details. For maximization, the iterative
+evolutionary algorithm of Storn and Price (1997) is used, available in \emph{R} through \link[DEoptim:DEoptim]{DEoptim::DEoptim}.
 
-\itemize{
-\item 2018-04-05, DM: first running version
-\item 2018-06-16, DM: added 2-component and 1-component case
-\item 2018-06-19, DM: changed t0 and t3 parameter to t.start and t.end and added full increment proof
-\item 2018-06-24, DM: changed data structure to get static tables
-\item 2019-03-21, DM: Rewritten for arbitrary component numbers and changed data structure again
-\item 2019-10-02, DM: added optional determination of background-fitting interval
-\item 2020-08-23, DM: Replaced own minimum searching algorithm with DEoptim
-\item 2020-08-27, DM: Renamed function; More input classes allowed
+The inclusion of a background level component is supported, see \link{decompose_OSLcurve} for details.
 }
-}
+\section{Last updates}{
 
-\section{ToDo}{
 
-\itemize{
-\item rename function into "optimise_OSLintervals" and edit depending functions
-\item write full documentation
-}
-}
+2020-08-23, DM: Replaced own maxmimum searching algorithm with \link[DEoptim:DEoptim]{DEoptim::DEoptim}
+(\strong{update may have changed analysis results})
 
-\section{Last changed}{
- 2020-08-27
+2020-10-30, DM: Added \code{parallel.computing} argument; enhanced roxygen documentation (\emph{minor update})
 }
 
 \examples{
@@ -74,14 +80,20 @@ print(A, row.names = FALSE)
 
 }
 \references{
-Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
+Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
+
+Storn, R., Price, K., 1997. Differential Evolution – A Simple and Efficient Heuristic for global Optimization over Continuous Spaces. Journal of Global Optimization 11, 341–359. \link{https://doi.org/10.1023/A:1008202821328}
 }
 \seealso{
-\link{decompose_OSLcomponents}, \link{RLum.OSL_decomposition}, \link[DEoptim:DEoptim]{DEoptim::DEoptim}
+\link{decompose_OSLcomponents}, \link{RLum.OSL_decomposition}, \link[DEoptim:DEoptim]{DEoptim::DEoptim}, \link{fit_OSLcurve}
 }
 \author{
 Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+
+Please cite the package the following way:
+
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
 }
 \keyword{CWOSL}
 \keyword{OSL}

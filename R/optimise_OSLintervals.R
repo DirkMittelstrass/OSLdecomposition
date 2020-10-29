@@ -1,55 +1,73 @@
 #' Find adequate integration intervals for CW-OSL decomposition
 #'
-#' The function optimises the integration intervals for CW-OSL component separation with [decompose_OSLcurve].
+#' Function defines integration intervals for CW-OSL component separation with [decompose_OSLcurve].
+#' The iterative optimisation process aims for minimum cross-correlation between the signal components.
+#'
+#' The precision of the component seperation with [decompose_OSLcurve] and the impact of
+#' eventual systematic decay rate errors on the component seperation depend on the integration interval definition.
+#' This function minimises the influence of an under/over-estimated decay rate to the
+#' signal intensity calculation of other component. This is done by maximizing the denominator
+#' determinant in Cramers rule, see Mittelstrass (2019) for details. For maximization, the iterative
+#' evolutionary algorithm of Storn and Price (1997) is used, available in *R* through [DEoptim::DEoptim].
+#'
+#' The inclusion of a background level component is supported, see [decompose_OSLcurve] for details.
 #'
 #'
-#' @param components [data.frame] (**required**):
-#' Table containing the decay constants of the signal components
+#' @param components [data.frame] or [numeric] vector (**required**):
+#' Table or vector containing the decay constants of the signal components.
+#' A [data.frame] must contain a column `$lambda`. Usually the [data.frame] is provided
+#' by [fit_OSLcurve]
 #'
-#' @param curve [data.frame] (*optional*):
-#' OSL signal curve. The x-axis (time axis) will be used ot define channel.width and channel.number
+#' @param curve [data.frame] or [matrix] or [RLum.Data.Curve-class] (*optional*):
+#' OSL signal curve which serves as time axis template.
+#' Input curve will just be used to define `channel.width` and `channel.number`
 #'
 #' @param channel.width [numeric] (*optional*):
-#' channel width in seconds. Necessary if *curve* is not given
+#' channel width in seconds. Necessary if `curve` is not given
 #'
-#' @param channel.number [integer] (*optional*):
-#' number of channels resp. data points. Necessary if *curve* is not given
+#' @param channel.number [numeric] (*optional*):
+#' number of channels resp. data points. Necessary if `curve` is not given
 #'
 #' @param t.start [numeric] (*with default*):
-#' starting point of the first interval, per default the start of the measurement
+#' starting time of the first interval, per default the start of the measurement
 #'
 #' @param t.end [numeric] (*optional*):
-#' end point of the last interval, per default the end of the measurement
+#' end time of the last interval, per default the end of the measurement
+#'
+#' @param verbose [logical] (*with default*):
+#' enables console text output
+#'
+#' @param parallel.computing [logical] (*with default*):
+#' enables the use of multiple CPU cores. This increases the execution speed significantly
+#' but may need administrator rights and/or a firewall exception.
+#' See [DEoptim::DEoptim.control] for further information
 #'
 #' @return
-#' The input table *components* [data.frame] will be returned with four additional columns:
-#' *$t.start*, *$t.end* defining the interval borders in time; *$ch.start*, *$ch.end* defining the intervals as channels
+#' The input table `components` [data.frame] will be returned with four additional columns:
+#' `$t.start`, `$t.end` defining the time intervals and `$ch.start`, `$ch.end` assigning those intervals to channel indicies.
+#' If a [numeric] vector is given as input, a new [data.frame] will be returned
 #'
+#' @section Last updates:
 #'
-#' @section Changelog:
-#' * 2018-04-05, DM: first running version
-#' * 2018-06-16, DM: added 2-component and 1-component case
-#' * 2018-06-19, DM: changed t0 and t3 parameter to t.start and t.end and added full increment proof
-#' * 2018-06-24, DM: changed data structure to get static tables
-#' * 2019-03-21, DM: Rewritten for arbitrary component numbers and changed data structure again
-#' * 2019-10-02, DM: added optional determination of background-fitting interval
-#' * 2020-08-23, DM: Replaced own minimum searching algorithm with DEoptim
-#' * 2020-08-27, DM: Renamed function; More input classes allowed
+#' 2020-08-23, DM: Replaced own maxmimum searching algorithm with [DEoptim::DEoptim]
+#'  (**update may have changed analysis results**)
 #'
-#' @section ToDo:
-#' * rename function into "optimise_OSLintervals" and edit depending functions
-#' * write full documentation
-#'
-#' @section Last changed: 2020-08-27
+#' 2020-10-30, DM: Added `parallel.computing` argument; enhanced roxygen documentation (*minor update*)
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
 #'
-#' @seealso [decompose_OSLcomponents], [RLum.OSL_decomposition], [DEoptim::DEoptim]
+#' Please cite the package the following way:
 #'
-#' @references
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
 #' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+#'
+#' @seealso [decompose_OSLcomponents], [RLum.OSL_decomposition], [DEoptim::DEoptim], [fit_OSLcurve]
+#'
+#' @references
+#' Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
+#'
+#' Storn, R., Price, K., 1997. Differential Evolution – A Simple and Efficient Heuristic for global Optimization over Continuous Spaces. Journal of Global Optimization 11, 341–359. [https://doi.org/10.1023/A:1008202821328]
 #'
 #' @keywords CWOSL OSL decomposition deconvolution components
 #'
@@ -61,7 +79,6 @@
 #' @md
 #' @export
 
-
 optimise_OSLintervals <- function(
   components,
   curve = NULL,
@@ -70,11 +87,25 @@ optimise_OSLintervals <- function(
   channel.number = NA,
   t.start = 0,
   t.end = NA,
-  verbose = TRUE
+  verbose = TRUE,
+  parallel.computing = FALSE
 ){
 
+  #' Changelog:
+  #' * 2018-04-05, DM: first running version
+  #' * 2018-06-16, DM: added 2-component and 1-component case
+  #' * 2018-06-19, DM: changed t0 and t3 parameter to t.start and t.end and added full increment proof
+  #' * 2018-06-24, DM: changed data structure to get static tables
+  #' * 2019-03-21, DM: Rewritten for arbitrary component numbers and changed data structure again
+  #' * 2019-10-02, DM: added optional determination of background-fitting interval
+  #' * 2020-08-23, DM: Replaced own minimum searching algorithm with DEoptim
+  #' * 2020-08-27, DM: Renamed function; More input classes allowed
+  #' * 2020-10-30, DM: Added `parallel.computing` argument; enhanced roxygen documentation
+  #'
+  #' ToDo:
+  #' * ...
+
   # Hidden parameters
-  parallel.computing <- FALSE
   silent <- FALSE
 
   # Check if 'components' is of valid type
@@ -155,7 +186,10 @@ optimise_OSLintervals <- function(
     components$ch.start <- 1 + floor(t0 /  dt)
     components$ch.end <- ceiling(t.end / dt)
 
-    return(components)}
+    if (verbose) {
+      cat("Just one component defined: Full measurement duration set as integration interval\n" )}
+
+    invisible(components)}
 
   ########## Create matrix ###########
 
@@ -222,7 +256,7 @@ optimise_OSLintervals <- function(
   if (is(det_min)[1] == "try-error"){
 
     #if (verbose & (is(DE_min)[1] == "try-error")) cat(DE_min[1])
-    stop("[decompose_OSLcurve()] Error: Differential evolution algorithm failed. Please reconsider input parameter\n")}
+    stop("[decompose_OSLcurve()] Error: Differential evolution failed. Please reconsider input parameter\n")}
 
   # Otherwise, extract results
   interval_divider <- sort(round(det_min$optim$bestmem))
@@ -232,12 +266,12 @@ optimise_OSLintervals <- function(
 
   if (verbose) {
     cat("Maximum determinant =", formatC(det_value, digits = 4),
-        "with interval dividing channels:", paste0(interval_divider, collapse = ", " ), "\n" )}
+        "with interval dividing channels at i =", paste0(interval_divider, collapse = ", " ), "\n" )}
 
   components$t.start <- unlist(c(t0, interval_divider * dt))
   components$t.end <- unlist(c(interval_divider * dt, t.end))
   components$ch.start <- unlist(c(1 + floor(t0 /  dt), interval_divider + 1))
   components$ch.end <- unlist(c(interval_divider, ceiling(t.end / dt)))
 
-  return(components)
+  invisible(components)
 }
