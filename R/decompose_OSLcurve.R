@@ -14,40 +14,91 @@
 #'
 #' **Decomposition algorithm**
 #'
-#' The calculation procedure depends on the function argument `algorithm`:
+#' The calculation procedure depends on the function argument `algorithm`.
+#' This function includes two different decomposition algorithms: `"det"` for **det**erminant solution
+#' and `"nls"` for **n**onlinear **l**east **s**quares estimate
 #'
-#' **Case:** `algorithm = "det"` (default)
+#' `algorithm = "det"` (default)
 #'
 #' The function calculates the CW-OSL component intensities by building an equation system
 #' which is then solved by a determinant-based approach (Cramers rule). This purely analytical
-#' approach, gives the algorithm 100 % robustness, even if the measurement consists just of noise
-#' or obviously the wrong model is used. There are also 'false minima' events.
+#' approach, gives the algorithm a solution in all possible cases, even if the measurement consists just of noise
+#' or the wrong model is used. There are also no 'false minima' events.
+#' The statistical error is calculated by applying the *propagation of uncertainty* method on Cramers rule.
 #'
-#' The signal intensity error is calculated by applying the *propagation of uncertainty* method on Cramers rule.
-#' The result is a highly accurate
+#' The precision of this algorithm as well as the propagation of eventual systematic errors of the decay rate values,
+#' depend on the integration intervals, given by the columns `$t.start`, `$t.end`, `$ch.start` and `$ch.end`
+#' of the [data.frame] used as input for the argument `components =`.
+#' In principle, these can be chosen freely. Reasonable integration intervals are defined by [optimise_OSLintervals].
+#' If not defined, the logarithmic mean values between life times (reciprocal decay rate) of subsequent components are
+#' used as interval borders.
 #'
+#' `algorithm = "nls"`
 #'
-#' It also estimates the standard deviation of the amplitudes by using the error propagation method applied at Cramers rule.
+#' As alternative algorithm, Levenberg-Marquardt nonlinear regression is available, see [minpack.lm::nlsLM] for details.
+#' The results are equal to that of the `"det"` algorithm in accuracy and precision. But there is the slight chance (< 1 %)
+#' of fitting failure when using the `"nls"` algorithm. Also, the statistical errors are between 20 % and 80 % underestimated
+#' in the most cases. As advantage, the `"nls"` algorithm is less sensitive against systematic errors
+#' caused by uncorrected signal background.
 #'
-#' **Case:** `algorithm = "det+nls"`
+#' `algorithm = "det+nls"`
 #'
+#' Both algorithms can be combined. Then, `"det"` provides the startings values and the error estimations for
+#' `"nls"` and returns replacement results, in case `"nls"` fails. `"nls"` compensates for eventual systematic
+#' errors in the fast and medium components intensity values due to uncorrected signal background. However,
+#' background signal will still affect slow components. The slowest component will be overestimated while
+#' the second slowest component will be underestimated. Are these components of particular interest,
+#' it is recommended to set `background.fitting = TRUE`
 #'
-#' **Case:** `algorithm = "nls"`
+#' All three methods were tested at 5x10^6 simulated CW-OSL curves by Mittelstrass (2019) for their performance
+#' (+++ reliable results in all cases; ++ reliable in >95% of cases: + reliable in most cases):
 #'
-#'
-#' All three methods were extensively tested by Mittelstrass (2019).
-#'
-#' \tabular{lll}{
-#'  **Characteristics** \tab **det** \tab **det+nls** \tab **nls** \cr
-#'  Intensity accuracy \tab +++ \tab +++ \tab +++ \cr
-#'  Intensity precision \tab ++ \tab +++ \tab +++ \cr
-#'  Error estimation accuracy \tab +++ \tab ++ \tab + \cr
-#'  Computing speed \tab ++ \tab + \tab ++ \cr
-#'  Success rate \tab 100 % \tab 100 % \tab >99.9 %
+#' \tabular{llll}{
+#'  **Characteristics** \tab **det** \tab **nls** \tab **det+nls** \cr
+#'  Decomposition success rate \tab 100 % \tab >99 % \tab 100 % \cr
+#'  Component intensity accuracy \tab +++ \tab +++ \tab +++ \cr
+#'  Accuracy in case of uncorrected background \tab + \tab ++ \tab ++ \cr
+#'  Error estimation accuracy \tab +++ \tab + \tab ++
 #' }
 #'
+#' In summary, `algorithm = "det"` is recommended for the most cases. If the signal background level is
+#' significant (> 2 % of initial signal) but was not corrected, `algorithm = "det+nls"` is the better choice.
+#' Setting `background.fitting = TRUE` is usually not recommended, only in case slow components shall
+#' be investigated in measurements with uncorrected background.
 #'
+#' *NOTE: All statements refer to the version prior 2020-08-27 where [stats::nls] was used instead of
+#' [minpack.lm::nlsLM]. The behavior of the * `"nls"` * algorithm should remain about the same, but
+#' has to be tested yet*
 #'
+#' **Error estimation**
+#'
+#' In case of `algorithm = "det"` or `"det+nls"` the Propagation of Uncertainty method is used to
+#' transform signal bin error values into component intensity error values. The signal bin error
+#' calculation depends on the argument `error.estimation`, see below.
+#' If `algorithm = "nls"` is used, the error values given back by [minpack.lm::nlsLM] are returned.
+#'
+#' `error.estimation = "empiric"` (default)
+#'
+#' The standard deviation of each signal bin (signal bin = signal value of an integrated time interval) is
+#' calculated from the *corrected sample variance* between the CW-OSL model and the actual CW-OSL curve
+#' for that interval. Thus, statistical errors are monitored accurately without prior knowledge necessary.
+#' However, eventual systematic errors are monitored insufficiently. Also, at least two (better more) data points
+#' per signal bin are needed to estimate its standard deviation. If a signal bin consists just of on data point,
+#' its square root value is taken as standard deviation, in accordance to the Poisson distribution.#'
+#'
+#' `error.estimation = "poisson"` or [numeric] value
+#'
+#' Alternatively the standard error can be calculated by approximating a **Poisson** distributed signal error, known as *Shot noise*.
+#' This is suitable if the lack of data points on the x-axis circumvent an empiric error estimation, like with spatial or spectral resolved CCD measurements.
+#' Also the parameter can be set to a [numeric] value, which will be handled as standard deviation per channel and added to the Poisson distributed Shot noise.
+#' Thus, the [numeric] value represents the detector noise per channel.
+#'
+#' *Systematic errors*
+#'
+#' The two error estimation approaches can be used to detect (but not quantify) eventual systematic errors.
+#' `"poisson"` error values are not affected by systematic errors, while `"empiric"` errors are.
+#' If the detector noise is known and taken into account, the relation between both values for a given
+#' signal bin should be about \eqn{empiric / poisson = 1}. In case of systematic errors, this ratio increases.
 #'
 #'
 #'
@@ -58,37 +109,37 @@
 #' @param components [data.frame] or [numeric] vector (**required**):
 #' Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by [fit_OSLcurve].
 #' In case of a vector: It is recommended to use less than 7 parameters. The parameters will be sorted in decreasing order.
-#' In case of a data.frame. One column must be named *$lambda*.
-#' It is recommended to provide also integration interval parameters (columns *t.start, t.end, ch.start, ch.end*),
+#' In case of a data.frame. One column must be named `$lambda`.
+#' It is recommended to provide also integration interval parameters (columns `$t.start`, `$t.end`, `$ch.start`, `$ch.end`),
 #' which can be found by applying [optimise_OSLintervals] to the global mean curve, calculated by [sum_OSLcurves].
-#' If one or more column is missing, a simple interval definition algorithm is run automatically (see **Notes**)..
+#' If one or more column is missing, a simple interval definition algorithm is run automatically, see section **Details**.
 #'
 #' @param background.fitting [logical] (*with default*):
-#'
+#' if `TRUE`, an additional signal component with a decay rate of \eqn{\lambda = 0} is included.
+#' This allows for an accurate estimation of slow component intensities if the data is not background
+#' corrected. However, the additional component reduces the overall precision of the algorithm.
+#' It can also cause implausible slow component results if the measurement duration is not sufficiently long (> 30 s).
 #'
 #' @param algorithm [character] string (*with default*):
-#' Choice of curve decomposition approach. Either `"det"` or `"det+nls"` or `"nls"`, see **Details**.
+#' Choice of curve decomposition approach. Either `"det"` or `"det+nls"` or `"nls"`, see section **Details**.
 #'
-#' @param error.calculation [character] string (*with default*):
-#' integral error estimation approach, either **"empiric"** or **"poisson"** or [numeric] value;
-#' Per default the data of *curve$residual* provided by [simulate_OSLcurve] is used to calculate an **empiric** standard error for each integral which will be processed in the error propagation formula.
-#' Alternatively the integral standard error can be calculated by assuming a **poisson** distributed signal error, known as *Shot noise*.
-#' This is suitable if the lack of data points on the x-axis circumvent an empiric error estimation, like with spatial or spectral resolved CCD measurements.
-#' Also the parameter can be set to a [numeric] value; which will be handled as standard deviation per channel and added to the poisson distributed *Shot noise*.
-#' If no error calculation is wished, set the argument to **"none"**. This reduces the necessary computing time heavily.
+#' @param error.estimation [character] string (*with default*):
+#' integral error estimation approach, either `"empiric"` or `"poisson"` or a [numeric] value or `"none"`.
+#' Argument has no effect if `algorithm = "nls"`.
 #'
 #' @param verbose [logical] (*with default*):
 #' enables console text output
 #'
 #' @return
-#' The input table **components** [data.frame] will be returned with added or overwritten columns: *$n, $n.error, $n.residual, $I, $I.error*
+#' The input table **components** [data.frame] will be returned with added or overwritten
+#' columns: *$n, $n.error, $n.residual, $I, $I.error*
 #'
 #' @section Last updates:
 #'
 #' 2020-08-27, DM: Replaced [nls] function in the `algorithm = "nls"` or `"det+nls"` cases
-#' with the more robust [minpack.lm::nlsLM] (**This update may changed analysis results**)
+#' with the more robust [minpack.lm::nlsLM] (**update may have changed analysis results**)
 #'
-#' 2020-10-28, Completed roxygen documentation (*minor update*)
+#' 2020-10-29, DM: Renamed 'error.calculation' into 'error.estimation' (*minor update*)
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -134,7 +185,7 @@ decompose_OSLcurve <- function(
   components,
   background.fitting = FALSE,
   algorithm = "det", # "det", "nls", "det+nls"
-  error.calculation = "empiric",   # "poisson", "empiric", "nls", numeric value
+  error.estimation = "empiric",   # "poisson", "empiric", "nls", numeric value
   verbose = TRUE
 ){
 
@@ -155,7 +206,7 @@ decompose_OSLcurve <- function(
   #' * 2020-04-06, DM: Added 'initial.signal' column in output data.frame; cleaned print output
   #' * 2020-07-20, DM: Added algorithm for fast interval definition based on logarithmic means; More input data checks
   #' * 2020-08-27, DM: Replaced [nls] function in the optional refinement fitting with the more robust [minpack.lm::nlsLM]
-  #'
+  #' * 2020-08-29, DM: Renamed 'error.calculation' into 'error.estimation'
   #' ToDo:
   #' * Enable the input of a list of curves
   #' * Replace Cramers rule equations with 'solve()' to increase performance and to increase precision if a
@@ -163,6 +214,7 @@ decompose_OSLcurve <- function(
   #' * In some very rare cases, negative values for n.error are returned. How can that happen?
   #' * Test and expand interval determination algorithm in case of very few (N ~ K) data points
   #' * Enhance Auto-interval finder to work when 'background.fitting = TRUE'
+  #' * It should be sufficient if t.start OR ch.start is given
 
   # Hidden parameters
   silent <- TRUE # don't display warnings or not-fatal errors
@@ -179,9 +231,7 @@ decompose_OSLcurve <- function(
     curve <- data.frame(time = curve[,1],
                         signal = curve[,2])}
 
-  if ((algorithm == "nls") &! (error.calculation == "nls")) {
-    if (verbose) warning("When algorithm 'nls' is chosen, error.calculation must be also 'nls'. Argument changed to error.calculation='nls'")
-    error.calculation <- "nls"}
+  if (algorithm == "nls") error.estimation <- "nls"
 
   # What is the channel width?
   dt <- curve$time[2] - curve$time[1]
@@ -225,7 +275,9 @@ decompose_OSLcurve <- function(
       !("t.end" %in% colnames(components)) ||
       !("ch.start" %in% colnames(components)) ||
       !("ch.end" %in% colnames(components))) {
-    #if (verbose) warning("Integration intervals not provided. calc_OSLintervals() executed")
+
+    if (background.fitting) {
+      stop("[decompose_OSLcurve()] Integration intervals are not provided! Auto-assignment works only if background.fitting = FALSE. Please change argument or run optimise_OSLintervals() prior data decomposition")}
 
     # Define the K = 1 case first:
     ch.start <- 1
@@ -272,7 +324,6 @@ decompose_OSLcurve <- function(
     ch.start <- components$ch.start
     ch.end <- components$ch.end}
 
-
   # preset some basic objects
   signal <- curve$signal[1:components$ch.end[K]]
   time <- curve$time[1:components$ch.end[K]]
@@ -284,7 +335,6 @@ decompose_OSLcurve <- function(
   I <- NULL
   for (i in X) I <- c(I, sum(signal[c(ch.start[i]:ch.end[i])]))
   components$bin <- I
-
 
   # supress warnings in the further script
   if (silent) options(warn = -1)
@@ -345,8 +395,6 @@ decompose_OSLcurve <- function(
                       , collapse=" + ")
       decays <- paste0(decays, " + ", n.names[K], " * ", dt)
 
-      #return(decays)
-
     } else {
 
       decays <- paste(n.names," * (exp(-",components$lambda," * (time - ", dt,")) - exp(-",components$lambda," * time))"
@@ -380,7 +428,7 @@ decompose_OSLcurve <- function(
       n <- coef(fit)
       components$n <- n
 
-      # add error estimations of fit as default and 'error.calculation=nls'-result
+      # add error estimations of fit as default and 'error.estimation=nls'-result
       components$n.error <- summary(fit)$parameters[, "Std. Error"][X]}
 
   } ########### end NLS ############
@@ -389,13 +437,13 @@ decompose_OSLcurve <- function(
 
   ################### ERROR CALC ##################
 
-  if ((error.calculation == "empiric")
-      || (error.calculation == "poisson")
-      || is.numeric(error.calculation)) {
+  if ((error.estimation == "empiric")
+      || (error.estimation == "poisson")
+      || is.numeric(error.estimation)) {
 
     ### Calculate signal bin variances  ###
     I.err <- NULL
-    if (error.calculation == "empiric") {
+    if (error.estimation == "empiric") {
 
       # Calc reconstructed noise-free curve
       curve <- simulate_OSLcurve(components, curve, simulate.curve = FALSE)
@@ -416,11 +464,11 @@ decompose_OSLcurve <- function(
     } else {
 
       # Use poisson approach, add instrumental noise if defined
-      if (!is.numeric(error.calculation)) error.calculation <- 0
+      if (!is.numeric(error.estimation)) error.estimation <- 0
 
       for (i in X) {
 
-        I.err[i] <- (I[i] + length(ch.start[i]:ch.end[i]) * error.calculation^2 )^0.5}}
+        I.err[i] <- (I[i] + length(ch.start[i]:ch.end[i]) * error.estimation^2 )^0.5}}
 
     components$bin.error <- I.err
 

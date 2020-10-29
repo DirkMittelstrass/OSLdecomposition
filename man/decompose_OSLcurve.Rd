@@ -2,14 +2,14 @@
 % Please edit documentation in R/decompose_OSLcurve.R
 \name{decompose_OSLcurve}
 \alias{decompose_OSLcurve}
-\title{multi-exponential CW-OSL decomposition}
+\title{Multi-exponential CW-OSL decomposition}
 \usage{
 decompose_OSLcurve(
   curve,
   components,
   background.fitting = FALSE,
   algorithm = "det",
-  error.calculation = "empiric",
+  error.estimation = "empiric",
   verbose = TRUE
 )
 }
@@ -21,45 +21,151 @@ CW-OSL record. \verb{$time} or first column (x-axis) for the measurement time (m
 \item{components}{\link{data.frame} or \link{numeric} vector (\strong{required}):
 Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by \link{fit_OSLcurve}.
 In case of a vector: It is recommended to use less than 7 parameters. The parameters will be sorted in decreasing order.
-In case of a data.frame. One column must be named \emph{$lambda}.
-It is recommended to provide also integration interval parameters (columns \emph{t.start, t.end, ch.start, ch.end}),
-which can be found by applying \link{optimise_OSLintervals} on the global mean curve, calculated by \link{sum_OSLcurves}.
-If one or more column is missing, a simple interval definition algorithm is run automatically (see \strong{Notes})..}
+In case of a data.frame. One column must be named \verb{$lambda}.
+It is recommended to provide also integration interval parameters (columns \verb{$t.start}, \verb{$t.end}, \verb{$ch.start}, \verb{$ch.end}),
+which can be found by applying \link{optimise_OSLintervals} to the global mean curve, calculated by \link{sum_OSLcurves}.
+If one or more column is missing, a simple interval definition algorithm is run automatically, see section \strong{Details}.}
 
-\item{algorithm}{}
+\item{background.fitting}{\link{logical} (\emph{with default}):
+if \code{TRUE}, an additional signal component with a decay rate of \eqn{\lambda = 0} is included.
+This allows for an accurate estimation of slow component intensities if the data is not background
+corrected. However, the additional component reduces the overall precision of the algorithm.
+It can also cause implausible slow component results if the measurement duration is not sufficiently long (> 30 s).}
 
-\item{error.calculation}{(\emph{with default}):
-integral error estimation approach, either \strong{"empiric"} or \strong{"poisson"} or \link{numeric} value;
-Per default the data of \emph{curve$residual} provided by \link{simulate_OSLcurve} is used to calculate an \strong{empiric} standard error for each integral which will be processed in the error propagation formula.
-Alternatively the integral standard error can be calculated by assuming a \strong{poisson} distributed signal error, known as \emph{Shot noise}.
-This is suitable if the lack of data points on the x-axis circumvent an empiric error estimation, like with spatial or spectral resolved CCD measurements.
-Also the parameter can be set to a \link{numeric} value; which will be handled as standard deviation per channel and added to the poisson distributed \emph{Shot noise}.
-If no error calculation is wished, set the argument to \strong{"none"}. This reduces the necessary computing time heavily.}
+\item{algorithm}{\link{character} string (\emph{with default}):
+Choice of curve decomposition approach. Either \code{"det"} or \code{"det+nls"} or \code{"nls"}, see section \strong{Details}.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
-enables text output}
+enables console text output}
+
+\item{error.estimation[character]}{string (\emph{with default}):
+integral error estimation approach, either \code{"empiric"} or \code{"poisson"} or a \link{numeric} value or \code{"none"}.
+Argument has no effect if \code{algorithm = "nls"}.}
 }
 \value{
-The input table \strong{components} \link{data.frame} will be returned with added or overwritten columns: \emph{$n, $n.error, $n.residual, $I, $I.error}
+The input table \strong{components} \link{data.frame} will be returned with added or overwritten
+columns: \emph{$n, $n.error, $n.residual, $I, $I.error}
 }
 \description{
-The function calculates the CW-OSL component intensities by building an equation system
-and solving it by a determinant-based algorithm (Cramers rule).
-It also estimates the standard deviation of the amplitudes by using the error propagation method applied at Cramers rule.
+Function for determing the signal component amplitudes of a multi-exponential decay curve if
+the signal component decay parameters are already given. Thus, this function decomposes CW-OSL
+curve with known components of unknown intensity.
 }
-\section{Last changed}{
- 2020-08-27
+\details{
+The function assumes multiple exponentially decaying signal components with first order kinetics:
+
+\deqn{I(t) = n_1 \lambda_1 exp(-\lambda_1 t) + n_2 \lambda_2 exp(-\lambda_2 t) + ... + n_K \lambda_K exp(-\lambda_K t)}
+
+with \eqn{I(t)} the CW-OSL signal, \eqn{n} the signal component intensity,
+\eqn{\lambda} the signal component decay constant and \eqn{K} the number of signal components.
+For the actual decomposition procedure, the integrated version of this formula is used, see Mittelstrass et al. (2021) for details.
+
+\strong{Decomposition algorithm}
+
+The calculation procedure depends on the function argument \code{algorithm}.
+This function includes two different decomposition algorithms: \code{"det"} for \strong{det}erminant solution
+and \code{"nls"} for \strong{n}onlinear \strong{l}east \strong{s}quares estimate
+
+\code{algorithm = "det"} (default)
+
+The function calculates the CW-OSL component intensities by building an equation system
+which is then solved by a determinant-based approach (Cramers rule). This purely analytical
+approach, gives the algorithm a solution in all possible cases, even if the measurement consists just of noise
+or the wrong model is used. There are also no 'false minima' events.
+The statistical error is calculated by applying the \emph{propagation of uncertainty} method on Cramers rule.
+
+The precision of this algorithm as well as the propagation of eventual systematic errors of the decay rate values,
+depend on the integration intervals, given by the columns \verb{$t.start}, \verb{$t.end}, \verb{$ch.start} and \verb{$ch.end}
+of the \link{data.frame} used as input for the argument \verb{components =}.
+In principle, these can be chosen freely. Reasonable integration intervals are defined by \link{optimise_OSLintervals}.
+If not defined, the logarithmic mean values between life times (reciprocal decay rate) of subsequent components are
+used as interval borders.
+
+\code{algorithm = "nls"}
+
+As alternative algorithm, Levenberg-Marquardt nonlinear regression is available, see \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} for details.
+The results are equal to that of the \code{"det"} algorithm in accuracy and precision. But there is the slight chance (< 1 \%)
+of fitting failure when using the \code{"nls"} algorithm. Also, the statistical errors are between 20 \% and 80 \% underestimated
+in the most cases. As advantage, the \code{"nls"} algorithm is less sensitive against systematic errors
+caused by uncorrected signal background.
+
+\code{algorithm = "det+nls"}
+
+Both algorithms can be combined. Then, \code{"det"} provides the startings values and the error estimations for
+\code{"nls"} and returns replacement results, in case \code{"nls"} fails. \code{"nls"} compensates for eventual systematic
+errors in the fast and medium components intensity values due to uncorrected signal background. However,
+background signal will still affect slow components. The slowest component will be overestimated while
+the second slowest component will be underestimated. Are these components of particular interest,
+it is recommended to set \code{background.fitting = TRUE}
+
+All three methods were tested at 5x10^6 simulated CW-OSL curves by Mittelstrass (2019) for their performance
+(+++ reliable results in all cases; ++ reliable in >95\% of cases: + reliable in most cases):
+
+\tabular{llll}{
+\strong{Characteristics} \tab \strong{det} \tab \strong{nls} \tab \strong{det+nls} \cr
+Decomposition success rate \tab 100 \% \tab >99 \% \tab 100 \% \cr
+Component intensity accuracy \tab +++ \tab +++ \tab +++ \cr
+Accuracy in case of uncorrected background \tab + \tab ++ \tab ++ \cr
+Error estimation accuracy \tab +++ \tab + \tab ++
+}
+
+In summary, \code{algorithm = "det"} is recommended for the most cases. If the signal background level is
+significant (> 2 \% of initial signal) but was not corrected, \code{algorithm = "det+nls"} is the better choice.
+Setting \code{background.fitting = TRUE} is usually not recommended, only in case slow components shall
+be investigated in measurements with uncorrected background.
+
+\emph{NOTE: All statements refer to the version prior 2020-08-27 where \link[stats:nls]{stats::nls} was used instead of
+\link[minpack.lm:nlsLM]{minpack.lm::nlsLM}. The behavior of the * \code{"nls"} * algorithm should remain about the same, but
+has to be tested yet}
+
+\strong{Error estimation}
+
+In case of \code{algorithm = "det"} or \code{"det+nls"} the Propagation of Uncertainty method is used to
+transform signal bin error values into component intensity error values. The signal bin error
+calculation depends on the argument \code{error.estimation}, see below.
+If \code{algorithm = "nls"} is used, the error values given back by \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} are returned.
+
+\code{error.estimation = "empiric"} (default)
+
+The standard deviation of each signal bin (signal bin = signal value of an integrated time interval) is
+calculated from the \emph{corrected sample variance} between the CW-OSL model and the actual CW-OSL curve
+for that interval. Thus, statistical errors are monitored accurately without prior knowledge necessary.
+However, eventual systematic errors are monitored insufficiently. Also, at least two (better more) data points
+per signal bin are needed to estimate its standard deviation. If a signal bin consists just of on data point,
+its square root value is taken as standard deviation, in accordance to the Poisson distribution.#'
+
+\code{error.estimation = "poisson"} or \link{numeric} value
+
+Alternatively the standard error can be calculated by approximating a \strong{Poisson} distributed signal error, known as \emph{Shot noise}.
+This is suitable if the lack of data points on the x-axis circumvent an empiric error estimation, like with spatial or spectral resolved CCD measurements.
+Also the parameter can be set to a \link{numeric} value, which will be handled as standard deviation per channel and added to the Poisson distributed Shot noise.
+Thus, the \link{numeric} value represents the detector noise per channel.
+
+\emph{Systematic errors}
+
+The two error estimation approaches can be used to detect (but not quantify) eventual systematic errors.
+\code{"poisson"} error values are not affected by systematic errors, while \code{"empiric"} errors are.
+If the detector noise is known and taken into account, the relation between both values for a given
+signal bin should be about \eqn{empiric / poisson = 1}. In case of systematic errors, this ratio increases.
+}
+\section{Last updates}{
+
+
+2020-08-27, DM: Replaced \link{nls} function in the \code{algorithm = "nls"} or \code{"det+nls"} cases
+with the more robust \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} (\strong{update may have changed analysis results})
+
+2020-10-29, DM: Renamed 'error.calculation' into 'error.estimation' (\emph{minor update})
 }
 
 \examples{
 
-# Set some reasonable parameter for a weak quartz CW-OSL decay
+# Set arbitrary but reasonable parameter for a weak quartz CW-OSL decay
 components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.1), n = c(1000, 1000, 10000))
 
 # Simulate the CW-OSL curve and add some signal noise and some detection background
 curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 40)
 
-# Let us decompose the simulated curve
+# Decompose the simulated curve
 components <- decompose_OSLcurve(curve, components)
 
 # Display the component separation results
@@ -76,12 +182,16 @@ plot_OSLcurve(curve, components)
 
 }
 \references{
-Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
+Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
 }
 \seealso{
 \link{fit_OSLcurve}, \link{optimise_OSLintervals}, \link{RLum.OSL_decomposition}, \link[minpack.lm:nlsLM]{minpack.lm::nlsLM}
 }
 \author{
 Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+
+Please cite the package the following way:
+
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
 }

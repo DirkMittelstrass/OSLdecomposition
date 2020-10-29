@@ -118,11 +118,11 @@ with \eqn{\sigma_k} the photo-ionisation cross-section of component \emph{k} in 
 If a \code{stimulation.intensity} larger or equal than 460 nm and lower or equal than 485 nm is defined,
 the components are names automatically. They are named according to value ranges approximated from the
 cross-sections published by Durcan and Duller (2011), Jain et al. (2003) and Singarayer and Bailey (2003).
-For the Ultrafast and the Slow4 component, no consistent literature values could be found, so there range
+For the Ultrafast and the Slow4 component, no consistent literature values could be found, so their range
 is guessed freely:
 
-\tabular{lcc}{
-**Component ** \tab **Lower limit (cm^2) ** \tab **Upper limit (cm^2) **\cr
+\tabular{lll}{
+\strong{Component} \tab \strong{Lower limit (cm^2)} \tab \strong{Upper limit (cm^2)}\cr
 Ultrafast \tab 1e-16 \tab 1e-15 \cr
 Fast \tab 1.9e-17 \tab 3.1e-17 \cr
 Medium \tab 3e-18 \tab 9e-18 \cr
@@ -135,9 +135,9 @@ Slow4 \tab 1e-21 \tab 1e-20
 \section{Last updates}{
 
 
-2020-08-05, Rewrote function to use \link[DEoptim:DEoptim]{DEoptim::DEoptim} and \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} (\strong{This update changes results})
+2020-08-05, Rewrote function to use \link[DEoptim:DEoptim]{DEoptim::DEoptim} and \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} (\strong{update may have changed analysis results})
 
-2020-10-26, Completed roxygen documentation (\emph{minor update})
+2020-10-27, Completed roxygen documentation (\emph{minor update})
 }
 
 \examples{
@@ -153,16 +153,16 @@ plot_OSLcurve(curve, components)
 
 }
 \references{
-Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL decay curves. Radiation Measurements 41, 886–891. https://doi.org/10.1016/j.radmeas.2006.05.016
+Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL decay curves. Radiation Measurements 41, 886–891. \link{https://doi.org/10.1016/j.radmeas.2006.05.016}
 
-Durcan, J.A., Duller, G.A.T., 2011. The fast ratio: A rapid measure for testing the dominance of the fast component in the initial OSL signal from quartz. Radiation Measurements 46, 1065–1072. https://doi.org/10.1016/j.radmeas.2011.07.016
+Durcan, J.A., Duller, G.A.T., 2011. The fast ratio: A rapid measure for testing the dominance of the fast component in the initial OSL signal from quartz. Radiation Measurements 46, 1065–1072. \link{https://doi.org/10.1016/j.radmeas.2011.07.016}
 
 Jain, M., Murray, A.S., Bøtter-Jensen, L., 2003. Characterisation of blue-light stimulated luminescence components in different quartz samples: implications for dose measurement. Radiation Measurements 37, 441–449.
 
 Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
 
 Singarayer, J.S., Bailey, R.M., 2003. Further investigations of the quartz optically stimulated luminescence components using linear modulation.
-Radiation Measurements, Proceedings of the 10th international Conference on Luminescence and Electron-Spin Resonance Dating (LED 2002) 37, 451–458. https://doi.org/10.1016/S1350-4487(03)00062-3
+Radiation Measurements, Proceedings of the 10th international Conference on Luminescence and Electron-Spin Resonance Dating (LED 2002) 37, 451–458. \link{https://doi.org/10.1016/S1350-4487(03)00062-3}
 }
 \seealso{
 \link{RLum.OSL_decomposition}, \link{sum_OSLcurves}, \link{decompose_OSLcurve}, \link{plot_OSLcurve},

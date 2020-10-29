@@ -95,7 +95,7 @@
 #'
 #' @section Last updates:
 #'
-#' 2020-08-05, Rewrote function to use [DEoptim::DEoptim] and [minpack.lm::nlsLM] (**This update may changed analysis results**)
+#' 2020-08-05, Rewrote function to use [DEoptim::DEoptim] and [minpack.lm::nlsLM] (**update may have changed analysis results**)
 #'
 #' 2020-10-27, Completed roxygen documentation (*minor update*)
 #'
