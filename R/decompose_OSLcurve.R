@@ -90,8 +90,8 @@
 #'
 #' Alternatively the standard error can be calculated by approximating a **Poisson** distributed signal error, known as *Shot noise*.
 #' This is suitable if the lack of data points on the x-axis circumvent an empiric error estimation, like with spatial or spectral resolved CCD measurements.
-#' Also the parameter can be set to a [numeric] value, which will be handled as standard deviation per channel and added to the Poisson distributed Shot noise.
-#' Thus, the [numeric] value represents the detector noise per channel.
+#' Also the parameter can be set to a [numeric] value, which  represents the detector noise in *cts / s* and is assumed to be normal distributed.
+#' The detector noise will be added on top of the Poisson distributed shot noise.
 #'
 #' *Systematic errors*
 #'
@@ -103,8 +103,8 @@
 #'
 #'
 #' @param curve [data.frame] or [matrix] or [RLum.Data.Curve-class] (**required**):
-#' CW-OSL record. `$time` or first column (x-axis) for the measurement time (must have constant time intervals),
-#' `$signal` or second column (y-axis) for the signal values. Further columns will be ignored
+#' CW-OSL curve x-Axis: `$time` or first column as measurement time (must have constant time intervals);
+#' y-Axis: `$signal` or second column as luminescence signal. Further columns will be ignored
 #'
 #' @param components [data.frame] or [numeric] vector (**required**):
 #' Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by [fit_OSLcurve].
@@ -124,8 +124,8 @@
 #' Choice of curve decomposition approach. Either `"det"` or `"det+nls"` or `"nls"`, see section **Details**.
 #'
 #' @param error.estimation [character] string (*with default*):
-#' integral error estimation approach, either `"empiric"` or `"poisson"` or a [numeric] value or `"none"`.
-#' Argument has no effect if `algorithm = "nls"`.
+#' integral error estimation approach, either `"empiric"` or `"poisson"` or a [numeric] value or `"none"`,
+#' see section **Details**. This argument has no effect if `algorithm = "nls"`.
 #'
 #' @param verbose [logical] (*with default*):
 #' enables console text output
@@ -139,7 +139,7 @@
 #' 2020-08-27, DM: Replaced [nls] function in the `algorithm = "nls"` or `"det+nls"` cases
 #' with the more robust [minpack.lm::nlsLM] (**update may have changed analysis results**)
 #'
-#' 2020-10-29, DM: Renamed 'error.calculation' into 'error.estimation' (*minor update*)
+#' 2020-08-30, DM: Renamed 'error.calculation' into 'error.estimation' and changed [numeric] value unit from cts/ch to cts/s  (*minor update*)
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -161,7 +161,7 @@
 #' components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.1), n = c(1000, 1000, 10000))
 #'
 #' # Simulate the CW-OSL curve and add some signal noise and some detection background
-#' curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 40)
+#' curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 40)
 #'
 #' # Decompose the simulated curve
 #' components <- decompose_OSLcurve(curve, components)
@@ -189,32 +189,32 @@ decompose_OSLcurve <- function(
   verbose = TRUE
 ){
 
-  #' Changelog:
-  #' * winter 2012/13: first basic version, used for Bachelor thesis DM
-  #' * autumn 2013   : added empiric error estimation, shown in germanLED Freiberg 2013
-  #' * 2014-11-??, SK: formated into Rluminecence package standard
-  #' * 2014-11-07, DM: Binomial error propagation added
-  #' * 2018-05-04, DM: added residuals for n values (necessary for slow component dosimetry) and many little tweaks
-  #' * 2018-06-22, DM: added decomposition of data sets with just 1 or 2 components
-  #' * 2018-06-22, DM: added negative.values.to.zero and set it on TRUE as default (on request of C. Schmidt) (later removed)
-  #' * 2018-07-05, DM: overworked error estimation; replaced binomial with poisson error approach; added auto-switch to poisson if integral length = 1; integrated background.noise into error
-  #' * 2019-03-29, DM: Rewritten function for several purposes: 1. working now with any number of components  2. shorter and more elegant code 3. data format more suitable for markdown/shiny applications.
-  #' * 2019-09-09, DM: Added anticorrelating covariance terms into error estimation (later removed)
-  #' * 2019-09-25, DM: Merged function with decompose_OSLalternatively() and added algorithm argument
-  #' * 2019-09-25, DM: Deleted unnecessary functions (negative.values.to.zero, offset, anticorrelation)
-  #' * 2019-10-02, DM: Added optional background fitting
-  #' * 2020-04-06, DM: Added 'initial.signal' column in output data.frame; cleaned print output
-  #' * 2020-07-20, DM: Added algorithm for fast interval definition based on logarithmic means; More input data checks
-  #' * 2020-08-27, DM: Replaced [nls] function in the optional refinement fitting with the more robust [minpack.lm::nlsLM]
-  #' * 2020-08-29, DM: Renamed 'error.calculation' into 'error.estimation'
-  #' ToDo:
-  #' * Enable the input of a list of curves
-  #' * Replace Cramers rule equations with 'solve()' to increase performance and to increase precision if a
-  #'   determinant converges towards zero
-  #' * In some very rare cases, negative values for n.error are returned. How can that happen?
-  #' * Test and expand interval determination algorithm in case of very few (N ~ K) data points
-  #' * Enhance Auto-interval finder to work when 'background.fitting = TRUE'
-  #' * It should be sufficient if t.start OR ch.start is given
+  # Changelog:
+  # * winter 2012/13: first basic version, used for Bachelor thesis DM
+  # * autumn 2013   : added empiric error estimation, shown in germanLED Freiberg 2013
+  # * 2014-11-??, SK: formated into Rluminecence package standard
+  # * 2014-11-07, DM: Binomial error propagation added
+  # * 2018-05-04, DM: added residuals for n values (necessary for slow component dosimetry) and many little tweaks
+  # * 2018-06-22, DM: added decomposition of data sets with just 1 or 2 components
+  # * 2018-06-22, DM: added negative.values.to.zero and set it on TRUE as default (on request of C. Schmidt) (later removed)
+  # * 2018-07-05, DM: overworked error estimation; replaced binomial with poisson error approach; added auto-switch to poisson if integral length = 1; integrated background.noise into error
+  # * 2019-03-29, DM: Rewritten function for several purposes: 1. working now with any number of components  2. shorter and more elegant code 3. data format more suitable for markdown/shiny applications.
+  # * 2019-09-09, DM: Added anticorrelating covariance terms into error estimation (later removed)
+  # * 2019-09-25, DM: Merged function with decompose_OSLalternatively() and added algorithm argument
+  # * 2019-09-25, DM: Deleted unnecessary functions (negative.values.to.zero, offset, anticorrelation)
+  # * 2019-10-02, DM: Added optional background fitting
+  # * 2020-04-06, DM: Added 'initial.signal' column in output data.frame; cleaned print output
+  # * 2020-07-20, DM: Added algorithm for fast interval definition based on logarithmic means; More input data checks
+  # * 2020-08-27, DM: Replaced [nls] function in the optional refinement fitting with the more robust [minpack.lm::nlsLM]
+  # * 2020-08-30, DM: Renamed 'error.calculation' into 'error.estimation'; changed [numeric] value unit from cts/ch to cts/s
+  # ToDo:
+  # * Enable the input of a list of curves
+  # * Replace Cramers rule equations with 'solve()' to increase performance and to increase precision if a
+  #   determinant converges towards zero
+  # * In some very rare cases, negative values for n.error are returned. How can that happen?
+  # * Test and expand interval determination algorithm in case of very few (N ~ K) data points
+  # * Enhance Auto-interval finder to work when 'background.fitting = TRUE'
+  # * It should be sufficient if t.start OR ch.start is given
 
   # Hidden parameters
   silent <- TRUE # don't display warnings or not-fatal errors
@@ -226,7 +226,7 @@ decompose_OSLcurve <- function(
 
   if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(Luminescence::get_RLum(curve))
 
-  if (!("time" %in% colnames(curve)) ||
+  if (!("time" %in% colnames(curve)) |
       !("signal" %in% colnames(curve))) {
     curve <- data.frame(time = curve[,1],
                         signal = curve[,2])}
@@ -400,7 +400,7 @@ decompose_OSLcurve <- function(
       decays <- paste(n.names," * (exp(-",components$lambda," * (time - ", dt,")) - exp(-",components$lambda," * time))"
                       , collapse=" + ")}
 
-    fit.formula <- as.formula(paste0("signal ~ ", decays))
+    fit.formula <- formula(paste0("signal ~ ", decays))
 
     names(n) <- n.names
 
@@ -446,7 +446,7 @@ decompose_OSLcurve <- function(
     if (error.estimation == "empiric") {
 
       # Calc reconstructed noise-free curve
-      curve <- simulate_OSLcurve(components, curve, simulate.curve = FALSE)
+      curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
 
       # Calc corrected sample variance
       for (i in X) {
@@ -468,7 +468,7 @@ decompose_OSLcurve <- function(
 
       for (i in X) {
 
-        I.err[i] <- (I[i] + length(ch.start[i]:ch.end[i]) * error.estimation^2 )^0.5}}
+        I.err[i] <- (I[i] + (t.end[i] - t.start[i]) * error.estimation^2 )^0.5}}
 
     components$bin.error <- I.err
 

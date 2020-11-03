@@ -1,76 +1,110 @@
-#' Combine RLum OSL records to a global mean curve
+#' Combine RLum OSL records to one global average curve
 #'
-#' The function adds up RLum records of one specific type
-#' it is useful to create background records and enable component fitting
-#' at sets of records with low signal-to-noise ratio
+#' The function adds up CW-OSL records saved in [RLum.Analysis-class] objects and
+#' calculates the arithmetic mean signal from all records for each channel.
+#' This is useful to create on global average curve with sufficient signal-to-noise ratio
+#' for OSL components identification with [fit_OSLcurve] or to create one signal background
+#' reference curve.
+#'
+#' Function supports currently just input objects of type `RLum.Analysis` from
+#' the [Luminescence] package. Major overhaul necessary, see ToDo list
+#' in the source code
+#'
 #'
 #' @param object [RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
 #' data set of one or multiple aliquots containing containing luminescence measurements
 #'
 #' @param record_type [character] (*with default*):
-#' record type ("OSL","TL","IRSL") which shall be summed up
+#' type of records which are selected from the input `object`,
+#' for example: `"OSL"`,`"SGOSL"` or `"IRSL"`
 #'
-#' @param aliquot_selection [c] (*optional*):
-#' vector specifying which items (aliquots) of a list of [RLum.Analysis-class] objects shall be combined
+#' @param aliquot_selection [numeric] vector (*optional*):
+#' vector specifying the indicies of elements (aliquots) of a list of [RLum.Analysis-class] objects
+#' which shall be included
 #'
 #' @param offset_value [numeric] (*with default*):
-#' signal offset (background) which will be substracted from each record before combining
+#' signal offset (background) which will be substracted from each record
+#'
+#' @param verbose [logical] (*with default*):
+#' enables console text output
 #'
 #' @param output.plot [logical] (*with default*):
-#' returns a plot of the created superposition curve
-#' @param plot.first
-#' @param plot.global
-#' @param verbose
-#' @param title
-#' @param return.plot
+#' returns a plot with all data points of all records and the average curve
+#'
+#' @param theme.set [ggplot2] object (*with default*):
+#' sets the graphical theme of the output plot.
+#' See [ggplot2::theme_bw] for available themes
+#'
+#' @param plot.first [logical] (*with default*):
+#' plot includes additional drawing of first `record_type` record of first `object` list element
+#'
+#' @param title [character] (*with default*):
+#' plot title. Set `title = "default"` for an automatically generated title.
+#' Set `title = NULL` for no title
+#'
+#' @param filename [character] (*optional*):
+#' file name or path to save the plot as image. If just a name is given, the image is
+#' saved in the working directory. The image type is chosen by the file ending.
+#' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics) and `.jpg`, `.png`, `.bmp` (pixel graphics)
+#' and more, see [ggplot2::ggsave] for details
+#'
 #'
 #' @return
-#' A [data.frame] is returned, containing the created mean curve
+#' A [data.frame] of the average CW-OSL curve is returned, containing two columns: `$time` and `$signal`
 #'
 #'
-#' @section Last changed: 2020-04-20
+#' @section Last updates:
+#'
+#' 2020-08-30, DM: Overworked plotting; Expanded roxygen documentation
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
 #'
-#' @seealso [fit_OSLcurve], [RLum.OSL_correction], [RLum.OSL_global_fitting]
+#' Please cite the package the following way:
 #'
-#' @references
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
 #' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
-
+#'
+#' @seealso [fit_OSLcurve], [RLum.OSL_correction], [RLum.OSL_global_fitting]
+#'
 #'
 #' @examples
 #'
-
+#' # Load example data from the package Luminescence
+#' library(Luminescence)
+#' data(ExampleData.BINfileData, envir = environment())
+#' OSLdata <- Risoe.BINfileData2RLum.Analysis(CWOSL.SAR.Data)
+#'
+#  # Plot all data points from the first five aliquots and give average CW-OSL curve back
+#' average_curve <- sum_OSLcurves(OSLdata, aliquot_selection = c(1:5))
+#'
+#' @md
+#' @export
 sum_OSLcurves <- function(
   object,
   record_type = "OSL",
   aliquot_selection = NULL,
   offset_value = 0,
-  output.plot = TRUE,
-  plot.first = TRUE,
-  plot.global = TRUE,
   verbose = TRUE,
+  output.plot = TRUE,
+  theme.set = ggplot2::theme_classic(),
+  plot.first = TRUE,
   title = "default",
-  return.plot = FALSE
+  filename = NULL
 ){
 
-  #' Changelog:
-  #' * 2018-05-23, DM: first version
-  #' * 2019-03-15, DM: rewritten for ggplots and new data format, renamend into sum_OSLcurves
-  #'
-  #'  ToDo:
-  #' * add more options for record selection (e.g. dose)
-  #' * interpolate x-axis if it doesn't match
-  #' * accept list of data.frames as input objects
-  #' * test if first value is zero
-  #' * add legend to plot
-  #' * add info box with number of OSL curves to plot
-  #' * Add ggsave() capabilities
-
-  library(Luminescence)
-
+  # Changelog:
+  # * 2018-05-23, DM: first version
+  # * 2019-03-15, DM: rewritten for ggplots and new data format, renamend into sum_OSLcurves
+  # * 2020-08-30, DM: Overworked plotting; Expanded roxygen documentation
+  #
+  #  ToDo:
+  # * add more options for record selection (e.g. dose)
+  # * interpolate x-axis if it doesn't match
+  # * accept list of data.frames as input objects
+  # * test if first value is zero
+  # * add legend to plot
+  # * add info box with number of OSL curves to plot
 
   # prove if object is a list of aliquots or just a single aliquot
   if (is.list(object)) {
@@ -149,7 +183,7 @@ sum_OSLcurves <- function(
   # cut curve length to shortest record and calc mean
   mean.curve <- data.frame(time = new_x_axis, signal = mean.values[1:shortest_record_length] / n)
 
-  if (verbose) writeLines(paste0("Built global average curve from arithmetic means from first ", shortest_record_length, " data points of all ", n, " ", record_type, " records"))
+  if (verbose) cat(paste0("Built global average curve from arithmetic means from first ", shortest_record_length, " data points of all ", n, " ", record_type, " records\n"))
 
   ##============================================================================##
   # PLOT
@@ -157,9 +191,15 @@ sum_OSLcurves <- function(
 
   if (output.plot == TRUE) {
 
-    library(gridExtra)
-    library(ggplot2)
-    theme_set(theme_bw())
+    # supress warnings
+    options(warn = -1)
+
+    #ggplot2::theme_set(ggplot2::theme_bw())
+    ggplot2::theme_set(theme.set)
+
+    text_format <- ggplot2::theme(axis.title = ggplot2::element_text(size = 8),
+                                  plot.subtitle = ggplot2::element_text(size = 9, face = "bold"))
+
     #theme_set(theme_classic())
 
     colnames(all.values) <- c("time", "signal", "record")
@@ -171,77 +211,67 @@ sum_OSLcurves <- function(
                               signal = first.values[1:shortest_record_length],
                               record = factor("first"))
 
-    alpha.value <- round(8 / n, digits = 3)
+    alpha.value <- round(10 / n, digits = 3)
 
-    if (alpha.value > 0.5) alpha.value <- 0.5
+    if (alpha.value > 0.4) alpha.value <- 0.4
     if (alpha.value < 0.01) alpha.value <- 0.01
 
     # plot a multiple line summary using the ggplot2 library
-    p.lin <- ggplot(all.values, aes(x=time, y=signal, group=record))+
-      geom_point(size = 0.5, alpha = alpha.value, na.rm = TRUE) +
-      ylim(0, round(max(curve$signal) * 1.5)) +
-      ylab("signal (cts)") + xlab("time (s)") +
-      theme(axis.ticks.x = element_blank(),
-            axis.ticks.y = element_blank(),
-            panel.border = element_blank(),
-            axis.title = element_text(size = 12),
-            legend.position = "none")
+    p.lin <- ggplot2::ggplot(all.values, ggplot2::aes(x=time, y=signal, group=record)) +
+      ggplot2::geom_point(size = 0.5, alpha = alpha.value, na.rm = TRUE, color = "black") +
+      ggplot2::ylim(0, round(max(curve$signal) * 1.5)) +
+      ggplot2::labs(subtitle = "CW-OSL", x = "Time (s)", y ="Signal (cts)") +
+      text_format
+
+    ######################## pseudoLM PLOT #########################################################
+
+    # transform data
+    P = 2*max(curve$time)
+
+    LMdata <- all.values
+    LMdata$signal <- LMdata$signal * (2 * LMdata$time / P)^0.5
+    LMdata$time <- (2 * P * LMdata$time)^0.5
+
+    LMcurve <- curve
+    LMcurve$signal <- LMcurve$signal * (2 * LMcurve$time / P)^0.5
+    LMcurve$time <- (2 * P * LMcurve$time)^0.5
+
+    LMfirst.curve <- first.curve
+    LMfirst.curve$signal <- LMfirst.curve$signal * (2 * LMfirst.curve$time / P)^0.5
+    LMfirst.curve$time <- (2 * P * LMfirst.curve$time)^0.5
 
 
-
-    ### plot log-log scale ###
-
-    # set y-axis minimum
-    log_limits <- c(1, max(all.values$signal))
-    if (min(all.values$signal) > 0) {
-      log_limits[1] <- 10^floor(log10(min(all.values$signal)))
-    }
-
-    breaks <- 10^(-10:10)
-    minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
-
-    p.log <- ggplot(all.values, aes(x=time, y=signal, group=record))+
-      geom_point(size = 0.5, alpha = alpha.value, na.rm = TRUE) +
-      scale_y_log10(limits = log_limits, position = "right",
-                    breaks = breaks,
-                    minor_breaks = minor_breaks) +
-      scale_x_log10(limits = c(new_x_axis[2] - new_x_axis[1], max(new_x_axis)), position = "right",
-                    breaks = breaks,
-                    minor_breaks = minor_breaks) +
-      ylab("signal (cts)") + xlab("time (s)") +
-     # ylab("log(signal (cts))") + xlab("log(time (s))") +
-      theme(axis.ticks.x = element_blank(),
-            axis.ticks.y = element_blank(),
-            panel.border = element_blank(),
-            axis.title = element_text(size = 12),
-            legend.position = "none")
+    p.LM <- ggplot2::ggplot(LMdata, ggplot2::aes(x=time, y=signal, group=record)) +
+      ggplot2::geom_point(size = 0.5, alpha = alpha.value, na.rm = TRUE, color = "black") +
+      ggplot2::ylim(0, round(max(LMcurve$signal) * 1.5)) +
+      ggplot2::labs(subtitle = "pseudoLM-OSL", x = "Ramping time (s)", y ="Signal (cts)") +
+      text_format
 
     if (plot.first) {
 
-      p.lin <- p.lin + geom_line(data = first.curve, size = 0.5, color = "red")
-      p.log <- p.log + geom_line(data = first.curve, size = 0.5, color = "red")
-    }
-    if (plot.global) {
+      p.lin <- p.lin + ggplot2::geom_line(data = first.curve, size = 0.5, color = "blue")
+      p.LM <- p.LM + ggplot2::geom_line(data = LMfirst.curve, size = 0.5, color = "blue")}
 
-      p.lin <- p.lin + geom_line(data = curve, size = 1, color = "blue")
-      p.log <- p.log + geom_line(data = curve, size = 1, color = "blue")
-    }
+    # plot global average curve
+    p.lin <- p.lin + ggplot2::geom_line(data = curve, size = 0.5, color = "red")
+    p.LM <- p.LM + ggplot2::geom_line(data = LMcurve, size = 0.5, color = "red")
+
 
     #plot title?
-    if (!is.null(title)) {
-      if (title == "default") {
-        title <- paste0("Global average curve and signal scattering of ", n, " ", record_type, " records")
-      }
-    }
+    if (!is.null(title) && title == "default") {
+
+      title <- paste0("Data points and average curve of ", n, " ", record_type, " records")}
 
     # use grid function from gridExtra package to display linear and log plot side by side
+    plot_object <- gridExtra::arrangeGrob(p.lin, p.LM, nrow = 1, top = title)
 
-    if (return.plot) {
+    # save plot as file
+    if (!is.null(filename)) {
+      try(ggplot2::ggsave(filename, plot = plot_object, units = "cm"), silent = FALSE)}
 
-      return(p.lin)
-    } else {
-      grid.arrange(p.lin, p.log, nrow = 1, top = title)
-    }
+    # show plot
+   gridExtra::grid.arrange(plot_object)
+
   }
 
   invisible(mean.curve)

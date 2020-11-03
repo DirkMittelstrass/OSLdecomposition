@@ -24,16 +24,15 @@ Average curve analysis of the data set **`r object_name`** performed by the func
  #   mathjax: local
   #  self_contained: false
 
-Last_changed <- "2020-09-15"
-
-### Further planned content:
-# * sheme about the steps with Step 1 highlighted into BASICS
+Last_changed <- "2020-10-30"
 
 library(kableExtra)
 library(knitr)
 library(ggplot2)
 library(gridExtra)
 library(scales)
+
+plot_theme <- theme_minimal()
 
 knitr::opts_chunk$set(fig.width=7,
                       fig.asp=.6,
@@ -58,6 +57,23 @@ for (j in 1:length(data_set)) {
 
 This report displays the results of [Step 1](#basics) in the component separation analysis workflow described in [Mittelstraß *et al.* (2019)](#disclaimer). The goal of Step 1 is to evaluate the number of components $K$ and determine their decay constants $\lambda_i$. To achieve this, we assume constant CW-OSL decay rates over all measurements of the data set and calculate one [global average curve](#M1). On this, we perform a series of [multi-exponential decay model fittings](#M2) with an increasing number of components *K*:
 
+### Global average
+```{r step1_draw_global_curve, fig.width=7, fig.asp=.5}
+
+sum_OSLcurves(data_set,
+              record_type = record_type,
+              output.plot = TRUE,
+              theme.set = plot_theme,
+              plot.first = FALSE,
+              title = NULL,
+              verbose = FALSE,
+              filename = paste0(image_path, "step1_fig1_1_global_average.", image_format))
+
+cat(paste0("<br><i><b>Figure 1.1:</b> <u>Blue line</u>: Global average curve built from the arithmetic mean of all curves. <br><u>Grey points</u>: Data points of all measurements. <u>Red</u>: First CW-OSL curve of the first aliquot in the data set.</i><br><br>"))
+```
+
+
+
 ```{r step1_define_fitting_tabs}
 
 # Define dynamic Rmarkdown code
@@ -67,8 +83,8 @@ dynamic_code <- c(
     "plot_OSLcurve(fit_data$curve, 
                 fit_data$component.tables[[{{i}}]], 
                 title = NULL,
-                filename = paste0(image_path, \"step1_fig1_{{i}}_K={{i}}.\", image_format))\n",
-    "cat(paste0(\"<br><i><b>Figure 1.{{i}}:</b> Fit model with K = {{i}} (black), global average curve (grey) and signal components (colored)<br>\", \"<u>Upper left</u>: Linear diagram. <u>Upper right</u>: pseudoLM-OSL diagram<br>\",\"<u>Lower left</u>: Residual curve between fitting and global average curve<br>\",\"<u>Lower right</u>: Fitting result table with estimated type of component names</i><br><br>\"))",
+                filename = paste0(image_path, \"step1_fig1_{{i+1}}_K={{i}}_fitting.\", image_format))\n",
+    "cat(paste0(\"<br><i><b>Figure 1.{{i+1}}:</b> Fit model with K = {{i}} (black), global average curve (grey) and signal components (colored)<br>\", \"<u>Upper left</u>: Linear diagram. <u>Upper right</u>: pseudoLM-OSL diagram<br>\",\"<u>Lower left</u>: Residual curve between fitting and global average curve<br>\",\"<u>Lower right</u>: Fitting result table with estimated type of component names</i><br><br>\"))",
     "```\n"
   )
 
@@ -193,21 +209,6 @@ To get component-seperated dose information, we divide the data analysis process
 ### Global average curve {#M1}
 
 For calculating the decay parameters, one representative OSL curve is needed. This is provided by combining all measurements to one global average curve. Each data point of this global curve represents the arithmetic mean of all data point values of the same channel in all OSL curves. This increases the signal-to-noise ratio by about one to two orders of magnitude, but still maintains the decay parameter information.  
-
-```{r step1_draw_global_curve, fig.width=7, fig.asp=0.5}
-
-sum_OSLcurves(data_set,
-              record_type = record_type,
-              output.plot = TRUE,
-              plot.first = TRUE,
-              plot.global = TRUE,
-              title = NULL,
-              verbose = FALSE,
-              return.plot = TRUE)
-
-cat(paste0("<br><i><b>Figure 3:</b> <u>Blue line</u>: Global average curve built from the arithmetic mean of all curves. <br><u>Grey points</u>: Data from all measurements. <u>Red</u>: First measurement of the data set.</i><br><br>"))
-```
-
 
 ### Multi-exponential fitting {#M2}
 

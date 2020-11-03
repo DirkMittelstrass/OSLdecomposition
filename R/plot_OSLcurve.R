@@ -1,121 +1,179 @@
-#' Advanced plot function for CW-OSL curves and CW-OSL signal components
+#' Advanced plot function for component resolved CW-OSL curves
 #'
-#' @param curve
-#' @param components
-#' @param display
-#' Choices: "detailed" (default), "components", "raw" ,"compare_lin", "compare_log", "lin-log"
+#' Function for plotting CW-OSL curves and its signal components. It can handle data returned
+#' by [fit_OSLcurve] or [decompose_OSLcurve]. Besides CW-OSL curves, pseudoLM-OSL and
+#' residual are plotted.
 #'
-#' @param show.intervals
-#' Draws vertical lines into the residual plot showing the signal bin intervals for Step 2 CW-OSL decomposition
+#' **Change graph types with parameter:** `display`
 #'
-#' @param title
-#' Plot title
+#' \tabular{ll}{
+#'  `"detailed"` \tab (default) Output plot consists of: Linear CW-OSL g, pseudoLM-OSL plot, Residual curve and component table \cr
+#'  `"lin"` \tab Linear CW-OSL plot only \cr
+#'  `"compare_lin"` \tab Linear CW-OSL plot with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
+#'  `"log"` \tab CW-OSL plot with logarithmic y-Axis and linear x-Axis \cr
+#'  `"compare_log"` \tab CW-OSL plot with logarithmic y-Axis with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
+#'  `"loglog"` \tab Double-logarithic CW-OSL plot \cr
+#'  `"LM"` \tab PseudoLM-OSL plot \cr
+#'  `"res"` \tab Plot of residual curve: Measurement minus Fitting model \cr
+#'  `"tab"` \tab Table of component parameters as image
+#' }
 #'
-#' @param hide.plot
-#' If true, plot is not drawn but can be catched by 'A <- plot_OSLcurve(...)' or saved as file.
-#' If catched, the plot ca be displayed later for example by [gridExtra::grid.arrange]
-#'
-#' @param filename
-#' Filename or path to save the diagram as file. If just a name is chosen, the file is
-#' saved in the working directory. The graphic type is chosen according to the file ending.
-#' Allowed are .pdf, .eps, .svg (vector graphics) and .jpg, .png, .bmp (pixel graphics)
-#' and more, see [ggplot2::ggsave]
-#'
-#' @section Notes:
-#'
-#' pseudoLM-OSL curves are created using the transformation described by Bulur (2000).
+#' PseudoLM-OSL curves are created using the transformation described by Bulur (2000).
 #' The stimulation ramp duration is chosen double the CW-OSL duration.
 #' See also Bos and Wallinga (2012) for a detailed explanation and discussion
 #'
-#' @references
-#' Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components, Radiation Measurements, 47(9), 752–758, doi:10.1016/j.radmeas.2012.01.013, 2012.
 #'
-#' Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves, Radiation Measurements, 32(2), 141–145, doi:10.1016/S1350-4487(99)00247-4, 2000.
+#' @param curve [data.frame] or [matrix] or [RLum.Data.Curve-class] (*optional*):
+#' CW-OSL curve x-Axis: `$time` or first column as measurement time (must have constant time intervals);
+#' y-Axis: `$signal` or second column as luminescence signal.
+#' Other columns will be plotted as component curves, in case no argument `components` is defined.
+#' If no input is given, a CW-OSL curve will be simulated with the parameters of `components`
+#'
+#' @param components [data.frame] (*optional*):
+#' Table with OSL component parameters. Overrides component curves provides by `curve`.
+#' Need to have at least the columns: `$names`, `$lambda` and `$n`
+#'
+#' @param display [character] (*with default*):
+#' Arrangement of graphs, see section **Details**
+#'
+#' @param show.legend [logical] (*with default*):
+#' Draws a legend in the top right corner of the first graph
+#'
+#' @param show.intervals [logical] (*with default*):
+#' Draws vertical lines into the residual plot showing the signal bin intervals for Step 2 CW-OSL
+#' decomposition (if available)
+#'
+#' @param theme.set [ggplot2] object (*with default*):
+#' Graphical theme of the output plot. Input is forwarded to [ggplot2::theme_set].
+#' Recommended themes are `ggplot2::theme_minimal()`, `ggplot2::theme_classic()` and `ggplot2::theme_bw()`,
+#' see [ggplot2::theme_bw] or [here](https://ggplot2.tidyverse.org/reference/ggtheme.html) for
+#' a full list
+#'
+#' @param title [character] (*with default*):
+#' plot title. Set `title = NULL` for no title
+#'
+#' @param hide.plot [logical] (*with default*):
+#' If true, plot is not drawn but can still be saved as files or catched by `A <- plot_OSLcurve()`.
+#' If catched, the plot can be drawn manually for example by using [gridExtra::grid.arrange]
+#'
+#' @param filename [character] (*optional*):
+#' file name or path to save the plot as image. If just a name is given, the image is
+#' saved in the working directory. The image type is chosen by the file ending.
+#' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
+#' and more, see [ggplot2::ggsave]
 #'
 #'
-#' @section Last changed. 2020-09-13
+#' @section Last updates:
+#'
+#' 2020-11-03, DM: Refactored code; Changed parameter `display` choices and added parameters `theme.set` and `show.legend`
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
 #'
-#' @references
-#' Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components,
-#' Radiation Measurements, 47(9), 752–758, doi:10.1016/j.radmeas.2012.01.013, 2012.
-#'
-#' Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves,
-#' Radiation Measurements, 32(2), 141–145, doi:10.1016/S1350-4487(99)00247-4, 2000.
+#' Please cite the package the following way:
 #'
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
 #' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
 #'
-#' @export
+#' @seealso [fit_OSLcurve], [RLum.OSL_decomposition, [RLum.OSL_global_fitting], [simulate_OSLcomponents]
+#'
+#' @references
+#' Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components,
+#' Radiation Measurements, 47(9)
+#'
+#' Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves,
+#' Radiation Measurements, 32(2)
+#'
 #'
 #' @examples
 #'
-#' # Set some reasonable parameter for a weak quartz CW-OSL decay
-#' components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(2, 0.5, 0.02), n = c(1000, 1000, 10000))
+#' # Set some arbitaty decay parameter for a dim CW-OSL measurement of quartz
+#' name <- c("fast", "medium", "slow")
+#' lambda <- c(2, 0.5, 0.02)
+#' n <- c(1000, 1000, 10000)
 #'
-#' # Simulate the CW-OSL curve and add some signal noise
-#' curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
+#' # Build a component table
+#' components <- data.frame(name, lambda, n)
+#'
+#' # Simulate a CW-OSL curve including some signal noise
+#' curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
 #'
 #' # Display the simulated curve
 #' plot_OSLcurve(curve, components)
 #'
+#' @md
+#' @export
 plot_OSLcurve <- function(curve = NULL,
                           components,
                           display = "detailed",
+                          show.legend = FALSE,
                           show.intervals = FALSE,
+                          theme.set = ggplot2::theme_classic(),
                           title = NULL,
                           hide.plot = FALSE,
                           filename = NULL){
 
-#' Changelog:
-#' * 2019-03-06, DM: First reasonable version
-#' * 2019-04-03, DM: Rebuild whole function
-#' * 2019-10-02, DM: Added background component support and some little tweaks
-#' * 2020-04-22, DM: Enabled hidden output to draw later
-#' * 2020-06-19, DM: Added pseudoLM-OSL diagrams
-#' * 2020-08-04, DM: Added subtitles and RSS info
-#' * 2020-09-02, DM: Added graphic saving with [ggplot2::ggsave]
-#'
-#' ToDo:
-#' * REFACTORIZE CODE
-#' * ! Put the ggplot building (or at least its style options) in its own sub-function !
-#' * Add input checks and data conversions from [decompose_OSLcurve]
-#' * When drawing components without curve, skip residual curve
-#' * Display fitting formula
-#' * Get rid of library 'ggpubr' to decrease dependencies
-#' * Change from library("XXX") to XXX::
-#' * Add argument ggsave.control() to give direct control about image saving
-#' * Add table column for the lambda error
 
+# Changelog:
+# * 2019-03-06, DM: First reasonable version
+# * 2019-04-03, DM: Rebuild whole function
+# * 2019-10-02, DM: Added background component support and some little tweaks
+# * 2020-04-22, DM: Enabled hidden output to draw later
+# * 2020-06-19, DM: Added pseudoLM-OSL diagrams
+# * 2020-08-04, DM: Added subtitles and RSS info
+# * 2020-09-02, DM: Added graphic saving with [ggplot2::ggsave]
+# * 2020-11-03, DM: Refactored code; Changed parameter `display` choices and added parameters `theme.set` and `show.legend`
+#
+# ToDo:
+# * ! Put the ggplot building (or at least its style options) in its own sub-function
+# * ! Enable option to display legends
+# * Change big numbers to scientific format
+# * Restructure options of 'display' argument
+# * When drawing components without curve, skip residual curve
+# * Display fitting formula
+#
+# * Get rid of library 'ggpubr' to decrease dependencies
+# * Add argument ggsave.control() to give direct control about image saving
+# * Add table column for the lambda error
+
+
+  # necessary libraries: gridExtra, ggplot2, ggpubr, scales
 
   # Hidden parameters
   zoom <- 1
 
-  #library(gridExtra)
-  library(ggplot2)
-  library(ggpubr)
-  library(scales)
-
-  ########## Checks and data preperations ###########
+  ###################### PLOT DESIGN ######################
 
   # Set color and line themes
-  theme_set(theme_minimal())
+  ggplot2::theme_set(theme.set)
   graph.colors <- c("darkgrey", "black","red3","green3","royalblue3","darkorchid","gold","brown","pink")
   graph.sizes <- c(1, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
   graph.shapes <-  c(16, 32, 32, 32, 32, 32, 32, 32, 32)
-  graph.lines <- c("blank", "solid","solid","solid","solid","solid","solid","solid","solid")
+  graph.lines <- c("blank","solid","solid","solid","solid","solid","solid","solid","solid")
 
-  text_format <- theme(axis.title = element_text(size = 8),
-                       plot.subtitle = element_text(size = 9, face = "bold"))
+  # Reduce font size
+  text_format <- ggplot2::theme(axis.title = ggplot2::element_text(size = 8),
+                       plot.subtitle = ggplot2::element_text(size = 9, face = "bold"),
+                       legend.position = c(1, 1), legend.justification = c("right", "top"),
+                       legend.title = ggplot2::element_blank(),
+                       legend.text = ggplot2::element_text(size = 8))
+
+  # LOG-Scales only: set breaks
+  breaks <- 10^(-10:10)
+  minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
+
+  guide <- FALSE
+  if (show.legend) guide <- "legend"
+
+
+  ###################### INPUT DATA  ######################
 
   # Create curve from component table if not given
   if (is.null(curve) && !is.null(components)) {
 
     channel.width <- 1 / (2*max(components$lambda))
     channel.number <- ceiling(1 / (min(components$lambda) * channel.width))
-    curve <- simulate_OSLcurve(components,
+    curve <- simulate_OSLcomponents(components,
                                channel.width = channel.width,
                                channel.number = channel.number,
                                simulate.curve = TRUE,
@@ -123,16 +181,16 @@ plot_OSLcurve <- function(curve = NULL,
   } else {
 
     # Check input curve
-    if(is(curve, "RLum.Data.Curve") == FALSE & is(curve, "data.frame") == FALSE & is(curve, "matrix") == FALSE){
-      stop("[plot_OSLcurve()] Error: Input object is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")
-    }
+    if(!(is(curve, "RLum.Data.Curve") | is(curve, "data.frame") | is(curve, "matrix"))){
+      stop("[plot_OSLcurve()] Error: Input object is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!") }
 
-    if (!("time" %in% colnames(curve)) ||
+    if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(Luminescence::get_RLum(curve))
+
+    if (!("time" %in% colnames(curve)) |
         !("signal" %in% colnames(curve))) {
+
       curve <- data.frame(time = curve[,1],
-                          signal = curve[,2])
-    }
-  }
+                          signal = curve[,2])}}
 
   time <- curve$time
   channel.width <- time[2] - time[1]
@@ -143,22 +201,18 @@ plot_OSLcurve <- function(curve = NULL,
   # Transform data into factor-based long data set
   data <- data.frame(time = time, signal = curve$signal, graph = factor("meas"))
 
+  # if a component table is given, add or overwrite the component signal columns in the curve data.frame
+  if (!is.null(components)) {
+    #|| !("residual" %in% colnames(curve))
+    curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)}
 
+  # Does 'curve' now contain component information?
+  if (length(curve[1,]) < 3) {
 
-  if ((display == "components") || (display == "detailed") ||
-      (display == "compare_lin") || (display == "compare_log") ||
-      (display == "return.lin") || (display =="lin-log")) {
+    warning("No component curve given neither in 'components' nor in 'curve'. Set 'display' = 'raw'")
+    display <- "raw"
 
-    # if a component table is given, add or overwrite the component signal columns in the curve data.frame
-    if (!is.null(components)) {
-      #|| !("residual" %in% colnames(curve))
-      curve <- simulate_OSLcurve(components, curve, simulate.curve = FALSE)
-    }
-
-    if (length(curve[1,]) < 3) {
-      warning("No components given neither in 'components' nor in 'curve'")
-      return(NULL)
-    }
+  } else if (display != "raw"){
 
     # set the columns which shall be displayed
     X <- c(1:length(curve[1,]))
@@ -170,31 +224,84 @@ plot_OSLcurve <- function(curve = NULL,
     graph.labels[1] <- "measured"
     graph.labels[2] <- "fitted"
 
-
-
     # rearrange data to work in ggplot-function
     for (i in X) {
 
       data.append <- data.frame(time = time, signal = curve[,i], graph = colnames(curve)[i])
-      data <- rbind(data, data.append)
-    }
+      data <- rbind(data, data.append)}}
 
-    ######################## LINEAR PLOT #########################################################
+  # LOG-Scales only: set y-axis minimum
+  log_limits <- c(1, max(data$signal))
+  if (min(curve$signal) > 0) log_limits[1] <- 10^floor(log10(min(curve$signal)))
 
-    p.lin <- ggplot(data, aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
-      geom_point(na.rm = TRUE) + geom_line(na.rm = TRUE) +
-      scale_y_continuous(limits = c(0, max(curve$signal) + 1)) +
-      scale_x_continuous(limits = X_limits) +
-      scale_colour_manual(values = graph.colors, labels = graph.labels, guide = FALSE) +
-      scale_size_manual(values = graph.sizes, labels = graph.labels, guide = FALSE) +
-      scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
-      scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
-      labs(subtitle = "CW-OSL", x = "Time (s)", y ="Signal (cts)") +
+
+
+  ######################## LINEAR PLOT #########################################################
+
+  if ((display == "detailed") | (display == "lin") | (display == "compare_lin")) {
+
+    subtitle <- "CW-OSL"
+    if (display == "lin") subtitle <- NULL
+
+    p.lin <- ggplot2::ggplot(data, ggplot2::aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
+      ggplot2::geom_point(na.rm = TRUE) + ggplot2::geom_line(na.rm = TRUE) +
+      ggplot2::scale_y_continuous(limits = c(0, max(curve$signal) + 1), labels = scales::label_number_auto()) +
+      ggplot2::scale_x_continuous(limits = X_limits, labels = scales::label_number_auto()) +
+      ggplot2::scale_colour_manual(values = graph.colors, labels = graph.labels, guide = guide) +
+      ggplot2::scale_size_manual(values = graph.sizes, labels = graph.labels, guide = guide) +
+      ggplot2::scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = guide) +
+      ggplot2::scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = guide) +
+      ggplot2::labs(subtitle = subtitle, x = "Time (s)", y = "Signal (cts)") +
       text_format
 
+    guide <- FALSE}
+
+  ######################## LOG PLOT #########################################################
+
+  if ((display == "log") | (display == "compare_log")) {
+
+    subtitle <- "CW-OSL (logarithmic scale)"
+    if (display == "log") subtitle <- NULL
+
+    p.log <- ggplot2::ggplot(data, ggplot2::aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
+      ggplot2::geom_point(na.rm = TRUE) + ggplot2::geom_line(na.rm = TRUE) +
+      ggplot2::scale_y_log10(limits = log_limits, #position = "right",
+                             breaks = breaks, minor_breaks = minor_breaks,
+                             labels = scales::label_number_auto()) +
+      ggplot2::scale_x_continuous(limits = X_limits, labels = scales::label_number_auto()) +
+      ggplot2::scale_colour_manual(values = graph.colors, labels = graph.labels, guide = guide) +
+      ggplot2::scale_size_manual(values = graph.sizes, labels = graph.labels, guide = guide) +
+      ggplot2::scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = guide) +
+      scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = guide) +
+      ggplot2::labs(subtitle = subtitle, x = "Time (s)", y = "Signal (cts)") +
+      text_format}
+
+  ######################## LOG-LOG PLOT #########################################################
+
+  if (display == "loglog") {
+
+    p.loglog <- ggplot2::ggplot(data, ggplot2::aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
+      ggplot2::geom_point(na.rm = TRUE) + ggplot2::geom_line(na.rm = TRUE) +
+      ggplot2::scale_y_log10(limits = log_limits,
+                             breaks = breaks, minor_breaks = minor_breaks,
+                             labels = scales::label_number_auto()) +
+      ggplot2::scale_x_log10(limits = c(channel.width, max(time)),
+                             breaks = breaks, minor_breaks = minor_breaks,
+                             labels = scales::label_number_auto()) +
+      ggplot2::scale_colour_manual(values = graph.colors, labels = graph.labels, guide = guide) +
+      ggplot2::scale_size_manual(values = graph.sizes, labels = graph.labels, guide = guide) +
+      ggplot2::scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = guide) +
+      ggplot2::scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = guide) +
+      ggplot2::labs(x = "Time (s)", y = "Signal (cts)") +
+      text_format}
 
 
-    ######################## pseudoLM PLOT #########################################################
+  ######################## pseudoLM PLOT #########################################################
+
+  if ((display == "detailed") | (display == "LM")) {
+
+    subtitle <- "pseudoLM-OSLL"
+    if (display == "LM") subtitle <- NULL
 
     # transform data
     P = 2*max(time)
@@ -203,20 +310,24 @@ plot_OSLcurve <- function(curve = NULL,
     LMdata$time <- (2 * P * LMdata$time)^0.5
 
 
-    p.LM <- ggplot(LMdata, aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
-      geom_point(na.rm = TRUE) + geom_line(na.rm = TRUE) +
-      scale_y_continuous(limits = c(0, max(LMdata$signal) + 1)) +
-      scale_x_continuous(limits = c(0, X_limits[2]*2)) +
-      scale_colour_manual(values = graph.colors, labels = graph.labels, guide = FALSE) +
-      scale_size_manual(values = graph.sizes, labels = graph.labels, guide = FALSE) +
-      scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
-      scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
-      labs(subtitle = "pseudoLM-OSL", x = "Ramping time (s)", y ="Signal (cts)") +
-      text_format
+    p.LM <- ggplot2::ggplot(LMdata, ggplot2::aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
+      ggplot2::geom_point(na.rm = TRUE) + ggplot2::geom_line(na.rm = TRUE) +
+      ggplot2::scale_y_continuous(limits = c(0, max(LMdata$signal) + 1),
+                                  labels = scales::label_number_auto()) +
+      ggplot2::scale_x_continuous(limits = c(0, X_limits[2]*2),
+                                  labels = scales::label_number_auto()) +
+      ggplot2::scale_colour_manual(values = graph.colors, labels = graph.labels, guide = guide) +
+      ggplot2::scale_size_manual(values = graph.sizes, labels = graph.labels, guide = guide) +
+      ggplot2::scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = guide) +
+      ggplot2::scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = guide) +
+      ggplot2::labs(subtitle = subtitle, x = "Ramping time (s)", y ="Signal (cts)") +
+      text_format}
 
 
+  ######################## RESIDUAL #########################################################
 
-    ######################## RESIDUAL PLOT #########################################################
+  if ((display == "detailed") | (display == "compare_lin") |
+      (display == "compare_log") | (display == "res")) {
 
     res <- curve$residual
     res_text <- paste0("Residual (RSS = ", formatC(sum(res^2, na.rm = TRUE)), ")")
@@ -225,7 +336,7 @@ plot_OSLcurve <- function(curve = NULL,
     res.max <- ceiling(abs(max(res))) + 1
     if (abs(min(res)) > res.max) res.max <- ceiling(abs(min(res))) + 1
 
-    # if the intervals are given, draw them into the residual curve
+    # if the integration intervals are given, draw them into the residual curve
     res.intervals <- list(NULL)
     if (("t.start" %in% colnames(components))
         & (zoom == 1)
@@ -233,111 +344,51 @@ plot_OSLcurve <- function(curve = NULL,
 
       for (i in c(1:nrow(components))) {
 
-        res.intervals[[i*2 - 1]] <- annotate("segment",
-                                             x = components$t.start[i],
-                                             xend = components$t.start[i],
-                                             y = - res.max, yend = res.max, colour = "black")
-        res.intervals[[i*2]] <- annotate("segment",
-                                         x = components$t.end[i],
-                                         xend = components$t.end[i],
-                                         y = - res.max, yend = res.max, colour = "black")
-      }
+        res.intervals[[i*2 - 1]] <- ggplot2::annotate("segment",
+                                                      x = components$t.start[i],
+                                                      xend = components$t.start[i],
+                                                      y = - res.max, yend = res.max, colour = "black")
+
+        res.intervals[[i*2]] <- ggplot2::annotate("segment",
+                                                  x = components$t.end[i],
+                                                  xend = components$t.end[i],
+                                                  y = - res.max, yend = res.max, colour = "black")}
+
       t.times <- c(components$t.start[1], components$t.end)
       t.labels <- formatC(t.times)
       if (t.times[1] == 0) t.labels <- c("", formatC(components$t.end))
-      if (t.labels[length(t.labels)] == time[length(time)]) {
-        t.labels[length(t.labels)] <- ""
-      }
+      if (t.labels[length(t.labels)] == time[length(time)]) t.labels[length(t.labels)] <- ""
 
-      scale.intervals <- scale_x_continuous(breaks = t.times, limits = X_limits,
-                                            labels = t.labels)#, position = "top")
+      scale.intervals <- ggplot2::scale_x_continuous(breaks = t.times, limits = X_limits, labels = t.labels)
 
     } else {
 
-      scale.intervals <- scale_x_continuous(limits = X_limits)#, position = "top")
-    }
+      scale.intervals <- ggplot2::scale_x_continuous(limits = X_limits,
+                                                     labels = scales::label_number_auto())}
 
 
-    ########## Plot residual curve ###########
-
-    p.res <- ggplot(curve, aes(x=time, y=residual)) +
-      #error.ribbon +
-      geom_point(size = 1, shape =  16, color = "darkgrey", na.rm = TRUE) +
-      scale_y_continuous(limits = c(- res.max, res.max)) +
-      labs(subtitle = res_text, x = "Time (s)", y ="Signal (cts)") +
-      annotate("segment", x = 0, xend = max(curve$time), y = 0, yend = 0, colour = "black", size = 1) +
+    # Plot residual curve
+    p.res <- ggplot2::ggplot(curve, ggplot2::aes(x=time, y=residual)) +
+      ggplot2::geom_point(size = 1, shape =  16, color = "darkgrey", na.rm = TRUE) +
+      ggplot2::scale_y_continuous(limits = c(- res.max, res.max),
+                                  labels = scales::label_number_auto()) +
+      ggplot2::labs(subtitle = res_text, x = "Time (s)", y ="Signal (cts)") +
+      ggplot2::annotate("segment", x = 0, xend = max(curve$time), y = 0, yend = 0, colour = "black", size = 1) +
       text_format +
       scale.intervals +
-      res.intervals
+      res.intervals}
 
 
+  ######################## TABLE #########################################################
+
+  if ((display == "detailed") | (display == "compare_lin") |
+      (display == "compare_log") | (display == "tab")) {
 
 
-    ######################## LOG LOG PLOT #########################################################
-    if (display == "detailed" || (display == "compare_lin") ||
-        (display == "compare_log") || (display == "lin-log")) {
+    if (!is.null(components) ) {
 
-      # set y-axis minimum
-      log_limits <- c(1, max(data$signal))
-      if (min(curve$signal) > 0) {
-        log_limits[1] <- 10^floor(log10(min(curve$signal)))
-      }
-
-      breaks <- 10^(-10:10)
-      minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
-
-
-      # draw plot
-      p.log <- ggplot(data, aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
-        geom_point(na.rm = TRUE) + geom_line(na.rm = TRUE) +
-        scale_y_log10(limits = log_limits, position = "right",
-                      breaks = breaks,
-                      minor_breaks = minor_breaks) +
-        scale_x_log10(limits = c(channel.width, max(time)), position = "right",
-                      breaks = breaks,
-                      minor_breaks = minor_breaks) +
-        scale_colour_manual(values = graph.colors, labels = graph.labels, guide = FALSE) +
-        scale_size_manual(values = graph.sizes, labels = graph.labels, guide = FALSE) +
-        scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
-        scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
-        ylab("Signal (cts)") + xlab("Time (s)")  +
-        text_format
-
-
-      ######################## LIN LOG PLOT #########################################################
-      if (display == "lin-log") {
-
-        # set y-axis minimum
-        log_limits <- c(1, max(data$signal))
-        if (min(curve$signal) > 0) {
-          log_limits[1] <- 10^floor(log10(min(curve$signal)))
-        }
-
-        breaks <- 10^(-10:10)
-        minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
-
-
-        # draw plot
-        p.linlog <- ggplot(data, aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
-          geom_point(na.rm = TRUE) + geom_line(na.rm = TRUE) +
-          scale_y_log10(limits = log_limits, position = "right",
-                        breaks = breaks, minor_breaks = minor_breaks,
-                        labels = scientific) +
-          scale_x_continuous(limits = X_limits, labels = scientific) +
-          scale_colour_manual(values = graph.colors, labels = graph.labels, guide = FALSE) +
-          scale_size_manual(values = graph.sizes, labels = graph.labels, guide = FALSE) +
-          scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = FALSE) +
-          scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = FALSE) +
-          ylab("Signal (cts)") + xlab("Time (s)")  +
-          text_format
-
-      }
-      ######################## TABLE #########################################################
-
-      if (!is.null(components) ) {
-
-        # Table styles can be found at:
-      # https://rpkgs.datanovia.com/ggpubr/reference/ggtexttable.html
+      # Table styles can be found at:
+      # Link: rpkgs.datanovia.com/ggpubr/reference/ggtexttable.html
 
       p.colnames <- c("      ",
                       expression(italic(lambda) ~~ (s^-1)),
@@ -364,126 +415,118 @@ plot_OSLcurve <- function(curve = NULL,
       #                        n.residual = prettyNum(round(components$n.residual)))
       #  p.colnames <- c(p.colnames,
       #                  expression(tail[italic(n)]))
-      #  p.table$n.residual[is.na(p.table$n.residual)] <- ""
-      #}
+      #  p.table$n.residual[is.na(p.table$n.residual)] <- ""}
 
 
       colnames(p.table) <- p.colnames
-
       print.size = 8
 
-      p.tab <-  ggtexttable(p.table,
-                            rows = NULL,
-                            theme = ttheme(base_style = "default",
-                                           colnames.style = colnames_style(fill = "white",
-                                                                           face = "bold",
-                                                                           size = print.size,
-                                                                           parse = TRUE),
-                                           tbody.style = tbody_style(fill = c("white","white"),
-                                                                     size = print.size)))
+      # draw component table
+      p.tab <-  ggpubr::ggtexttable(p.table,
+                                    rows = NULL,
+                                    theme = ggpubr::ttheme(base_style = "default",
+                                                           colnames.style = ggpubr::colnames_style(fill = "white",
+                                                                                                   face = "bold",
+                                                                                                   size = print.size,
+                                                                                                   parse = TRUE),
+                                                           tbody.style = ggpubr::tbody_style(fill = c("white","white"),
+                                                                                             size = print.size)))
 
+      # assign graph colors to component names
       for (z in 1:nrow(p.table)) {
-        p.tab <- table_cell_bg(p.tab, row = 1 + z, column = 1, fill = graph.colors[z+2],
-                               color = "white", linewidth = 5)
-      }
+        p.tab <- ggpubr::table_cell_bg(p.tab, row = 1 + z, column = 1, fill = graph.colors[z + 2],
+                                       color = "white", linewidth = 5)}
+
+    } else {
+
+      # if no component table is given, draw blank image
+      p.tab <- ggplot2::ggplot() + ggplot2::geom_blank()}}
 
 
-      } else {
+  ######################## RAW PLOT ########################################################
 
-        p.tab <- ggplot() + geom_blank()
-      }
-    }
-    ##################################################################################################
-  } else {
+  if (display == "raw") {
 
-    ########## Create plot without components ###########
-
-    # plot using the ggplot2 library
-    p.lin <- ggplot(curve, aes(x=time, y=signal)) +
-      geom_line(na.rm = TRUE, color = "black") +
-      scale_y_continuous(limits = c(0, max(curve$signal))) +
-      scale_x_continuous(limits = X_limits) +
-      # geom_point(size = 1, shape =  16, color = "darkgrey", na.rm = TRUE) +
-      #  ylim(0, round(max(curve$signal) * 1.1)) +
-      ylab("signal (cts)") + xlab("time (s)")
-
-  }
+    # Create plot without components
+    p.raw <- ggplot2::ggplot(curve, ggplot2::aes(x=time, y=signal)) +
+      ggplot2::geom_line(na.rm = TRUE, color = "black") +
+      ggplot2::scale_y_continuous(limits = c(0, max(curve$signal))) +
+      ggplot2::scale_x_continuous(limits = X_limits) +
+      ggplot2::ylab("Signal (cts)") + ggplot2::xlab("Time (s)") +
+      text_format}
 
 
-  ########## Arrange and display plots ###########
+  #########################################################################################
+  ######                              Arrange plots                                  ######
+  #########################################################################################
 
 
-  if (display == "return.lin") {
+  if (display == "detailed") {
 
-    plot_object <- p.lin
-
-  } else if (display == "components") {
-
-    # display layout matrix:
-    lay <- cbind(c(1,1,2))
-
-    # use grid function from gridExtra package to display linear and log plot side by side
-    plot_object <- gridExtra::arrangeGrob(p.lin, p.res, layout_matrix = lay, top = title)
-
-  } else if (display == "detailed") {
-
-    'lay <- rbind(c(1,1,1,3,3),
-                 c(1,1,1,3,3),
-                 c(1,1,1,3,3),
-                 c(1,1,1,4,4),
-                 c(2,2,2,4,4),
-                 c(2,2,2,4,4))'
-
-    lay <- rbind(c(1,3),
-                 c(1,4),
-                 c(2,4))
-
-    #nrow(p.table)
+    # Create layout matrix, see ?gridExtra::arrangeGrob for details
+    # As the component table needs more space with increasing number of components,
+    # pane 4 is increased in height
     tab.shift <- 0
     if (nrow(p.table) > 4) tab.shift <- nrow(p.table) - 4
 
-    lay <- matrix(c(rep(1,10),
-                    rep(2,5),
-                    rep(3,10 - tab.shift),
-                    rep(4,5 + tab.shift))
-                  ,ncol = 2)
+    lay <- matrix(c(rep(1, 10),
+                    rep(2, 5),
+                    rep(3, 10 - tab.shift),
+                    rep(4, 5 + tab.shift)),
+                  ncol = 2)
 
-    #grid.arrange(p.lin, p.res, p.log, p.tab, layout_matrix = lay, top = title)
     plot_object <- gridExtra::arrangeGrob(p.lin, p.res, p.LM, p.tab, layout_matrix = lay, top = title)
+
 
   } else if (display == "compare_lin") {
 
-    lay <- rbind(c(1),
-                 c(1),
-                 c(2),
-                 c(3))
+    lay <- rbind(c(1), c(1), c(2), c(3))
 
     plot_object <- gridExtra::arrangeGrob(p.lin, p.res, p.tab, layout_matrix = lay, top = title)
 
   } else if (display == "compare_log") {
 
-    lay <- rbind(c(1),
-                 c(1),
-                 c(2),
-                 c(3))
+    lay <- rbind(c(1), c(1), c(2), c(3))
 
     plot_object <- gridExtra::arrangeGrob(p.log, p.res, p.tab, layout_matrix = lay, top = title)
 
-  } else if (display == "lin-log") {
+  } else if (display == "lin") {
 
+    plot_object <- gridExtra::arrangeGrob(p.lin, nrow = 1, top = title)
 
-    lay <- rbind(c(1,1,1,3),
-                 c(1,1,1,3),
-                 c(2,2,2,3))
+  } else if (display == "log") {
 
-    plot_object <- gridExtra::arrangeGrob(p.linlog, p.res, p.tab, layout_matrix = lay, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.log, nrow = 1, top = title)
 
+  } else if (display == "loglog") {
+
+    plot_object <- gridExtra::arrangeGrob(p.loglog, nrow = 1, top = title)
+
+  } else if (display == "LM") {
+
+    plot_object <- gridExtra::arrangeGrob(p.LM, nrow = 1, top = title)
+
+  } else if (display == "res") {
+
+    plot_object <- gridExtra::arrangeGrob(p.res, nrow = 1, top = title)
+
+  } else if (display == "tab") {
+
+    plot_object <- gridExtra::arrangeGrob(p.tab, nrow = 1, top = title)
+
+  } else if (display == "raw") {
+
+    plot_object <- gridExtra::arrangeGrob(p.raw, nrow = 1, top = title)
 
   } else {
-    plot_object <- gridExtra::arrangeGrob(p.lin, nrow = 1, top = title)}
+
+    stop("No valid argument 'display'")}
+
+
 
   # save plot as file
   if (!is.null(filename)) {
+
     try(ggplot2::ggsave(filename, plot = plot_object, units = "cm"), silent = FALSE)}
 
   # show plot

@@ -33,7 +33,7 @@ NA
 components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(2, 0.5, 0.02), n = c(1e6, 1e6, 1e7))
 
 # Simulate the CW-OSL curve and add some signal noise
-curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
+curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
 
 # Perform nonlinear regression at the simulated curve
 fit_results <- fit_OSLcurve(curve, output.complex = TRUE)

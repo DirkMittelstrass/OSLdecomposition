@@ -107,7 +107,7 @@ Thus, the \emph{K} - 1 model will be recommended as fitting solution.
 While the function is suited for the analysis of a wide variety of multi-exponential decay problems,
 it is target to CW-OSL measurements of quartz under SAR protocol conditions (470 nm stimulation at 125 °C).
 To simplify the assignemt of the found components to OSL components found in published literature,
-photo-ionisation cross-sections are calculated using the \code{stimulation.wavelength} \lambda~stim~  and
+photo-ionisation cross-sections are calculated using the \code{stimulation.wavelength} \eqn{\lambda_{stim}}  and
 \code{stimulation.intensity} \eqn{\Phi_{stim}}:
 
 \deqn{\sigma_k=\lambda_k {hc / \Phi_{stim}\lambda_{stim}}}
@@ -153,16 +153,16 @@ plot_OSLcurve(curve, components)
 
 }
 \references{
-Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL decay curves. Radiation Measurements 41, 886–891. \link{https://doi.org/10.1016/j.radmeas.2006.05.016}
+Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL decay curves. Radiation Measurements 41, 886–891.
 
-Durcan, J.A., Duller, G.A.T., 2011. The fast ratio: A rapid measure for testing the dominance of the fast component in the initial OSL signal from quartz. Radiation Measurements 46, 1065–1072. \link{https://doi.org/10.1016/j.radmeas.2011.07.016}
+Durcan, J.A., Duller, G.A.T., 2011. The fast ratio: A rapid measure for testing the dominance of the fast component in the initial OSL signal from quartz. Radiation Measurements 46, 1065–1072.
 
 Jain, M., Murray, A.S., Bøtter-Jensen, L., 2003. Characterisation of blue-light stimulated luminescence components in different quartz samples: implications for dose measurement. Radiation Measurements 37, 441–449.
 
 Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
 
 Singarayer, J.S., Bailey, R.M., 2003. Further investigations of the quartz optically stimulated luminescence components using linear modulation.
-Radiation Measurements, Proceedings of the 10th international Conference on Luminescence and Electron-Spin Resonance Dating (LED 2002) 37, 451–458. \link{https://doi.org/10.1016/S1350-4487(03)00062-3}
+Radiation Measurements, Proceedings of the 10th international Conference on Luminescence and Electron-Spin Resonance Dating (LED 2002) 37, 451–458.
 }
 \seealso{
 \link{RLum.OSL_decomposition}, \link{sum_OSLcurves}, \link{decompose_OSLcurve}, \link{plot_OSLcurve},

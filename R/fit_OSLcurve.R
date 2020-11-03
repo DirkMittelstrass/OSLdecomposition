@@ -37,7 +37,7 @@
 #' While the function is suited for the analysis of a wide variety of multi-exponential decay problems,
 #' it is target to CW-OSL measurements of quartz under SAR protocol conditions (470 nm stimulation at 125 °C).
 #' To simplify the assignemt of the found components to OSL components found in published literature,
-#' photo-ionisation cross-sections are calculated using the `stimulation.wavelength` \lambda~stim~  and
+#' photo-ionisation cross-sections are calculated using the `stimulation.wavelength` \eqn{\lambda_{stim}}  and
 #' `stimulation.intensity` \eqn{\Phi_{stim}}:
 #'
 #' \deqn{\sigma_k=\lambda_k {hc / \Phi_{stim}\lambda_{stim}}}
@@ -112,16 +112,16 @@
 #'
 #' @references
 #'
-#' Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL decay curves. Radiation Measurements 41, 886–891. [https://doi.org/10.1016/j.radmeas.2006.05.016]
+#' Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL decay curves. Radiation Measurements 41, 886–891.
 #'
-#' Durcan, J.A., Duller, G.A.T., 2011. The fast ratio: A rapid measure for testing the dominance of the fast component in the initial OSL signal from quartz. Radiation Measurements 46, 1065–1072. [https://doi.org/10.1016/j.radmeas.2011.07.016]
+#' Durcan, J.A., Duller, G.A.T., 2011. The fast ratio: A rapid measure for testing the dominance of the fast component in the initial OSL signal from quartz. Radiation Measurements 46, 1065–1072.
 #'
 #' Jain, M., Murray, A.S., Bøtter-Jensen, L., 2003. Characterisation of blue-light stimulated luminescence components in different quartz samples: implications for dose measurement. Radiation Measurements 37, 441–449.
 #'
 #' Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
 #'
 #' Singarayer, J.S., Bailey, R.M., 2003. Further investigations of the quartz optically stimulated luminescence components using linear modulation.
-#' Radiation Measurements, Proceedings of the 10th international Conference on Luminescence and Electron-Spin Resonance Dating (LED 2002) 37, 451–458. [https://doi.org/10.1016/S1350-4487(03)00062-3]
+#' Radiation Measurements, Proceedings of the 10th international Conference on Luminescence and Electron-Spin Resonance Dating (LED 2002) 37, 451–458.
 #'
 #'
 #' @return
@@ -172,26 +172,26 @@ fit_OSLcurve <- function(
   parallel.computing = FALSE
 ){
 
-  #' Changelog:
-  #' * 2019-02-14, DM: First version
-  #' * 2019-03-15, DM: Seperated 'decompose_OSLalternatively()'
-  #' * 2019-04-29, DM: Added Blucszs & Adamiec-like approach using numOSL::decomp (Peng et al. 2014)
-  #' * 2019-05-14, DM: Added "fit_OSLLifeTimes" approach from Luminescence package 0.9; Corrected and improved numOSL approach; Deleted nls.default approach
-  #' * 2019-06-28, DM: Deleted "fit_OSLLifeTimes" approach. Added stretched exponentials for testing. Added overview plot
-  #' * 2019-10-07, DM: Streamlined function; added optional background fitting
-  #' * 2019-10-08, DM: Seperated plotting to plot_PhotoCrosssections()
-  #' * 2020-04-04, DM: Extended output list (curve & arguments)
-  #' * 2020-04-06, DM: Extended print output and made some  tweaks. Replaced 'SAR.compatible' with 'fully.bleached'
-  #' * 2020-05-05, DM: Replaced bolean 'fully.bleached' with numeric 'bleaching.grade'
-  #' * 2020-08-05, DM: Added DEoptim + nlsLM algorithm
-  #' * 2020-08-10, DM: Optional parallel computing enabled
-  #' * 2020-10-26, DM: Roxygen documentation
-  #'
-  #' ToDo:
-  #' * Enhance documentation with more algorithm info and some F.threshold recommendation
-  #' * Reactivate optional background level fitting
-  #' * Introduce 'fit_OSLcurve.control' which forwards algorith parameters to DEoptim.control and nls.lm.control
-  #' * Enable optional weighted fitting and give out reduced Chi²
+  # Changelog:
+  # * 2019-02-14, DM: First version
+  # * 2019-03-15, DM: Seperated 'decompose_OSLalternatively()'
+  # * 2019-04-29, DM: Added Blucszs & Adamiec-like approach using numOSL::decomp (Peng et al. 2014)
+  # * 2019-05-14, DM: Added "fit_OSLLifeTimes" approach from Luminescence package 0.9; Corrected and improved numOSL approach; Deleted nls.default approach
+  # * 2019-06-28, DM: Deleted "fit_OSLLifeTimes" approach. Added stretched exponentials for testing. Added overview plot
+  # * 2019-10-07, DM: Streamlined function; added optional background fitting
+  # * 2019-10-08, DM: Seperated plotting to plot_PhotoCrosssections()
+  # * 2020-04-04, DM: Extended output list (curve & arguments)
+  # * 2020-04-06, DM: Extended print output and made some  tweaks. Replaced 'SAR.compatible' with 'fully.bleached'
+  # * 2020-05-05, DM: Replaced bolean 'fully.bleached' with numeric 'bleaching.grade'
+  # * 2020-08-05, DM: Added DEoptim + nlsLM algorithm
+  # * 2020-08-10, DM: Optional parallel computing enabled
+  # * 2020-10-26, DM: Roxygen documentation
+  #
+  # ToDo:
+  # * Enhance documentation with more algorithm info and some F.threshold recommendation
+  # * Reactivate optional background level fitting
+  # * Introduce 'fit_OSLcurve.control' which forwards algorith parameters to DEoptim.control and nls.lm.control
+  # * Enable optional weighted fitting and give out reduced Chi²
 
   # Internal parameter (for later use in fit_OSLcurve.control)
   silent <- TRUE # don't display warnings or not-fatal errors
@@ -249,13 +249,13 @@ fit_OSLcurve <- function(
     RSScomponents <- decompose_OSLcurve(RSScurve,
                                         lambda_vector,
                                         algorithm = "det",
-                                        error.calculation = "none",
+                                        error.estimation = "none",
                                         verbose = FALSE)
 
     # Now add the residual curve to the input curve ...
-    RSScurve <- simulate_OSLcurve(RSScomponents,
-                               template.curve = RSScurve,
-                               simulate.curve = FALSE)
+    RSScurve <- simulate_OSLcomponents(RSScomponents,
+                                       curve = RSScurve,
+                                       simulate.curve = FALSE)
 
     # ... and calculate the residual sum of squares (RSS)
     RSS <- sum(RSScurve$residual^2)
@@ -265,8 +265,9 @@ fit_OSLcurve <- function(
   ###################### Reduced Chi² ###############################################################
   calc_Chi2 <- function(components, CHIcurve = curve, N_curves = M, detec_noise = 0, K = K){
 
-    CHIcurve <- simulate_OSLcurve(components,
-                                    template.curve = CHIcurve)
+    CHIcurve <- simulate_OSLcomponents(components,
+                                       curve = CHIcurve,
+                                       simulate.curve = FALSE)
 
     RS <- CHIcurve$residual^2 * N_curves / (abs(curve$sum) + detec_noise)
     Chi2 <- sum(RS) / (length(RS) - K * 2)
@@ -406,7 +407,7 @@ fit_OSLcurve <- function(
       DE_components <- decompose_OSLcurve(curve,
                                           lambda,
                                           algorithm = "det",
-                                          error.calculation = "none",
+                                          error.estimation = "none",
                                           verbose = FALSE)
       n <- DE_components$n
 
@@ -415,7 +416,7 @@ fit_OSLcurve <- function(
       lambda.names <- paste0("lambda.",1:K)
 
       # now creat the optimization formula
-      fit.formula <- as.formula(paste0("signal ~ ",
+      fit.formula <- formula(paste0("signal ~ ",
                                        paste(n.names," * (exp(-", lambda.names," * (time - ", channel_width,")) - exp(-", lambda.names," * time))",
                                              collapse=" + ")))
 

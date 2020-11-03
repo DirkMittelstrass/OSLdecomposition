@@ -47,8 +47,9 @@ but may need administrator rights and/or a firewall exception.
 See \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further information}
 }
 \value{
-The input table \emph{components} \link{data.frame} will be returned with four additional columns:
-\emph{$t.start}, \emph{$t.end} defining the interval borders in time; \emph{$ch.start}, \emph{$ch.end} defining the intervals as channels
+The input table \code{components} \link{data.frame} will be returned with four additional columns:
+\verb{$t.start}, \verb{$t.end} defining the time intervals and \verb{$ch.start}, \verb{$ch.end} assigning those intervals to channel indicies.
+If a \link{numeric} vector is given as input, a new \link{data.frame} will be returned
 }
 \description{
 Function defines integration intervals for CW-OSL component separation with \link{decompose_OSLcurve}.
@@ -62,7 +63,7 @@ signal intensity calculation of other component. This is done by maximizing the 
 determinant in Cramers rule, see Mittelstrass (2019) for details. For maximization, the iterative
 evolutionary algorithm of Storn and Price (1997) is used, available in \emph{R} through \link[DEoptim:DEoptim]{DEoptim::DEoptim}.
 
-The inclusion of a background level component is supported, see \link{decompose_OSLcurve} for details.
+The inclusion of a background component is supported, see \link{decompose_OSLcurve} for details.
 }
 \section{Last updates}{
 
@@ -70,22 +71,22 @@ The inclusion of a background level component is supported, see \link{decompose_
 2020-08-23, DM: Replaced own maxmimum searching algorithm with \link[DEoptim:DEoptim]{DEoptim::DEoptim}
 (\strong{update may have changed analysis results})
 
-2020-10-30, DM: Added \code{parallel.computing} argument; enhanced roxygen documentation (\emph{minor update})
+2020-10-29, DM: Added \code{parallel.computing} argument; enhanced roxygen documentation (\emph{minor update})
 }
 
 \examples{
 
-A <- optimise_OSLintervals(c(2, 0.5, 0.02), channel.width = 0.1, channel.number = 200, background.fitting = TRUE)
+A <- optimise_OSLintervals(c(2, 0.5, 0.02), channel.width = 0.1, channel.number = 200)
 print(A, row.names = FALSE)
 
 }
 \references{
 Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
 
-Storn, R., Price, K., 1997. Differential Evolution – A Simple and Efficient Heuristic for global Optimization over Continuous Spaces. Journal of Global Optimization 11, 341–359. \link{https://doi.org/10.1023/A:1008202821328}
+Storn, R., Price, K., 1997. Differential Evolution – A Simple and Efficient Heuristic for global Optimization over Continuous Spaces. Journal of Global Optimization 11, 341–359.
 }
 \seealso{
-\link{decompose_OSLcomponents}, \link{RLum.OSL_decomposition}, \link[DEoptim:DEoptim]{DEoptim::DEoptim}, \link{fit_OSLcurve}
+\link{decompose_OSLcurve}, \link{RLum.OSL_decomposition}, \link[DEoptim:DEoptim]{DEoptim::DEoptim}, \link{fit_OSLcurve}
 }
 \author{
 Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
@@ -95,8 +96,3 @@ Please cite the package the following way:
 Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
 Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
 }
-\keyword{CWOSL}
-\keyword{OSL}
-\keyword{components}
-\keyword{decomposition}
-\keyword{deconvolution}

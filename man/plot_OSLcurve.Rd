@@ -2,93 +2,122 @@
 % Please edit documentation in R/plot_OSLcurve.R
 \name{plot_OSLcurve}
 \alias{plot_OSLcurve}
-\title{Advanced plot function for CW-OSL curves and CW-OSL signal components}
+\title{Advanced plot function for component resolved CW-OSL curves}
 \usage{
 plot_OSLcurve(
   curve = NULL,
   components,
   display = "detailed",
+  show.legend = FALSE,
   show.intervals = FALSE,
+  theme.set = ggplot2::theme_classic(),
   title = NULL,
   hide.plot = FALSE,
   filename = NULL
 )
 }
 \arguments{
-\item{display}{Choices: "detailed" (default), "components", "raw" ,"compare_lin", "compare_log", "lin-log"}
+\item{curve}{\link{data.frame} or \link{matrix} or \linkS4class{RLum.Data.Curve} (\emph{optional}):
+CW-OSL curve x-Axis: \verb{$time} or first column as measurement time (must have constant time intervals);
+y-Axis: \verb{$signal} or second column as luminescence signal.
+Other columns will be plotted as component curves, in case no argument \code{components} is defined.
+If no input is given, a CW-OSL curve will be simulated with the parameters of \code{components}}
 
-\item{show.intervals}{Draws vertical lines into the residual plot showing the signal bin intervals for Step 2 CW-OSL decomposition}
+\item{components}{\link{data.frame} (\emph{optional}):
+Table with OSL component parameters. Overrides component curves provides by \code{curve}.
+Need to have at least the columns: \verb{$names}, \verb{$lambda} and \verb{$n}}
 
-\item{title}{Plot title}
+\item{display}{\link{character} (\emph{with default}):
+Arrangement of graphs, see section \strong{Details}}
 
-\item{hide.plot}{If true, plot is not drawn but can be catched by 'A <- plot_OSLcurve(...)' or saved as file.
-If catched, the plot ca be displayed later for example by [gridExtra::grid.arrange]}
+\item{show.legend}{\link{logical} (\emph{with default}):
+Draws a legend in the top right corner of the first graph}
 
-\item{filename}{Filename or path to save the diagram as file. If just a name is chosen, the file is
-saved in the working directory. The graphic type is chosen according to the file ending.
-Allowed are .pdf, .eps, .svg (vector graphics) and .jpg, .png, .bmp (pixel graphics)
-and more, see [ggplot2::ggsave]}
+\item{show.intervals}{\link{logical} (\emph{with default}):
+Draws vertical lines into the residual plot showing the signal bin intervals for Step 2 CW-OSL
+decomposition (if available)}
+
+\item{theme.set}{\link{ggplot2} object (\emph{with default}):
+Graphical theme of the output plot. Input is forwarded to \link[ggplot2:theme_get]{ggplot2::theme_set}.
+Recommended themes are \code{ggplot2::theme_minimal()}, \code{ggplot2::theme_classic()} and \code{ggplot2::theme_bw()},
+see \link[ggplot2:ggtheme]{ggplot2::theme_bw} or \href{https://ggplot2.tidyverse.org/reference/ggtheme.html}{here} for
+a full list}
+
+\item{title}{\link{character} (\emph{with default}):
+plot title. Set \code{title = NULL} for no title}
+
+\item{hide.plot}{\link{logical} (\emph{with default}):
+If true, plot is not drawn but can still be saved as files or catched by \code{A <- plot_OSLcurve()}.
+If catched, the plot can be drawn manually for example by using \link[gridExtra:arrangeGrob]{gridExtra::grid.arrange}}
+
+\item{filename}{\link{character} (\emph{optional}):
+file name or path to save the plot as image. If just a name is given, the image is
+saved in the working directory. The image type is chosen by the file ending.
+Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
+and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}}
 }
 \description{
-Advanced plot function for CW-OSL curves and CW-OSL signal components
+Function for plotting CW-OSL curves and its signal components. It can handle data returned
+by \link{fit_OSLcurve} or \link{decompose_OSLcurve}. Besides CW-OSL curves, pseudoLM-OSL and
+residual are plotted.
 }
-\section{Notes}{
+\details{
+\strong{Change graph types with parameter:} \code{display}
 
+\tabular{ll}{
+\code{"detailed"} \tab (default) Output plot consists of: Linear CW-OSL g, pseudoLM-OSL plot, Residual curve and component table \cr
+\code{"lin"} \tab Linear CW-OSL plot only \cr
+\code{"compare_lin"} \tab Linear CW-OSL plot with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
+\code{"log"} \tab CW-OSL plot with logarithmic y-Axis and linear x-Axis \cr
+\code{"compare_log"} \tab CW-OSL plot with logarithmic y-Axis with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
+\code{"loglog"} \tab Double-logarithic CW-OSL plot \cr
+\code{"LM"} \tab PseudoLM-OSL plot \cr
+\code{"res"} \tab Plot of residual curve: Measurement minus Fitting model \cr
+\code{"tab"} \tab Table of component parameters as image
+}
 
-pseudoLM-OSL curves are created using the transformation described by Bulur (2000).
+PseudoLM-OSL curves are created using the transformation described by Bulur (2000).
 The stimulation ramp duration is chosen double the CW-OSL duration.
 See also Bos and Wallinga (2012) for a detailed explanation and discussion
 }
+\section{Last updates}{
 
-\section{Last changed. 2020-09-13}{
-NA
+
+2020-11-03, DM: Refactored code; Changed parameter \code{display} choices and added parameters \code{theme.set} and \code{show.legend}
 }
 
 \examples{
 
-# Set some reasonable parameter for a weak quartz CW-OSL decay
-components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(2, 0.5, 0.02), n = c(1000, 1000, 10000))
+# Set some arbitaty decay parameter for a dim CW-OSL measurement of quartz
+name <- c("fast", "medium", "slow")
+lambda <- c(2, 0.5, 0.02)
+n <- c(1000, 1000, 10000)
 
-# Simulate the CW-OSL curve and add some signal noise
-curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
+# Build a component table
+components <- data.frame(name, lambda, n)
+
+# Simulate a CW-OSL curve including some signal noise
+curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
 
 # Display the simulated curve
 plot_OSLcurve(curve, components)
 
-Changelog:
-* 2019-03-06, DM: First reasonable version
-* 2019-04-03, DM: Rebuild whole function
-* 2019-10-02, DM: Added background component support and some little tweaks
-* 2020-04-22, DM: Enabled hidden output to draw later
-* 2020-06-19, DM: Added pseudoLM-OSL diagrams
-* 2020-08-04, DM: Added subtitles and RSS info
-* 2020-09-02, DM: Added graphic saving with [ggplot2::ggsave]
-
-ToDo:
-* REFACTORIZE CODE
-* ! Put the ggplot building (or at least its style options) in its own sub-function !
-* Add input checks and data conversions from [decompose_OSLcurve]
-* When drawing components without curve, skip residual curve
-* Display fitting formula
-* Get rid of library 'ggpubr' to decrease dependencies
-* Change from library("XXX") to XXX::
-* Add argument ggsave.control() to give direct control about image saving
-* Add table column for the lambda error
 }
 \references{
-Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components, Radiation Measurements, 47(9), 752–758, doi:10.1016/j.radmeas.2012.01.013, 2012.
-
-Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves, Radiation Measurements, 32(2), 141–145, doi:10.1016/S1350-4487(99)00247-4, 2000.
-
 Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components,
-Radiation Measurements, 47(9), 752–758, doi:10.1016/j.radmeas.2012.01.013, 2012.
+Radiation Measurements, 47(9)
 
 Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves,
-Radiation Measurements, 32(2), 141–145, doi:10.1016/S1350-4487(99)00247-4, 2000.
-
-Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+Radiation Measurements, 32(2)
+}
+\seealso{
+\link{fit_OSLcurve}, [RLum.OSL_decomposition, \link{RLum.OSL_global_fitting}, \link{simulate_OSLcomponents}
 }
 \author{
 Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+
+Please cite the package the following way:
+
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
 }

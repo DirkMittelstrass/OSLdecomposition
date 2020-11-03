@@ -2,58 +2,98 @@
 % Please edit documentation in R/sum_OSLcurves.R
 \name{sum_OSLcurves}
 \alias{sum_OSLcurves}
-\title{Combine RLum OSL records to a global mean curve}
+\title{Combine RLum OSL records to one global average curve}
 \usage{
 sum_OSLcurves(
   object,
   record_type = "OSL",
   aliquot_selection = NULL,
   offset_value = 0,
-  output.plot = TRUE,
-  plot.first = TRUE,
-  plot.global = TRUE,
   verbose = TRUE,
+  output.plot = TRUE,
+  theme.set = ggplot2::theme_classic(),
+  plot.first = TRUE,
   title = "default",
-  return.plot = FALSE
+  filename = NULL
 )
 }
 \arguments{
-\item{object}{[RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
+\item{object}{\linkS4class{RLum.Analysis} or \href{RLum.Analysis}{list} (\strong{required}):
 data set of one or multiple aliquots containing containing luminescence measurements}
 
-\item{record_type}{[character] (*with default*):
-record type ("OSL","TL","IRSL") which shall be summed up}
+\item{record_type}{\link{character} (\emph{with default}):
+type of records which are selected from the input \code{object},
+for example: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}}
 
-\item{aliquot_selection}{[c] (*optional*):
-vector specifying which items (aliquots) of a list of [RLum.Analysis-class] objects shall be combined}
+\item{aliquot_selection}{\link{numeric} vector (\emph{optional}):
+vector specifying the indicies of elements (aliquots) of a list of \linkS4class{RLum.Analysis} objects
+which shall be included}
 
-\item{offset_value}{[numeric] (*with default*):
-signal offset (background) which will be substracted from each record before combining}
+\item{offset_value}{\link{numeric} (\emph{with default}):
+signal offset (background) which will be substracted from each record}
 
-\item{output.plot}{[logical] (*with default*):
-returns a plot of the created superposition curve}
+\item{verbose}{\link{logical} (\emph{with default}):
+enables console text output}
 
-\item{return.plot}{}
+\item{output.plot}{\link{logical} (\emph{with default}):
+returns a plot with all data points of all records and the average curve}
+
+\item{theme.set}{\link{ggplot2} object (\emph{with default}):
+sets the graphical theme of the output plot.
+See \link[ggplot2:ggtheme]{ggplot2::theme_bw} for available themes}
+
+\item{plot.first}{\link{logical} (\emph{with default}):
+plot includes additional drawing of first \code{record_type} record of first \code{object} list element}
+
+\item{title}{\link{character} (\emph{with default}):
+plot title. Set \code{title = "default"} for an automatically generated title.
+Set \code{title = NULL} for no title}
+
+\item{filename}{\link{character} (\emph{optional}):
+file name or path to save the plot as image. If just a name is given, the image is
+saved in the working directory. The image type is chosen by the file ending.
+Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics) and \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
+and more, see \link[ggplot2:ggsave]{ggplot2::ggsave} for details}
 }
 \value{
-A [data.frame] is returned, containing the created mean curve
+A \link{data.frame} of the average CW-OSL curve is returned, containing two columns: \verb{$time} and \verb{$signal}
 }
 \description{
-The function adds up RLum records of one specific type
-it is useful to create background records and enable component fitting
-at sets of records with low signal-to-noise ratio
+The function adds up CW-OSL records saved in \linkS4class{RLum.Analysis} objects and
+calculates the arithmetic mean signal from all records for each channel.
+This is useful to create on global average curve with sufficient signal-to-noise ratio
+for OSL components identification with \link{fit_OSLcurve} or to create one signal background
+reference curve.
 }
-\section{Last changed}{
- 2020-04-20
+\details{
+Function supports currently just input objects of type \code{RLum.Analysis} from
+the \link{Luminescence} package. Major overhaul necessary, see ToDo list
+in the source code
+}
+\section{Last updates}{
+
+
+2020-08-30, DM: Overworked plotting; Expanded roxygen documentation
 }
 
-\references{
-Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+\examples{
+
+# Load example data from the package Luminescence
+library(Luminescence)
+data(ExampleData.BINfileData, envir = environment())
+OSLdata <- Risoe.BINfileData2RLum.Analysis(CWOSL.SAR.Data)
+
+average_curve <- sum_OSLcurves(OSLdata, aliquot_selection = c(1:5))
+
 }
 \seealso{
-[fit_OSLcurve], [RLum.OSL_correction], [RLum.OSL_global_fitting]
+\link{fit_OSLcurve}, \link{RLum.OSL_correction}, \link{RLum.OSL_global_fitting}
 }
 \author{
 Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+
+Please cite the package the following way:
+
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
 }

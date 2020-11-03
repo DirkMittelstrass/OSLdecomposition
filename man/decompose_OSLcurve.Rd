@@ -15,8 +15,8 @@ decompose_OSLcurve(
 }
 \arguments{
 \item{curve}{\link{data.frame} or \link{matrix} or \linkS4class{RLum.Data.Curve} (\strong{required}):
-CW-OSL record. \verb{$time} or first column (x-axis) for the measurement time (must have constant time intervals),
-\verb{$signal} or second column (y-axis) for the signal values. Further columns will be ignored}
+CW-OSL curve x-Axis: \verb{$time} or first column as measurement time (must have constant time intervals);
+y-Axis: \verb{$signal} or second column as luminescence signal. Further columns will be ignored}
 
 \item{components}{\link{data.frame} or \link{numeric} vector (\strong{required}):
 Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by \link{fit_OSLcurve}.
@@ -36,8 +36,8 @@ It can also cause implausible slow component results if the measurement duration
 Choice of curve decomposition approach. Either \code{"det"} or \code{"det+nls"} or \code{"nls"}, see section \strong{Details}.}
 
 \item{error.estimation}{\link{character} string (\emph{with default}):
-integral error estimation approach, either \code{"empiric"} or \code{"poisson"} or a \link{numeric} value or \code{"none"}.
-Argument has no effect if \code{algorithm = "nls"}.}
+integral error estimation approach, either \code{"empiric"} or \code{"poisson"} or a \link{numeric} value or \code{"none"},
+see section \strong{Details}. This argument has no effect if \code{algorithm = "nls"}.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
 enables console text output}
@@ -138,8 +138,8 @@ its square root value is taken as standard deviation, in accordance to the Poiss
 
 Alternatively the standard error can be calculated by approximating a \strong{Poisson} distributed signal error, known as \emph{Shot noise}.
 This is suitable if the lack of data points on the x-axis circumvent an empiric error estimation, like with spatial or spectral resolved CCD measurements.
-Also the parameter can be set to a \link{numeric} value, which will be handled as standard deviation per channel and added to the Poisson distributed Shot noise.
-Thus, the \link{numeric} value represents the detector noise per channel.
+Also the parameter can be set to a \link{numeric} value, which  represents the detector noise in \emph{cts / s} and is assumed to be normal distributed.
+The detector noise will be added on top of the Poisson distributed shot noise.
 
 \emph{Systematic errors}
 
@@ -154,7 +154,7 @@ signal bin should be about \eqn{empiric / poisson = 1}. In case of systematic er
 2020-08-27, DM: Replaced \link{nls} function in the \code{algorithm = "nls"} or \code{"det+nls"} cases
 with the more robust \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} (\strong{update may have changed analysis results})
 
-2020-10-29, DM: Renamed 'error.calculation' into 'error.estimation' (\emph{minor update})
+2020-08-30, DM: Renamed 'error.calculation' into 'error.estimation' and changed \link{numeric} value unit from cts/ch to cts/s  (\emph{minor update})
 }
 
 \examples{
@@ -163,7 +163,7 @@ with the more robust \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} (\strong{update 
 components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.1), n = c(1000, 1000, 10000))
 
 # Simulate the CW-OSL curve and add some signal noise and some detection background
-curve <- simulate_OSLcurve(components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 40)
+curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 40)
 
 # Decompose the simulated curve
 components <- decompose_OSLcurve(curve, components)

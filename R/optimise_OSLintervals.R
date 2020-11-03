@@ -10,7 +10,7 @@
 #' determinant in Cramers rule, see Mittelstrass (2019) for details. For maximization, the iterative
 #' evolutionary algorithm of Storn and Price (1997) is used, available in *R* through [DEoptim::DEoptim].
 #'
-#' The inclusion of a background level component is supported, see [decompose_OSLcurve] for details.
+#' The inclusion of a background component is supported, see [decompose_OSLcurve] for details.
 #'
 #'
 #' @param components [data.frame] or [numeric] vector (**required**):
@@ -52,7 +52,7 @@
 #' 2020-08-23, DM: Replaced own maxmimum searching algorithm with [DEoptim::DEoptim]
 #'  (**update may have changed analysis results**)
 #'
-#' 2020-10-30, DM: Added `parallel.computing` argument; enhanced roxygen documentation (*minor update*)
+#' 2020-10-29, DM: Added `parallel.computing` argument; enhanced roxygen documentation (*minor update*)
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -62,18 +62,16 @@
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
 #' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
 #'
-#' @seealso [decompose_OSLcomponents], [RLum.OSL_decomposition], [DEoptim::DEoptim], [fit_OSLcurve]
+#' @seealso [decompose_OSLcurve], [RLum.OSL_decomposition], [DEoptim::DEoptim], [fit_OSLcurve]
 #'
 #' @references
 #' Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
 #'
-#' Storn, R., Price, K., 1997. Differential Evolution – A Simple and Efficient Heuristic for global Optimization over Continuous Spaces. Journal of Global Optimization 11, 341–359. [https://doi.org/10.1023/A:1008202821328]
-#'
-#' @keywords CWOSL OSL decomposition deconvolution components
+#' Storn, R., Price, K., 1997. Differential Evolution – A Simple and Efficient Heuristic for global Optimization over Continuous Spaces. Journal of Global Optimization 11, 341–359.
 #'
 #' @examples
 #'
-#' A <- optimise_OSLintervals(c(2, 0.5, 0.02), channel.width = 0.1, channel.number = 200, background.fitting = TRUE)
+#' A <- optimise_OSLintervals(c(2, 0.5, 0.02), channel.width = 0.1, channel.number = 200)
 #' print(A, row.names = FALSE)
 #'
 #' @md
@@ -91,19 +89,19 @@ optimise_OSLintervals <- function(
   parallel.computing = FALSE
 ){
 
-  #' Changelog:
-  #' * 2018-04-05, DM: first running version
-  #' * 2018-06-16, DM: added 2-component and 1-component case
-  #' * 2018-06-19, DM: changed t0 and t3 parameter to t.start and t.end and added full increment proof
-  #' * 2018-06-24, DM: changed data structure to get static tables
-  #' * 2019-03-21, DM: Rewritten for arbitrary component numbers and changed data structure again
-  #' * 2019-10-02, DM: added optional determination of background-fitting interval
-  #' * 2020-08-23, DM: Replaced own minimum searching algorithm with DEoptim
-  #' * 2020-08-27, DM: Renamed function; More input classes allowed
-  #' * 2020-10-30, DM: Added `parallel.computing` argument; enhanced roxygen documentation
-  #'
-  #' ToDo:
-  #' * ...
+  # Changelog:
+  # * 2018-04-05, DM: first running version
+  # * 2018-06-16, DM: added 2-component and 1-component case
+  # * 2018-06-19, DM: changed t0 and t3 parameter to t.start and t.end and added full increment proof
+  # * 2018-06-24, DM: changed data structure to get static tables
+  # * 2019-03-21, DM: Rewritten for arbitrary component numbers and changed data structure again
+  # * 2019-10-02, DM: added optional determination of background-fitting interval
+  # * 2020-08-23, DM: Replaced own minimum searching algorithm with DEoptim
+  # * 2020-08-27, DM: Renamed function; More input classes allowed
+  # * 2020-10-29, DM: Added `parallel.computing` argument; enhanced roxygen documentation
+  #
+  # ToDo:
+  # * alter argument `curve` to `template.curve`
 
   # Hidden parameters
   silent <- FALSE
