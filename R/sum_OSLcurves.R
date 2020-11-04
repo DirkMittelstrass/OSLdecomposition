@@ -105,6 +105,7 @@ sum_OSLcurves <- function(
   # * test if first value is zero
   # * add legend to plot
   # * add info box with number of OSL curves to plot
+  # * add 'hide.plot' parameter
 
   # prove if object is a list of aliquots or just a single aliquot
   if (is.list(object)) {

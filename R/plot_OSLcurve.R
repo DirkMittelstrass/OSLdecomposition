@@ -50,14 +50,14 @@
 #' a full list
 #'
 #' @param title [character] (*with default*):
-#' plot title. Set `title = NULL` for no title
+#' Plot title. Set `title = NULL` for no title
 #'
 #' @param hide.plot [logical] (*with default*):
 #' If true, plot is not drawn but can still be saved as files or catched by `A <- plot_OSLcurve()`.
 #' If catched, the plot can be drawn manually for example by using [gridExtra::grid.arrange]
 #'
 #' @param filename [character] (*optional*):
-#' file name or path to save the plot as image. If just a name is given, the image is
+#' File name or path to save the plot as image. If just a name is given, the image is
 #' saved in the working directory. The image type is chosen by the file ending.
 #' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
 #' and more, see [ggplot2::ggsave]

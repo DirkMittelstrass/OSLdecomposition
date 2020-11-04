@@ -44,14 +44,14 @@ see \link[ggplot2:ggtheme]{ggplot2::theme_bw} or \href{https://ggplot2.tidyverse
 a full list}
 
 \item{title}{\link{character} (\emph{with default}):
-plot title. Set \code{title = NULL} for no title}
+Plot title. Set \code{title = NULL} for no title}
 
 \item{hide.plot}{\link{logical} (\emph{with default}):
 If true, plot is not drawn but can still be saved as files or catched by \code{A <- plot_OSLcurve()}.
 If catched, the plot can be drawn manually for example by using \link[gridExtra:arrangeGrob]{gridExtra::grid.arrange}}
 
 \item{filename}{\link{character} (\emph{optional}):
-file name or path to save the plot as image. If just a name is given, the image is
+File name or path to save the plot as image. If just a name is given, the image is
 saved in the working directory. The image type is chosen by the file ending.
 Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
 and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}}
