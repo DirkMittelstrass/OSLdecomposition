@@ -1,36 +1,132 @@
 #' Identifies CW-OSL signal components in RLum.Analysis data sets
 #'
-#' @last_changed 2020-09-03
+#' This function identifies CW-OSL signal components in [RLum.Analysis-class] data sets
+#' from the [Luminescence-package]. First, all CW-OSL records are combined to one
+#' global average CW-OSL curve, then the multi-exponential fitting approach of
+#' Bluszcz and Adamiec (2006) is applied.
 #'
-#' @param object
-#' @param max_components
-#' @param record_type
-#' @param F_threshold
-#' @param stimulation_intensity
-#' @param stimulation_wavelength
-#' @param report
-#' @param image_format
-#' @param verbose
+#'
+#' The workflow is as following:
+#'
+#' \enumerate{
+#'   \item{[sum_OSLcurve]: Combine all measurement of type `record_type` to one global average curve}
+#'   \item{[fit_OSLcurves]: Identify  component by a multi-exponential fitting}
+#'   \item{Create a `html` report to summarize the results (*optional*)}
+#' }
+#'
+#' The function processes just data sets created within the [Luminescence-package] (Kreutzer et al. 2012).
+#' Data sets must be formatted as [RLum.Analysis-class] objects. Output objects will also be
+#' [RLum.Analysis-class] objects. The data set should be processed with [R.Lum_correction] and is
+#' meant for further analysis with [RLum.OSL_decomposition] afterwards.
+#'
+#' The `html` report is rendered by the [rmarkdown-package] and saved in the working directory,
+#' which is usually the directory of the data set file. The correct display of the report needs
+#' a internet connection to allow formula encoding by *MathJax*.
+#' The *Rmarkdown* source code can be found with the following command:
+#'
+#' `system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")`
+#'
+#'
+#'
+#' @param object [RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
+#' Data set of one or multiple CW-OSL measured aliquots
+#'
+#' @param record_type [character] (*with default*):
+#' Type of records, selected by the [RLum.Analysis-class] attribute `@recordType`.
+#' Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`
+#'
+#' @param max_components [numeric] (*with default*):
+#' Maximum number of components *K*, see [fit_OSLcurve]
+#'
+#' @param F_threshold [numeric] (*with default*):
+#' Fitting stop criterion, see [fit_OSLcurve]
+#'
+#' @param stimulation_intensity [numeric] (*with default*):
+#' Intensity of optical stimulation in *mW / cm²*. Used to calculate photo-ionisation cross-sections, see [fit_OSLcurve]
+#'
+#' @param stimulation_wavelength [numeric] (*with default*):
+#' Wavelength of optical stimulation in *nm*. Used to calculate photo-ionisation cross-sections, see [fit_OSLcurve]
+#'
+#' @param report [logical] (*with default*):
+#' Creates a `html` report, saves it in the working directory and opens it in your
+#' standard browser. The report contains the results and further information
+#' on the data processing
+#'
+#' @param image_format [character] (*with default*):
+#' Image format of the automatically saved graphs if `report = TRUE`.
+#' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
+#' and more, see [ggplot2::ggsave]. The images are saved in the working directory subfolder `/report_figures`
+#'
+#' @param verbose [logical] (*with default*):
+#' Enables console text output
+#'
+#'
+#' @section Last updates:
+#'
+#' 2020-11-06, DM: Added roxygen documentation
+#'
+#' @author
+#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
+#'
+#' Please cite the package the following way:
+#'
+#' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+#'
+#' @seealso [RLum.OSL_correction], [RLum.OSL_decomposition], [sum_OSLcurves], [fit_OSLcurve]
+#'
+#' @references
+#'
+#' Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL
+#' decay curves. Radiation Measurements 41, 886–891.
+#'
+#' Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fischer, M., Fuchs, M., 2012.
+#' Introducing an R package for luminescence dating analysis. Ancient TL, 30 (1), 1-8.
 #'
 #' @return
+#'
+#' The input `object`, a [list] of [RLum.Analysis-class] objects is given back.
+#' The returned data set contains a new list element `object[["OSL_COMPONENTS"]]` which provides
+#' a [list] of the input parameters, the global average OSL curve from [sum_OSLcurves] and
+#' the `output.complex = TRUE` results from [fit_OSLcurve]
+#'
 #' @examples
+#'
+#' # 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+#' # measured in a lexsyg research with green LED stimulation
+#' data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
+#' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
+#'
+#' # Check data set and perform background correction
+#' data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
+#'
+#' # Identify components and create report
+#' data_set_fitted <- RLum.OSL_global_fitting(data_set_corrected,
+#'                                            max_components = 3,
+#'                                            stimulation_intensity = 50,
+#'                                            stimulation_wavelength = 530)
+#'
+#' @md
+#' @export
 
 RLum.OSL_global_fitting <- function(object,
-                     max_components = 5,
-                     record_type = "OSL",
-                     F_threshold = 150,
-                     stimulation_intensity = 35,
-                     stimulation_wavelength = 470,
-                     report = TRUE,
-                     image_format = "pdf",
-                     verbose = TRUE){
+                                    record_type = "OSL",
+                                    max_components = 5,
+                                    F_threshold = 150,
+                                    stimulation_intensity = 35,
+                                    stimulation_wavelength = 470,
+                                    report = TRUE,
+                                    image_format = "pdf",
+                                    verbose = TRUE){
 
-  ### ToDo:
-  # - Get stimulation.intensity from @info[["LPOWER"]]
-  # - add 'autoname' argument
-  # - add file name argument
-  # - add file directory argument
-  # - add background fitting functionality
+  # Changelog:
+  # * 2020-May  , DM: First reasonable version
+  # * 2020-11-06, DM: Added roxygen documentation
+  #
+  # ToDo:
+  # * Get stimulation.intensity from @info[["LPOWER"]]
+  # * add 'autoname' and other file handling parameters
+  # * add background fitting functionality
 
   # Hidden parameters
   report_format <- "html"
@@ -54,7 +150,7 @@ RLum.OSL_global_fitting <- function(object,
 
         element_name <- names(object)[i]
 
-        if (element_name=="OSL_COMPONENTS") {
+        if (element_name == "OSL_COMPONENTS") {
 
           warning("Input object already contains Step 1 results. Old results were overwritten")
         }else{

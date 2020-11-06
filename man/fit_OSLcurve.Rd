@@ -26,13 +26,13 @@ Maximum number of components \emph{K}. The computing time increases exponentiall
 \emph{K} < 7 is recommended}
 
 \item{F.threshold}{\link{numeric} (\emph{with default}):
-If the F-value is lower than this threshold, the fitting procedure stops and the the K - 1 fitting is returned}
+Fitting stop criterion. If the F-value is lower than this threshold, the fitting procedure stops and the K - 1 fitting is returned}
 
 \item{stimulation.intensity}{\link{numeric} (\emph{with default}):
-Intensity of optical stimulation in mW / cm². Used to calculate the photo-ionisation cross-sections.}
+Intensity of optical stimulation in \emph{mW / cm²}. Used to calculate photo-ionisation cross-sections.}
 
 \item{stimulation.wavelength}{\link{numeric} (\emph{with default}):
-Wavelength of optical stimulation in nm. Used to calculate the photo-ionisation cross-sections.
+Wavelength of optical stimulation in \emph{nm}. Used to calculate photo-ionisation cross-sections.
 If a wavelength between 465 and 480 nm is chosen, the photo-ionisation cross-sections are set into
 relation with literature values to name the signal components}
 
@@ -153,13 +153,15 @@ plot_OSLcurve(curve, components)
 
 }
 \references{
-Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL decay curves. Radiation Measurements 41, 886–891.
+Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL
+decay curves. Radiation Measurements 41, 886–891.
 
 Durcan, J.A., Duller, G.A.T., 2011. The fast ratio: A rapid measure for testing the dominance of the fast component in the initial OSL signal from quartz. Radiation Measurements 46, 1065–1072.
 
 Jain, M., Murray, A.S., Bøtter-Jensen, L., 2003. Characterisation of blue-light stimulated luminescence components in different quartz samples: implications for dose measurement. Radiation Measurements 37, 441–449.
 
-Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
+Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and
+its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
 
 Singarayer, J.S., Bailey, R.M., 2003. Further investigations of the quartz optically stimulated luminescence components using linear modulation.
 Radiation Measurements, Proceedings of the 10th international Conference on Luminescence and Electron-Spin Resonance Dating (LED 2002) 37, 451–458.

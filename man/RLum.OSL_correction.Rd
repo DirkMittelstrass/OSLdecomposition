@@ -2,7 +2,7 @@
 % Please edit documentation in R/RLum.OSL_correction.R
 \name{RLum.OSL_correction}
 \alias{RLum.OSL_correction}
-\title{Various tools for checking and manipulation CW-OSL curves in RLum.Analysis data sets}
+\title{Check and correct CW-OSL curves in RLum.Analysis data sets}
 \usage{
 RLum.OSL_correction(
   object,
@@ -19,21 +19,129 @@ RLum.OSL_correction(
 )
 }
 \arguments{
-\item{object}{[RLum.Analysis-class] (**required**):
-input object containing data for analysis, alternatively a [list] of
-[RLum.Analysis-class] objects can be provided.}
+\item{object}{\linkS4class{RLum.Analysis} or \href{RLum.Analysis}{list} (\strong{required}):
+Data set of one or multiple CW-OSL measured aliquots}
 
-\item{check_signal_level}{**Inactive**}
+\item{record_type}{\link{character} (\emph{with default}):
+Type of records selected from the input \code{object}, see
+\code{object[[]]@records[[]]@recordType}. Common are: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}}
 
-\item{tailor_records}{**Inactive**}
+\item{background_sequence}{\link{numeric} vector (\emph{optional}):
+Indicies of list items with CW-OSL measurements of empty aliquots.
+The records in these list items are used to calculate one average CW-OSL background curve
+with \link{sum_OSLcurves}. This background curve is subtracted from each
+CW-OSL record of the data set. The attributes \verb{@recordType} of the background
+measurements will be renamed to \code{"{record_type}background"}}
 
-\item{correct_PMTsaturation}{**Inactive**}
+\item{subtract_offset}{\link{numeric} (\emph{optional}):
+Signal offset value in counts per second (cts/s). Value is handled as background
+level and will be subtracted from each CW-OSL record}
 
-\item{report}{}
+\item{check_consistency}{\link{logical} (\emph{with default}):
+CW-OSL component identification and separation needs uniform measurement parameters
+throughout the whole data set. If \code{TRUE}, all records are compared for their
+channel width and their number of channels. Those records with the most frequent
+set of channel parameters keep their \verb{@recordType} attribute, while records
+with other sets of measurement parameter will be enumerated \code{record_type}
+\code{"{record_type}2"}, \code{"{record_type}3"} and so on}
+
+\item{check_signal_level}{\link{numeric} (\emph{optional}): \strong{(Has no effect yet)}
+Checks if the CW-OSL curvea of each \code{object} list item has sufficient signal-to-noise
+ratios to enable component resolved data analysis. List items where this is
+not the case, will be removed from the data set. Useful to remove no-signal grains from
+single grain measurements}
+
+\item{tailor_records}{\link{logical} (\emph{with default}): \strong{(Has no effect yet)}
+Checks if the records contain zero-signal intervals at beginning and/or end of the
+measurement and removes them. Useful to tailor single grain measurements}
+
+\item{record_cut}{\link{numeric} (\emph{with default}):
+Reduce measurement duration to input value (in s).
+Long measurement durations can lead to over-fitting at the component identification
+of Step 1 which may induce systematic errors, see Mittelstrass (2019). Thus, limiting
+the OSL record length ensures sufficient accuracy regarding the Fast and Medium component analysis.
+If however, slow decaying components are of interest, set \code{record_cut = NULL}}
+
+\item{correct_PMTsaturation}{\link{numeric} (\emph{optional}): \strong{(Has no effect yet)}
+Bright CW-OSL signals may lead to detection non-linearity. This
+tool corrects this in accordance to (\emph{add reference here})}
+
+\item{verbose}{\link{logical} (\emph{with default}):
+Enables console text output}
+
+\item{report}{\link{logical} (\emph{with default}): \strong{(Has no effect yet)}
+Creates a \code{html} report, saves it in the working directory and opens it in your
+standard browser. The report contains the results and further information
+on the data processing}
 }
 \value{
+The input \code{object}, a \link{list} of \linkS4class{RLum.Analysis} objects, is given back with eventual changes
+in elements \code{object[[]]@records[[]]@recordType} and \code{object[[]]@records[[]]@data}.
 
+The returned data set contains a new list element \code{object[["CORRECTION"]]} which provides
+a \link{list} of the input parameters and additional data, depending on the applied tools.
 }
 \description{
-Various tools for checking and manipulation CW-OSL curves in RLum.Analysis data sets
+CW-OSL measurements are often affected by background signals or might be measured under
+inconsistent detection settings or have other issues. This function provides tools
+to test and solve some common problems.
+}
+\details{
+This function processes just data sets created within the \link{Luminescence-package} (Kreutzer et al. 2012).
+Data sets must be formatted as \linkS4class{RLum.Analysis} objects. Output objects will also be
+\linkS4class{RLum.Analysis} objects and are meant for further analysis with \link{RLum.OSL_global_fitting}.
+
+The data preparation tools are executed in the following order:
+\enumerate{
+\item{\code{check_consistency}}
+\item{\code{tailor_records} (\emph{inactive})}
+\item{\code{record_cut}}
+\item{\code{correct_PMTsaturation} (\emph{inactive})}
+\item{\code{background_sequence}}
+\item{\code{check_signal_level} (\emph{inactive})}
+\item{\code{subtract_offset}}
+}
+
+\strong{Currently, not all functions are available. Also there is no} \code{html} \strong{report available yet.}
+}
+\section{Last updates}{
+
+
+2020-11-05, DM: Added roxygen documentation
+}
+
+\examples{
+
+# 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+# measured in a lexsyg research with green LED stimulation
+data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
+data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
+
+# To correct for the background signal, subtracted the average curve from the
+# OSL curves of an empty aliquot (list item 11) from all other OSL records:
+data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
+
+sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSL")
+
+# Plot background curve
+sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSLbackground")
+
+}
+\references{
+Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fischer, M., Fuchs, M., 2012.
+Introducing an R package for luminescence dating analysis. Ancient TL, 30 (1), 1-8.
+
+Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and
+its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
+}
+\seealso{
+\link{RLum.OSL_global_fitting}, \link{RLum.OSL_decomposition}, \link{sum_OSLcurves}
+}
+\author{
+Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+
+Please cite the package the following way:
+
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
 }

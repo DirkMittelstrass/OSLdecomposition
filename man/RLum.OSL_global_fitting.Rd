@@ -6,8 +6,8 @@
 \usage{
 RLum.OSL_global_fitting(
   object,
-  max_components = 5,
   record_type = "OSL",
+  max_components = 5,
   F_threshold = 150,
   stimulation_intensity = 35,
   stimulation_wavelength = 470,
@@ -17,11 +17,108 @@ RLum.OSL_global_fitting(
 )
 }
 \arguments{
-\item{verbose}{}
+\item{object}{\linkS4class{RLum.Analysis} or \href{RLum.Analysis}{list} (\strong{required}):
+Data set of one or multiple CW-OSL measured aliquots}
+
+\item{record_type}{\link{character} (\emph{with default}):
+Type of records, selected by the \linkS4class{RLum.Analysis} attribute \verb{@recordType}.
+Common are: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}}
+
+\item{max_components}{\link{numeric} (\emph{with default}):
+Maximum number of components \emph{K}, see \link{fit_OSLcurve}}
+
+\item{F_threshold}{\link{numeric} (\emph{with default}):
+Fitting stop criterion, see \link{fit_OSLcurve}}
+
+\item{stimulation_intensity}{\link{numeric} (\emph{with default}):
+Intensity of optical stimulation in \emph{mW / cm²}. Used to calculate photo-ionisation cross-sections, see \link{fit_OSLcurve}}
+
+\item{stimulation_wavelength}{\link{numeric} (\emph{with default}):
+Wavelength of optical stimulation in \emph{nm}. Used to calculate photo-ionisation cross-sections, see \link{fit_OSLcurve}}
+
+\item{report}{\link{logical} (\emph{with default}):
+Creates a \code{html} report, saves it in the working directory and opens it in your
+standard browser. The report contains the results and further information
+on the data processing}
+
+\item{image_format}{\link{character} (\emph{with default}):
+Image format of the automatically saved graphs if \code{report = TRUE}.
+Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
+and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in the working directory subfolder \verb{/report_figures}}
+
+\item{verbose}{\link{logical} (\emph{with default}):
+Enables console text output}
 }
 \value{
-
+The input \code{object}, a \link{list} of \linkS4class{RLum.Analysis} objects is given back.
+The returned data set contains a new list element \code{object[["OSL_COMPONENTS"]]} which provides
+a \link{list} of the input parameters, the global average OSL curve from \link{sum_OSLcurves} and
+the \code{output.complex = TRUE} results from \link{fit_OSLcurve}
 }
 \description{
-Identifies CW-OSL signal components in RLum.Analysis data sets
+This function identifies CW-OSL signal components in \linkS4class{RLum.Analysis} data sets
+from the \link{Luminescence-package}. First, all CW-OSL records are combined to one
+global average CW-OSL curve, then the multi-exponential fitting approach of
+Bluszcz and Adamiec (2006) is applied.
+}
+\details{
+The workflow is as following:
+
+\enumerate{
+\item{\link{sum_OSLcurve}: Combine all measurement of type \code{record_type} to one global average curve}
+\item{\link{fit_OSLcurves}: Identify  component by a multi-exponential fitting}
+\item{Create a \code{html} report to summarize the results (\emph{optional})}
+}
+
+The function processes just data sets created within the \link{Luminescence-package} (Kreutzer et al. 2012).
+Data sets must be formatted as \linkS4class{RLum.Analysis} objects. Output objects will also be
+\linkS4class{RLum.Analysis} objects. The data set should be processed with \link{R.Lum_correction} and is
+meant for further analysis with \link{RLum.OSL_decomposition} afterwards.
+
+The \code{html} report is rendered by the \link[rmarkdown:rmarkdown-package]{rmarkdown::rmarkdown-package} and saved in the working directory,
+which is usually the directory of the data set file. The \emph{Rmarkdown} source code of the report function
+can be found with the following command:
+
+\code{system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")}
+}
+\section{Last updates}{
+
+
+2020-11-06, DM: Added roxygen documentation
+}
+
+\examples{
+
+# 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+# measured in a lexsyg research with green LED stimulation
+data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
+data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
+
+# Check data set and perform background correction
+data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
+
+# Identify components and create report
+data_set_fitted <- RLum.OSL_global_fitting(data_set_corrected,
+                                           max_components = 3,
+                                           stimulation_intensity = 50,
+                                           stimulation_wavelength = 530)
+
+}
+\references{
+Bluszcz, A., Adamiec, G., 2006. Application of differential evolution to fitting OSL
+decay curves. Radiation Measurements 41, 886–891.
+
+Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fischer, M., Fuchs, M., 2012.
+Introducing an R package for luminescence dating analysis. Ancient TL, 30 (1), 1-8.
+}
+\seealso{
+\link{RLum.OSL_correction}, \link{RLum.OSL_decomposition}, \link{sum_OSLcurves}, \link{fit_OSLcurve}
+}
+\author{
+Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+
+Please cite the package the following way:
+
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
 }

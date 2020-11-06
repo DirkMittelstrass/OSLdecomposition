@@ -12,14 +12,14 @@ sum_OSLcurves(
   verbose = TRUE,
   output.plot = TRUE,
   theme.set = ggplot2::theme_classic(),
-  plot.first = TRUE,
+  plot.first = FALSE,
   title = "default",
   filename = NULL
 )
 }
 \arguments{
 \item{object}{\linkS4class{RLum.Analysis} or \href{RLum.Analysis}{list} (\strong{required}):
-data set of one or multiple aliquots containing containing luminescence measurements}
+data set of one or multiple aliquots containing CW-OSL records}
 
 \item{record_type}{\link{character} (\emph{with default}):
 type of records which are selected from the input \code{object},
@@ -73,17 +73,17 @@ in the source code
 \section{Last updates}{
 
 
-2020-08-30, DM: Overworked plotting; Expanded roxygen documentation
+2020-10-30, DM: Overworked plotting; Expanded roxygen documentation
 }
 
 \examples{
 
-# Load example data from the package Luminescence
-library(Luminescence)
-data(ExampleData.BINfileData, envir = environment())
-OSLdata <- Risoe.BINfileData2RLum.Analysis(CWOSL.SAR.Data)
+# 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+# measured in a lexsyg research with green LED stimulation
+data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
+data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 
-average_curve <- sum_OSLcurves(OSLdata, aliquot_selection = c(1:5))
+average_curve <- sum_OSLcurves(data_set, aliquot_selection = c(1:5))
 
 }
 \seealso{

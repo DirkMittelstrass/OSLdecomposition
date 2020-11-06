@@ -16,7 +16,7 @@ plot_PhotoCrosssections(
 }
 \arguments{
 \item{fit.list}{\link{list} (\strong{required}):
-Output object of \link{fit_OSLcurve} if \code{output.complex = TRUE}}
+Output object of \link{fit_OSLcurve} with \code{output.complex = TRUE}}
 
 \item{stimulation.intensity}{\link{numeric} (\emph{optional}):
 Intensity of optical stimulation in mW / cm². Used to calculate the photo-ionisation cross-sections.
@@ -50,7 +50,7 @@ the photo-ionisation cross-sections are set into relation with literature values
 from Singarayer and Bailey (2003), Jain et al. (2003) and Durcan and Duller (2011).
 }
 \details{
-The photo-ionisation cross-section ranges of the literature values are defined as following:
+The photo-ionisation cross-section ranges of the reference components are defined as following:
 
 \tabular{lll}{
 \strong{Component} \tab \strong{Lower limit (cm^2)} \tab \strong{Upper limit (cm^2)}\cr
@@ -89,7 +89,7 @@ fit_results <- fit_OSLcurve(curve, output.complex = TRUE)
 plot_PhotoCrosssections(fit_results)
 
 # How to create figures meant for publication:
-# Open new graphics device to set image dimensions manually and save image as vector graphics
+# Open new graphics device to set image dimensions manually and save image as vector graphic
 dev.new(width = 10, height = 3, unit = "cm", noRStudioGD = TRUE)
 plot_PhotoCrosssections(fit_results, filename = paste0(getwd(), "//plot.pdf"))
 dev.off()
