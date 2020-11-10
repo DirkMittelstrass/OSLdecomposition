@@ -122,6 +122,9 @@ plot_PhotoCrosssections <- function(
 
   ggplot2::theme_set(ggplot2::theme_bw())
 
+  # Solve a devtools::check problem were it complains about ggplot2 syntax ("no visible binding for global variable")
+  lambda <- lambda.low <- lambda.up <- NULL
+
   if (is.null(stimulation.intensity)) stimulation.intensity <- fit.list$parameters$stimulation.intensity
 
   if (is.null(stimulation.wavelength)) stimulation.wavelength <- fit.list$parameters$stimulation.wavelength

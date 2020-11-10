@@ -75,8 +75,8 @@
 #' data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 #' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 #'
-#  # Plot all data points from the first five aliquots and give average CW-OSL curve back
-#' average_curve <- sum_OSLcurves(data_set, aliquot_selection = c(1:5))
+#  # Plot all data points and give average CW-OSL curve back
+#' average_curve <- sum_OSLcurves(data_set)
 #'
 #' @md
 #' @export
@@ -121,6 +121,9 @@ sum_OSLcurves <- function(
     object <- list(object)
     aliquot_selection <- c(1)
   }
+
+  # Solve a devtools::check problem were it complains about ggplot2 syntax ("no visible binding for global variable")
+  time <- signal <- record <- NULL
 
 
   ##============================================================================##
@@ -220,7 +223,9 @@ sum_OSLcurves <- function(
     # plot a multiple line summary using the ggplot2 library
     p.lin <- ggplot2::ggplot(all.values, ggplot2::aes(x=time, y=signal, group=record)) +
       ggplot2::geom_point(size = 0.5, alpha = alpha.value, na.rm = TRUE, color = "black") +
-      ggplot2::ylim(0, round(max(curve$signal) * 1.5)) +
+      ggplot2::scale_x_continuous(labels = scales::label_number_auto()) +
+      ggplot2::scale_y_continuous(limits = c(0, round(max(curve$signal) * 1.5)),
+                                  labels = scales::label_number_auto()) +
       ggplot2::labs(subtitle = "CW-OSL", x = "Time (s)", y ="Signal (cts)") +
       text_format
 
@@ -244,7 +249,9 @@ sum_OSLcurves <- function(
 
     p.LM <- ggplot2::ggplot(LMdata, ggplot2::aes(x=time, y=signal, group=record)) +
       ggplot2::geom_point(size = 0.5, alpha = alpha.value, na.rm = TRUE, color = "black") +
-      ggplot2::ylim(0, round(max(LMcurve$signal) * 1.5)) +
+      ggplot2::scale_y_continuous(limits = c(0, round(max(LMcurve$signal) * 1.5)),
+                                  labels = scales::label_number_auto()) +
+      ggplot2::scale_x_continuous(labels = scales::label_number_auto()) +
       ggplot2::labs(subtitle = "pseudoLM-OSL", x = "Ramping time (s)", y ="Signal (cts)") +
       text_format
 

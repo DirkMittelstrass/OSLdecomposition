@@ -83,7 +83,7 @@ in the source code
 data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 
-average_curve <- sum_OSLcurves(data_set, aliquot_selection = c(1:5))
+average_curve <- sum_OSLcurves(data_set)
 
 }
 \seealso{

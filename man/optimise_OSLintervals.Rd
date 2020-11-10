@@ -7,11 +7,11 @@
 optimise_OSLintervals(
   components,
   curve = NULL,
-  background.fitting = FALSE,
   channel.width = NA,
   channel.number = NA,
   t.start = 0,
   t.end = NA,
+  background.component = FALSE,
   verbose = TRUE,
   parallel.computing = FALSE
 )
@@ -27,22 +27,27 @@ OSL signal curve which serves as time axis template.
 Input curve will just be used to define \code{channel.width} and \code{channel.number}}
 
 \item{channel.width}{\link{numeric} (\emph{optional}):
-channel width in seconds. Necessary if \code{curve} is not given}
+Channel width in seconds. Necessary if \code{curve} is not given}
 
 \item{channel.number}{\link{numeric} (\emph{optional}):
-number of channels resp. data points. Necessary if \code{curve} is not given}
+Number of channels resp. data points. Necessary if \code{curve} is not given}
 
 \item{t.start}{\link{numeric} (\emph{with default}):
-starting time of the first interval, per default the start of the measurement}
+Starting time of the first interval, per default the start of the measurement}
 
 \item{t.end}{\link{numeric} (\emph{optional}):
-end time of the last interval, per default the end of the measurement}
+End time of the last interval, per default the end of the measurement}
+
+\item{background.component}{\link{logical} (\emph{with default}):
+If \code{TRUE}, an additional interval for a component with a decay rate of zero will be taken
+determined. This enables the calculation of the signal background level during the signal
+decompositionwit \link{decompose_OSLcurve}}
 
 \item{verbose}{\link{logical} (\emph{with default}):
-enables console text output}
+Enables console text output}
 
 \item{parallel.computing}{\link{logical} (\emph{with default}):
-enables the use of multiple CPU cores. This increases the execution speed significantly
+Enables the use of multiple CPU cores. This increases the execution speed significantly
 but may need administrator rights and/or a firewall exception.
 See \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further information}
 }

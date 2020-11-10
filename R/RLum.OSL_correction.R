@@ -147,12 +147,12 @@ RLum.OSL_correction <- function(
   # * 2020-11-05, DM: Added roxygen documentation
   #
   # ToDo:
-  # - Check for Zero as first value at the time axis
-  # - enhance 'record_sorting' to accept vectors of @info-arguments, include LPOWER and LIGHTSOURCE per default and print arguments
-  # - enhance 'background' to accept whole RLum objects
-  # - deploy Luminescence::verify_SingleGrainData() for 'check_single_grain_signal'
-  # - handle previous CORRECTION steps
-  # - new 'reduce data' argument to delete all unnecessary data (like TL curves etc.)
+  # * Check for Zero as first value at the time axis
+  # * enhance 'record_sorting' to accept vectors of @info-arguments, include LPOWER and LIGHTSOURCE per default and print arguments
+  # * enhance 'background' to accept whole RLum objects
+  # * deploy Luminescence::verify_SingleGrainData() for 'check_single_grain_signal'
+  # * handle previous CORRECTION steps
+  # * new 'reduce data' argument to delete all unnecessary data (like TL curves etc.)
 
   #library(Luminescence)
 
@@ -434,11 +434,10 @@ RLum.OSL_correction <- function(
   ################################ REPORT  ################################
 
   if (FALSE) {
-    if(("rmarkdown" %in% rownames(installed.packages())) && ("kableExtra" %in% rownames(installed.packages()))) {
+    if(("rmarkdown" %in% rownames(utils::installed.packages())) && ("kableExtra" %in% rownames(utils::installed.packages()))) {
 
       if(verbose) cat("CORRECTION SUMMARY ----- Create report -----\n")
       if(verbose) cat("This process can take a few minutes...\n")
-      library(rmarkdown)
 
       time.start <- Sys.time()
 
@@ -464,7 +463,7 @@ RLum.OSL_correction <- function(
 
         # ToDo: Replace the following try() outside the big try
         try({
-          browseURL(output_file)
+          utils::browseURL(output_file)
           cat("Open", toupper(report_format), "report in the systems standard browser\n")})
 
 

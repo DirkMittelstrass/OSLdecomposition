@@ -23,22 +23,27 @@
 #' Input curve will just be used to define `channel.width` and `channel.number`
 #'
 #' @param channel.width [numeric] (*optional*):
-#' channel width in seconds. Necessary if `curve` is not given
+#' Channel width in seconds. Necessary if `curve` is not given
 #'
 #' @param channel.number [numeric] (*optional*):
-#' number of channels resp. data points. Necessary if `curve` is not given
+#' Number of channels resp. data points. Necessary if `curve` is not given
 #'
 #' @param t.start [numeric] (*with default*):
-#' starting time of the first interval, per default the start of the measurement
+#' Starting time of the first interval, per default the start of the measurement
 #'
 #' @param t.end [numeric] (*optional*):
-#' end time of the last interval, per default the end of the measurement
+#' End time of the last interval, per default the end of the measurement
+#'
+#' @param background.component [logical] (*with default*):
+#' If `TRUE`, an additional interval for a component with a decay rate of zero will be taken
+#' determined. This enables the calculation of the signal background level during the signal
+#' decompositionwit [decompose_OSLcurve]
 #'
 #' @param verbose [logical] (*with default*):
-#' enables console text output
+#' Enables console text output
 #'
 #' @param parallel.computing [logical] (*with default*):
-#' enables the use of multiple CPU cores. This increases the execution speed significantly
+#' Enables the use of multiple CPU cores. This increases the execution speed significantly
 #' but may need administrator rights and/or a firewall exception.
 #' See [DEoptim::DEoptim.control] for further information
 #'
@@ -80,11 +85,11 @@
 optimise_OSLintervals <- function(
   components,
   curve = NULL,
-  background.fitting = FALSE,
   channel.width = NA,
   channel.number = NA,
   t.start = 0,
   t.end = NA,
+  background.component = FALSE,
   verbose = TRUE,
   parallel.computing = FALSE
 ){
@@ -122,10 +127,10 @@ optimise_OSLintervals <- function(
   # check if template curve or channel parameters are given
   if (!is.null(curve)) {
 
-    if(!(is(curve, "RLum.Data.Curve") | is(curve, "data.frame") | is(curve, "matrix"))){
+    if(!((class(curve) == "RLum.Data.Curve") | (class(curve) == "data.frame") | (class(curve) == "matrix"))){
       stop("[decompose_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
 
-    if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(Luminescence::get_RLum(curve))
+    if(class(curve) == "RLum.Data.Curve") curve <- as.data.frame(Luminescence::get_RLum(curve))
 
     if (!("time" %in% colnames(curve)) ||
         !("signal" %in% colnames(curve))) {
@@ -147,7 +152,7 @@ optimise_OSLintervals <- function(
 
 
   # If the background also shall be fitted, add another component without lambda value
-  if (background.fitting) {
+  if (background.component) {
 
     if (!is.na(components$lambda[nrow(components)])) {
       new.row <- components[nrow(components),]
@@ -251,7 +256,7 @@ optimise_OSLintervals <- function(
     silent = silent)
 
   # Did the DE algorithm break?
-  if (is(det_min)[1] == "try-error"){
+  if (methods::is(det_min)[1] == "try-error"){
 
     #if (verbose & (is(DE_min)[1] == "try-error")) cat(DE_min[1])
     stop("[decompose_OSLcurve()] Error: Differential evolution failed. Please reconsider input parameter\n")}

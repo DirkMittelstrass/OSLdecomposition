@@ -87,13 +87,10 @@
 #'
 #' @examples
 #'
-#' # Set some arbitaty decay parameter for a dim CW-OSL measurement of quartz
-#' name <- c("fast", "medium", "slow")
-#' lambda <- c(2, 0.5, 0.02)
-#' n <- c(1000, 1000, 10000)
-#'
-#' # Build a component table
-#' components <- data.frame(name, lambda, n)
+#' # Set some arbitary decay parameter for a dim CW-OSL measurement of quartz
+#' components <- data.frame(name = c("fast", "medium", "slow"),
+#'                          lambda = c(2, 0.5, 0.02),
+#'                          n = c(1000, 1000, 10000))
 #'
 #' # Simulate a CW-OSL curve including some signal noise
 #' curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
@@ -142,6 +139,9 @@ plot_OSLcurve <- function(curve = NULL,
   # Hidden parameters
   zoom <- 1
 
+  # Solve a devtools::check problem were it complains about ggplot2 syntax ("no visible binding for global variable")
+  signal <- graph <- residual <- NULL
+
   ###################### PLOT DESIGN ######################
 
   # Set color and line themes
@@ -181,10 +181,10 @@ plot_OSLcurve <- function(curve = NULL,
   } else {
 
     # Check input curve
-    if(!(is(curve, "RLum.Data.Curve") | is(curve, "data.frame") | is(curve, "matrix"))){
+    if(!((class(curve) == "RLum.Data.Curve") | (class(curve) == "data.frame") | (class(curve) == "matrix"))){
       stop("[plot_OSLcurve()] Error: Input object is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!") }
 
-    if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(Luminescence::get_RLum(curve))
+    if(class(curve) == "RLum.Data.Curve") curve <- as.data.frame(Luminescence::get_RLum(curve))
 
     if (!("time" %in% colnames(curve)) |
         !("signal" %in% colnames(curve))) {
@@ -243,7 +243,8 @@ plot_OSLcurve <- function(curve = NULL,
     subtitle <- "CW-OSL"
     if (display == "lin") subtitle <- NULL
 
-    p.lin <- ggplot2::ggplot(data, ggplot2::aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
+    p.lin <- ggplot2::ggplot(data, ggplot2::aes(x = time, y = signal, colour = graph,
+                                                size = graph, shape = graph, linetype = graph)) +
       ggplot2::geom_point(na.rm = TRUE) + ggplot2::geom_line(na.rm = TRUE) +
       ggplot2::scale_y_continuous(limits = c(0, max(curve$signal) + 1), labels = scales::label_number_auto()) +
       ggplot2::scale_x_continuous(limits = X_limits, labels = scales::label_number_auto()) +
@@ -272,7 +273,7 @@ plot_OSLcurve <- function(curve = NULL,
       ggplot2::scale_colour_manual(values = graph.colors, labels = graph.labels, guide = guide) +
       ggplot2::scale_size_manual(values = graph.sizes, labels = graph.labels, guide = guide) +
       ggplot2::scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = guide) +
-      scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = guide) +
+      ggplot2::scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = guide) +
       ggplot2::labs(subtitle = subtitle, x = "Time (s)", y = "Signal (cts)") +
       text_format}
 

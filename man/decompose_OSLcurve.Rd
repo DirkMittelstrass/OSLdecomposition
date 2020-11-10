@@ -159,11 +159,14 @@ with the more robust \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} (\strong{update 
 
 \examples{
 
-# Set arbitrary but reasonable parameter for a weak quartz CW-OSL decay
-components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.1), n = c(1000, 1000, 10000))
+# Set some arbitary decay parameter for a dim CW-OSL measurement of quartz
+components <- data.frame(name = c("fast", "medium", "slow"),
+                         lambda = c(2, 0.5, 0.02),
+                         n = c(1000, 1000, 10000))
 
 # Simulate the CW-OSL curve and add some signal noise and some detection background
-curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 40)
+curve <- simulate_OSLcomponents(components, simulate.curve = TRUE,
+                                add.poisson.noise = TRUE, add.background = 40)
 
 # Decompose the simulated curve
 components <- decompose_OSLcurve(curve, components)
@@ -173,8 +176,8 @@ plot_OSLcurve(curve, components)
 
 ### Decomposition including signal background fitting:
 
-# We need to define a background integration interval
-components <- optimise_OSLintervals(components, curve, background.fitting = TRUE)
+# Define optimized integration intervals, including an interval for the background
+components <- optimise_OSLintervals(components, curve, background.component = TRUE)
 
 # Decompose again and view results
 components <- decompose_OSLcurve(curve, components, background.fitting = TRUE)
@@ -182,7 +185,8 @@ plot_OSLcurve(curve, components)
 
 }
 \references{
-Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
+Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and
+its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
 }
 \seealso{
 \link{fit_OSLcurve}, \link{optimise_OSLintervals}, \link{RLum.OSL_decomposition}, \link[minpack.lm:nlsLM]{minpack.lm::nlsLM}

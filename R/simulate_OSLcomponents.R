@@ -62,8 +62,10 @@
 #'
 #' @examples
 #'
-#' # Set some reasonable parameter for a weak quartz CW-OSL decay
-#' components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.1), n = c(1000, 1000, 10000))
+#' # Set some arbitary decay parameter for a dim CW-OSL measurement of quartz
+#' components <- data.frame(name = c("fast", "medium", "slow"),
+#'                          lambda = c(2, 0.5, 0.02),
+#'                          n = c(1000, 1000, 10000))
 #'
 #' # Simulate the CW-OSL curve and add some signal noise
 #' curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
@@ -181,14 +183,14 @@ simulate_OSLcomponents <- function(components,
     signal <- data$sum
 
     if (add.poisson.noise == TRUE){
-      for (i in c(1:length(signal))) signal[i] <- rpois(1, signal[i])}
+      for (i in c(1:length(signal))) signal[i] <- stats::rpois(1, signal[i])}
 
     if ((add.gaussian.noise > 0) || (add.background != 0)) {
 
       stddev <- sqrt(channel.width) * add.gaussian.noise
       offset <- add.background * channel.width
 
-      signal <- signal + rnorm(length(signal), mean = offset, sd = stddev)}
+      signal <- signal + stats::rnorm(length(signal), mean = offset, sd = stddev)}
 
     if (round.values) signal <- round(signal)
 

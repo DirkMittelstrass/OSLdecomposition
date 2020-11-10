@@ -2,12 +2,12 @@
 % Please edit documentation in R/RLum.OSL_global_fitting.R
 \name{RLum.OSL_global_fitting}
 \alias{RLum.OSL_global_fitting}
-\title{Identifies CW-OSL signal components in RLum.Analysis data sets}
+\title{Identify CW-OSL signal components in RLum.Analysis data sets}
 \usage{
 RLum.OSL_global_fitting(
   object,
   record_type = "OSL",
-  max_components = 5,
+  K_maximum = 5,
   F_threshold = 150,
   stimulation_intensity = 35,
   stimulation_wavelength = 470,
@@ -24,7 +24,7 @@ Data set of one or multiple CW-OSL measured aliquots}
 Type of records, selected by the \linkS4class{RLum.Analysis} attribute \verb{@recordType}.
 Common are: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}}
 
-\item{max_components}{\link{numeric} (\emph{with default}):
+\item{K_maximum}{\link{numeric} (\emph{with default}):
 Maximum number of components \emph{K}, see \link{fit_OSLcurve}}
 
 \item{F_threshold}{\link{numeric} (\emph{with default}):
@@ -50,34 +50,48 @@ and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in th
 Enables console text output}
 }
 \value{
-The input \code{object}, a \link{list} of \linkS4class{RLum.Analysis} objects is given back.
-The returned data set contains a new list element \code{object[["OSL_COMPONENTS"]]} which provides
-a \link{list} of the input parameters, the global average OSL curve from \link{sum_OSLcurves} and
-the \code{output.complex = TRUE} results from \link{fit_OSLcurve}
+The input \code{object}, a \link{list} of \linkS4class{RLum.Analysis} objects is returned but with
+a new list element \code{object[["OSL_COMPONENTS"]]}, containing:
+\itemize{
+\item \verb{$decay.rates} \link{numeric} vector: Decay rates of F-test recommended or last sucessfull fitting
+\item \verb{$K.selected} \link{numeric}: Number of components of F-test recommended or last sucessfull fitting
+\item \verb{$F.test} \link{data.frame}: F-test table
+\item \verb{$F.test.print} \link{data.frame}: F-test table but formatted for console output and display with \link[kableExtra:reexports]{kableExtra::kable}
+\item \verb{$info.text} \link{list}: Small process log
+\item \verb{$component.tables} \link{list} of \link{data.frame}s: Signal component tables for all curve models
+\item \verb{$curve} \link{list}: Global average curve
+\item \verb{$components} \link{data.frame}: Signal component table of F-test recommended or last sucessfull fitting
+\item \verb{$fit.results} \link{list}: Returned fitting objects of \link[DEoptim:DEoptim]{DEoptim::DEoptim} and \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} for all curve models
+\item \verb{$plot.data} \link{data.frame}: Model overview table for photo-ionisation cross-section plotting with \link{plot_PhotoCrosssections}
+\item \verb{$parameters} \link{list}: Input and algorithm parameters
+}
 }
 \description{
-This function identifies CW-OSL signal components in \linkS4class{RLum.Analysis} data sets
-from the \link{Luminescence-package}. First, all CW-OSL records are combined to one
-global average CW-OSL curve, then the multi-exponential fitting approach of
-Bluszcz and Adamiec (2006) is applied.
+First, all CW-OSL records are combined to one global average CW-OSL curve,
+then the multi-exponential fitting approach of Bluszcz and Adamiec (2006) is applied.
+The function processes just \linkS4class{RLum.Analysis} data sets created within
+the \link{Luminescence-package} (Kreutzer et al. 2012).
 }
 \details{
-The workflow is as following:
+The workflow of this function is as following:
 
 \enumerate{
-\item{\link{sum_OSLcurve}: Combine all measurement of type \code{record_type} to one global average curve}
-\item{\link{fit_OSLcurves}: Identify  component by a multi-exponential fitting}
-\item{Create a \code{html} report to summarize the results (\emph{optional})}
+\item \link{sum_OSLcurves}: Combine all measurement of type \code{record_type} to one global average curve
+\item \link{fit_OSLcurve}: Identify  component by a multi-exponential fitting
+\item Create a \code{html} report to summarize the results (\emph{optional})
 }
 
-The function processes just data sets created within the \link{Luminescence-package} (Kreutzer et al. 2012).
-Data sets must be formatted as \linkS4class{RLum.Analysis} objects. Output objects will also be
-\linkS4class{RLum.Analysis} objects. The data set should be processed with \link{R.Lum_correction} and is
-meant for further analysis with \link{RLum.OSL_decomposition} afterwards.
+Data sets must be formatted as \linkS4class{RLum.Analysis} objects and
+should have been processed with \link{RLum.OSL_correction} beforehand.
+Output objects are also \linkS4class{RLum.Analysis} objects and are
+meant for further analysis with \link{RLum.OSL_decomposition}.
 
-The \code{html} report is rendered by the \link[rmarkdown:rmarkdown-package]{rmarkdown::rmarkdown-package} and saved in the working directory,
-which is usually the directory of the data set file. The \emph{Rmarkdown} source code of the report function
-can be found with the following command:
+If \code{report = TRUE}, a \code{html} report of the results is rendered by the \link{rmarkdown-package}
+and saved in the working directory, which is usually the directory of the data file.
+This report can be displayed, shared and published online without any requirements to
+the OS or installed software. But an internet connection is needed to display
+the \emph{MathJax} encoded equations and special characters.
+The \emph{Rmarkdown} source code of the report can be found with the following command:
 
 \code{system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")}
 }
@@ -99,7 +113,7 @@ data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
 
 # Identify components and create report
 data_set_fitted <- RLum.OSL_global_fitting(data_set_corrected,
-                                           max_components = 3,
+                                           K_maximum = 3,
                                            stimulation_intensity = 50,
                                            stimulation_wavelength = 530)
 

@@ -153,15 +153,19 @@
 #'
 #' @references
 #'
-#' Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
+#' Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and
+#' its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
 #'
 #' @examples
 #'
-#' # Set arbitrary but reasonable parameter for a weak quartz CW-OSL decay
-#' components <- data.frame(name = c("fast", "medium", "slow"), lambda = c(1.5, 0.5, 0.1), n = c(1000, 1000, 10000))
+#' # Set some arbitary decay parameter for a dim CW-OSL measurement of quartz
+#' components <- data.frame(name = c("fast", "medium", "slow"),
+#'                          lambda = c(2, 0.5, 0.02),
+#'                          n = c(1000, 1000, 10000))
 #'
 #' # Simulate the CW-OSL curve and add some signal noise and some detection background
-#' curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE, add.background = 40)
+#' curve <- simulate_OSLcomponents(components, simulate.curve = TRUE,
+#'                                 add.poisson.noise = TRUE, add.background = 40)
 #'
 #' # Decompose the simulated curve
 #' components <- decompose_OSLcurve(curve, components)
@@ -171,8 +175,8 @@
 #'
 #' ### Decomposition including signal background fitting:
 #'
-#' # We need to define a background integration interval
-#' components <- optimise_OSLintervals(components, curve, background.fitting = TRUE)
+#' # Define optimized integration intervals, including an interval for the background
+#' components <- optimise_OSLintervals(components, curve, background.component = TRUE)
 #'
 #' # Decompose again and view results
 #' components <- decompose_OSLcurve(curve, components, background.fitting = TRUE)
@@ -207,6 +211,7 @@ decompose_OSLcurve <- function(
   # * 2020-07-20, DM: Added algorithm for fast interval definition based on logarithmic means; More input data checks
   # * 2020-08-27, DM: Replaced [nls] function in the optional refinement fitting with the more robust [minpack.lm::nlsLM]
   # * 2020-08-30, DM: Renamed 'error.calculation' into 'error.estimation'; changed [numeric] value unit from cts/ch to cts/s
+  #
   # ToDo:
   # * Enable the input of a list of curves
   # * Replace Cramers rule equations with 'solve()' to increase performance and to increase precision if a
@@ -221,10 +226,10 @@ decompose_OSLcurve <- function(
 
   ########## Input checks ###########
 
-  if(!(is(curve, "RLum.Data.Curve") | is(curve, "data.frame") | is(curve, "matrix"))){
+  if(!((class(curve) == "RLum.Data.Curve") | (class(curve) == "data.frame") | (class(curve) == "matrix"))){
    stop("[decompose_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
 
-  if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(Luminescence::get_RLum(curve))
+  if(class(curve) == "RLum.Data.Curve") curve <- as.data.frame(Luminescence::get_RLum(curve))
 
   if (!("time" %in% colnames(curve)) |
       !("signal" %in% colnames(curve))) {
@@ -240,11 +245,11 @@ decompose_OSLcurve <- function(
   if (curve$time[1] == 0)  curve$time <- curve$time + dt
 
   # Check if 'components' is of valid type
-  if (class(components)=="numeric") {
+  if (class(components) == "numeric") {
     components <- data.frame(name = paste0("Component ", 1:length(components)),
                              lambda = sort(components, decreasing = TRUE))
 
-  }else if(class(components)=="data.frame"){
+  }else if(class(components) == "data.frame"){
     if (!("lambda" %in% colnames(components)) | !("name" %in% colnames(components))) {
       stop("[decompose_OSLcurve()] Error: Input object 'components' needs at least a column '$lambda' and a column '$name'!")}
 
@@ -400,7 +405,7 @@ decompose_OSLcurve <- function(
       decays <- paste(n.names," * (exp(-",components$lambda," * (time - ", dt,")) - exp(-",components$lambda," * time))"
                       , collapse=" + ")}
 
-    fit.formula <- formula(paste0("signal ~ ", decays))
+    fit.formula <- stats::as.formula(paste0("signal ~ ", decays))
 
     names(n) <- n.names
 
@@ -425,7 +430,7 @@ decompose_OSLcurve <- function(
 
     } else {
 
-      n <- coef(fit)
+      n <- stats::coef(fit)
       components$n <- n
 
       # add error estimations of fit as default and 'error.estimation=nls'-result

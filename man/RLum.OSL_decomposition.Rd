@@ -2,31 +2,128 @@
 % Please edit documentation in R/RLum.OSL_decomposition.R
 \name{RLum.OSL_decomposition}
 \alias{RLum.OSL_decomposition}
-\title{Decomposes CW-OSL curves in RLum.Analysis data sets into its signal components}
+\title{Separate CW-OSL components in RLum.Analysis data sets}
 \usage{
 RLum.OSL_decomposition(
   object,
-  K = 3,
   record_type = "OSL",
+  K = 3,
   decay_rates = NULL,
-  error_calculation = "empiric",
   report = TRUE,
   image_format = "pdf",
   verbose = TRUE
 )
 }
 \arguments{
-\item{object}{Object returned by [RLum.OSL_global_fitting()]}
+\item{object}{\linkS4class{RLum.Analysis} or \href{RLum.Analysis}{list} (\strong{required}):
+Data set of one or multiple CW-OSL measured aliquots. The data set must either
+contain a list element \code{"OSL_COMPONENTS"} or the parameter \code{decay_rates} must
+be defined}
 
-\item{K}{Number of components. If not defined K = 3 is selected}
+\item{record_type}{\link{character} (\emph{with default}):
+Type of records, selected by the \linkS4class{RLum.Analysis} attribute \verb{@recordType}.
+Common are: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}}
 
-\item{decay_rates}{(optional) user-defined component decay rates}
+\item{K}{\link{numeric} (\emph{with default}):
+Number of components. Should be chosen after OSL component evaluation with}
 
-\item{verbose}{}
+\item{decay_rates}{\link{numeric} vector or \link{data.frame} (\emph{optional}):
+User-defined component decay rates. If the}
+
+\item{report}{\link{logical} (\emph{with default}):
+Creates a \code{html} report, saves it in the working directory and opens it in your
+standard browser. The report contains the results and further information
+on the data processing}
+
+\item{image_format}{\link{character} (\emph{with default}):
+Image format of the automatically saved graphs if \code{report = TRUE}.
+Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
+and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in the working directory subfolder \verb{/report_figures}}
+
+\item{verbose}{\link{logical} (\emph{with default}):
+Enables console text output}
 }
 \value{
+The input \code{object}, a \link{list} of \linkS4class{RLum.Analysis} objects is returned but with
+a new list element \code{object[["DECOMPOSITION"]]}, containing:
 
+\itemize{
+\item \verb{$decompositon.input} \link{data.frame}: Set of input components. Relevant is just the column \verb{$lambda}
+\item \verb{$results} \link{data.frame}: Overview table of decomposition
+\item \verb{$parameters} \link{list}: Input and algorithm parameters
+}
+
+The \linkS4class{RLum.Data.Curve} attribute \verb{@info} of each CW-OSL record contains the
+new entry \verb{$COMPONENTS} with the curve-individual signal component parameters.
+It can be read for examle by:
+
+\code{object[[i]]@records[[j]]@info[["COMPONENTS"]]}
 }
 \description{
-Decomposes CW-OSL curves in RLum.Analysis data sets into its signal components
+Calculate the CW-OSL signal component intensites for each CW-OSL measurement
+under the requirement that the decay rates are already given. The signal decompositon
+process uses an analytical approach described in details in Mittelstrass (2019) and
+Mittelstrass et al. (2021). This function processes just \linkS4class{RLum.Analysis} data sets created within
+the \link{Luminescence-package} (Kreutzer et al. 2012).
+}
+\details{
+The workflow of this function is as following:
+
+\enumerate{
+\item {\link{optimise_OSLintervals}: Approximate the best suiting integration intervals. Use the global
+average curve as time axis template. If none is given, create one using \link{sum_OSLcurves}}
+\item \link{decompose_OSLcurve}: {Calculate component intensities for \strong{all} \code{record_type} measurements.
+Use the \code{"det"} algorithm if a background correction was performed with \link{RLum.OSL_correction} or the
+\code{"det+nls"} algorithm if no background correction was performed. Use the \code{"empiric"} error estimation approach.}
+\item Create a \code{html} report to summarize the results (\emph{optional})
+}
+
+Data sets must be formatted as \linkS4class{RLum.Analysis} objects and
+should have been processed with \link{RLum.OSL_correction} and \link{RLum.OSL_global_fitting} beforehand.
+Output objects are also \linkS4class{RLum.Analysis} objects and are
+meant for equivalent dose determination with \link[Luminescence:analyse_SAR.CWOSL]{Luminescence::analyse_SAR.CWOSL}.
+
+If \code{report = TRUE}, a \code{html} report of the results is rendered by the \link{rmarkdown-package}
+and saved in the working directory, which is usually the directory of the data file.
+This report can be displayed, shared and published online without any requirements to
+the OS or installed software. But an internet connection is needed to display
+the \emph{MathJax} encoded equations and special characters.
+The \emph{Rmarkdown} source code of the report can be found with the following command:
+
+\code{system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")}
+}
+\section{Last updates}{
+
+
+2020-11-07, DM: Added roxygen documentation; Auto-switch between "det" and "det+nls" depending on background correction
+}
+
+\examples{
+
+# 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+# measured in a lexsyg research with green LED stimulation
+data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
+data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
+
+# Separate components and create report
+data_set_decomposed <- RLum.OSL_decomposition(data_set, decay_rates = c(0.8, 0.05))
+
+}
+\references{
+Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fischer, M., Fuchs, M., 2012.
+Introducing an R package for luminescence dating analysis. Ancient TL, 30 (1), 1-8.
+
+Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and
+its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
+}
+\seealso{
+\link{RLum.OSL_global_fitting}, \link{decompose_OSLcurve}, \link{optimise_OSLintervals}, \link[Luminescence:analyse_SAR.CWOSL]{Luminescence::analyse_SAR.CWOSL}
+}
+\author{
+Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+
+Please cite the package the following way:
+
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
 }

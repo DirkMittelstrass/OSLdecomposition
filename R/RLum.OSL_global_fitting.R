@@ -1,28 +1,29 @@
-#' Identifies CW-OSL signal components in RLum.Analysis data sets
+#' Identify CW-OSL signal components in RLum.Analysis data sets
 #'
-#' This function identifies CW-OSL signal components in [RLum.Analysis-class] data sets
-#' from the [Luminescence-package]. First, all CW-OSL records are combined to one
-#' global average CW-OSL curve, then the multi-exponential fitting approach of
-#' Bluszcz and Adamiec (2006) is applied.
+#' First, all CW-OSL records are combined to one global average CW-OSL curve,
+#' then the multi-exponential fitting approach of Bluszcz and Adamiec (2006) is applied.
+#' The function processes just [RLum.Analysis-class] data sets created within
+#' the [Luminescence-package] (Kreutzer et al. 2012).
 #'
-#'
-#' The workflow is as following:
+#' The workflow of this function is as following:
 #'
 #' \enumerate{
-#'   \item{[sum_OSLcurve]: Combine all measurement of type `record_type` to one global average curve}
-#'   \item{[fit_OSLcurves]: Identify  component by a multi-exponential fitting}
-#'   \item{Create a `html` report to summarize the results (*optional*)}
-#' }
+#'   \item [sum_OSLcurves]: Combine all measurement of type `record_type` to one global average curve
+#'   \item [fit_OSLcurve]: Identify  component by a multi-exponential fitting
+#'   \item Create a `html` report to summarize the results (*optional*)
+#'}
 #'
-#' The function processes just data sets created within the [Luminescence-package] (Kreutzer et al. 2012).
-#' Data sets must be formatted as [RLum.Analysis-class] objects. Output objects will also be
-#' [RLum.Analysis-class] objects. The data set should be processed with [R.Lum_correction] and is
-#' meant for further analysis with [RLum.OSL_decomposition] afterwards.
+#' Data sets must be formatted as [RLum.Analysis-class] objects and
+#' should have been processed with [RLum.OSL_correction] beforehand.
+#' Output objects are also [RLum.Analysis-class] objects and are
+#' meant for further analysis with [RLum.OSL_decomposition].
 #'
-#' The `html` report is rendered by the [rmarkdown-package] and saved in the working directory,
-#' which is usually the directory of the data set file. The correct display of the report needs
-#' a internet connection to allow formula encoding by *MathJax*.
-#' The *Rmarkdown* source code can be found with the following command:
+#' If `report = TRUE`, a `html` report of the results is rendered by the [rmarkdown-package]
+#' and saved in the working directory, which is usually the directory of the data file.
+#' This report can be displayed, shared and published online without any requirements to
+#' the OS or installed software. But an internet connection is needed to display
+#' the *MathJax* encoded equations and special characters.
+#' The *Rmarkdown* source code of the report can be found with the following command:
 #'
 #' `system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")`
 #'
@@ -35,7 +36,7 @@
 #' Type of records, selected by the [RLum.Analysis-class] attribute `@recordType`.
 #' Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`
 #'
-#' @param max_components [numeric] (*with default*):
+#' @param K_maximum [numeric] (*with default*):
 #' Maximum number of components *K*, see [fit_OSLcurve]
 #'
 #' @param F_threshold [numeric] (*with default*):
@@ -85,10 +86,21 @@
 #'
 #' @return
 #'
-#' The input `object`, a [list] of [RLum.Analysis-class] objects is given back.
-#' The returned data set contains a new list element `object[["OSL_COMPONENTS"]]` which provides
-#' a [list] of the input parameters, the global average OSL curve from [sum_OSLcurves] and
-#' the `output.complex = TRUE` results from [fit_OSLcurve]
+#' The input `object`, a [list] of [RLum.Analysis-class] objects is returned but with
+#' a new list element `object[["OSL_COMPONENTS"]]`, containing:
+#' \itemize{
+#'   \item `$decay.rates` [numeric] vector: Decay rates of F-test recommended or last sucessfull fitting
+#'   \item `$K.selected` [numeric]: Number of components of F-test recommended or last sucessfull fitting
+#'   \item `$F.test` [data.frame]: F-test table
+#'   \item `$F.test.print` [data.frame]: F-test table but formatted for console output and display with [kableExtra::kable]
+#'   \item `$info.text` [list]: Small process log
+#'   \item `$component.tables` [list] of [data.frame]s: Signal component tables for all curve models
+#'   \item `$curve` [list]: Global average curve
+#'   \item `$components` [data.frame]: Signal component table of F-test recommended or last sucessfull fitting
+#'   \item `$fit.results` [list]: Returned fitting objects of [DEoptim::DEoptim] and [minpack.lm::nlsLM] for all curve models
+#'   \item `$plot.data` [data.frame]: Model overview table for photo-ionisation cross-section plotting with [plot_PhotoCrosssections]
+#'   \item `$parameters` [list]: Input and algorithm parameters
+#' }
 #'
 #' @examples
 #'
@@ -102,7 +114,7 @@
 #'
 #' # Identify components and create report
 #' data_set_fitted <- RLum.OSL_global_fitting(data_set_corrected,
-#'                                            max_components = 3,
+#'                                            K_maximum = 3,
 #'                                            stimulation_intensity = 50,
 #'                                            stimulation_wavelength = 530)
 #'
@@ -111,7 +123,7 @@
 
 RLum.OSL_global_fitting <- function(object,
                                     record_type = "OSL",
-                                    max_components = 5,
+                                    K_maximum = 5,
                                     F_threshold = 150,
                                     stimulation_intensity = 35,
                                     stimulation_wavelength = 470,
@@ -186,7 +198,7 @@ RLum.OSL_global_fitting <- function(object,
   time.start <- Sys.time()
 
   fit_data <- fit_OSLcurve(global_curve,
-                         K.max = max_components,
+                         K.max = K_maximum,
                          F.threshold = F_threshold,
                          stimulation.intensity = stimulation_intensity,
                          stimulation.wavelength = stimulation_wavelength,
@@ -199,7 +211,7 @@ RLum.OSL_global_fitting <- function(object,
   if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
   if (report) {
-    if(("rmarkdown" %in% rownames(installed.packages())) && ("kableExtra" %in% rownames(installed.packages()))) {
+    if(("rmarkdown" %in% rownames(utils::installed.packages())) && ("kableExtra" %in% rownames(utils::installed.packages()))) {
 
       if(verbose) cat("STEP 1.3 ----- Create report -----\n")
 
@@ -235,7 +247,7 @@ RLum.OSL_global_fitting <- function(object,
         # ToDo: Replace the following try() outside the big try
         try({
 
-          browseURL(output_file)
+          utils::browseURL(output_file)
           cat("Open", toupper(report_format), "report in your systems standard browser\n")})
 
         if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")})

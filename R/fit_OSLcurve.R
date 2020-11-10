@@ -201,10 +201,10 @@ fit_OSLcurve <- function(
 
   ################### Prepare input data ###########################
 
-  if(!(is(curve, "RLum.Data.Curve") | is(curve, "data.frame") | is(curve, "matrix"))){
-    stop("[fit_CWCurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
+  if(!((class(curve) == "RLum.Data.Curve") | (class(curve) == "data.frame") | (class(curve) == "matrix"))){
+    stop("[fit_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
 
-  if(is(curve, "RLum.Data.Curve") == TRUE) curve <- as.data.frame(Luminescence::get_RLum(curve))
+  if(class(curve) == "RLum.Data.Curve") curve <- as.data.frame(Luminescence::get_RLum(curve))
 
   if (!("time" %in% colnames(curve)) |
       !("signal" %in% colnames(curve))) {
@@ -265,15 +265,15 @@ fit_OSLcurve <- function(
     return(RSS)}
 
   ###################### Reduced Chi² ###############################################################
-  calc_Chi2 <- function(components, CHIcurve = curve, N_curves = M, detec_noise = 0, K = K){
+  # calc_Chi2 <- function(components, CHIcurve = curve, N_curves = M, detec_noise = 0, K = K){
 
-    CHIcurve <- simulate_OSLcomponents(components,
-                                       curve = CHIcurve,
-                                       simulate.curve = FALSE)
+  #   CHIcurve <- simulate_OSLcomponents(components,
+  #                                      curve = CHIcurve,
+  #                                      simulate.curve = FALSE)
 
-    RS <- CHIcurve$residual^2 * N_curves / (abs(curve$sum) + detec_noise)
-    Chi2 <- sum(RS) / (length(RS) - K * 2)
-    return(Chi2)}
+  #   RS <- CHIcurve$residual^2 * N_curves / (abs(curve$sum) + detec_noise)
+  #   Chi2 <- sum(RS) / (length(RS) - K * 2)
+  #   return(Chi2)}
 
   ###################### Photo-Ionisation Crosssections #############################################
   build_component_table <- function(lambda_vector, lambda_err, BCTcurve = curve){
@@ -388,7 +388,7 @@ fit_OSLcurve <- function(
       silent = silent)
 
     # Did the DE algorithm break?
-    if (is(DE_min)[1] == "try-error"){
+    if (methods::is(DE_min)[1] == "try-error"){
 
       #if (verbose & (is(DE_min)[1] == "try-error")) cat(DE_min[1])
       if (verbose) cat("-> Differential evolution failed at K =", K, ". Algorithm stopped.\n")
@@ -418,7 +418,7 @@ fit_OSLcurve <- function(
       lambda.names <- paste0("lambda.",1:K)
 
       # now creat the optimization formula
-      fit.formula <- formula(paste0("signal ~ ",
+      fit.formula <- stats::formula(paste0("signal ~ ",
                                        paste(n.names," * (exp(-", lambda.names," * (time - ", channel_width,")) - exp(-", lambda.names," * time))",
                                              collapse=" + ")))
 
@@ -434,7 +434,7 @@ fit_OSLcurve <- function(
                                         maxiter = 50 + K * 20)),
                     silent = silent)
 
-      if (is(LM_fit)[1] == "try-error") {
+      if (methods::is(LM_fit)[1] == "try-error") {
 
         #if (verbose) cat(LM_fit[1])
         if (verbose) cat("Levenberg-Marquardt fitting failed at K =", K, ". Differential evolution result:\n")
@@ -455,7 +455,7 @@ fit_OSLcurve <- function(
     component_table <- try(build_component_table(lambda, lambda_error),
                                  silent = silent)
 
-    if (is(component_table)[1] == "try-error") {
+    if (methods::is(component_table)[1] == "try-error") {
 
       if (verbose) cat(component_table[1])
       break
@@ -534,8 +534,9 @@ fit_OSLcurve <- function(
     cat("\nSignal component parameter:\n")
     # Reduce amount of information in the table to avoid user irritation, also round some values
     print_components <- subset(components,
-                               select = c(name, lambda, lambda.error,
-                                          n, n.error, cross.section, initial.signal, bleaching.grade))
+                               select = c("name", "lambda", "lambda.error",
+                                          "n", "n.error", "cross.section",
+                                          "initial.signal", "bleaching.grade"))
 
      for (col in 2:ncol(print_components)) {
       print_components[,col] <- formatC(print_components[,col], digits = 4)}

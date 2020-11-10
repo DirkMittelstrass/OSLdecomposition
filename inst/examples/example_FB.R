@@ -5,7 +5,7 @@ source(system.file("beta", "calc_OSLLxTxDecomposed.R", package = "OSLdecompositi
 
 library(Luminescence)
 library(OSLdecomposition)
-report <- TRUE # To save a lot of computing time, disable auto-reporting
+report <- TRUE #  disable auto-reporting if you want to save a lot of computing time,
 
 # FB_10Gy is a dose recovery test with the La Fontainebleau quartz
 # in the Bayreuth lexsyg system with green stimulation
@@ -27,16 +27,15 @@ FB_fitted <- RLum.OSL_global_fitting(FB_corrected,
                                      report = report)
 
 FB_decomposed <-RLum.OSL_decomposition(FB_fitted,
+                                       K = 2,
                                        report = report)
 
 # Here, component 2 is the 'fast' component
-FB_fast_De <- analyse_SAR.CWOSL_beta(FB_decomposed,
-                                     OSL.component = 2)
-
+FB_fast_De <- analyse_SAR.CWOSL_beta(FB_decomposed, OSL.component = 1, plot = FALSE)
 
 # the outlier comes from the background measurements
-FB_late_background <- analyse_SAR.CWOSL_beta(FB, 1, 10, 800, 999)
+FB_late_background <- analyse_SAR.CWOSL_beta(FB, 1, 10, 800, 999, plot = FALSE)
 
 # black: late background, red: fast component
-plot_KDE(list(FB_late_background,
-              FB_fast_De))
+plot_AbanicoPlot(list(FB_late_background,
+                      FB_fast_De))

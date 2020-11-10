@@ -88,13 +88,10 @@ See also Bos and Wallinga (2012) for a detailed explanation and discussion
 
 \examples{
 
-# Set some arbitaty decay parameter for a dim CW-OSL measurement of quartz
-name <- c("fast", "medium", "slow")
-lambda <- c(2, 0.5, 0.02)
-n <- c(1000, 1000, 10000)
-
-# Build a component table
-components <- data.frame(name, lambda, n)
+# Set some arbitary decay parameter for a dim CW-OSL measurement of quartz
+components <- data.frame(name = c("fast", "medium", "slow"),
+                         lambda = c(2, 0.5, 0.02),
+                         n = c(1000, 1000, 10000))
 
 # Simulate a CW-OSL curve including some signal noise
 curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE)

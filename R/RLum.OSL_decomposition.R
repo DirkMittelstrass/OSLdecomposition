@@ -1,43 +1,143 @@
-#' Decomposes CW-OSL curves in RLum.Analysis data sets into its signal components
+#' Separate CW-OSL components in RLum.Analysis data sets
 #'
-#' @last_changed 2020-09-13
+#' Calculate the CW-OSL signal component intensites for each CW-OSL measurement
+#' under the requirement that the decay rates are already given. The signal decompositon
+#' process uses an analytical approach described in details in Mittelstrass (2019) and
+#' Mittelstrass et al. (2021). This function processes just [RLum.Analysis-class] data sets created within
+#' the [Luminescence-package] (Kreutzer et al. 2012).
 #'
-#' @param object
-#' Object returned by [RLum.OSL_global_fitting()]
+#' The workflow of this function is as following:
 #'
-#' @param K
-#' Number of components. If not defined K = 3 is selected
+#' \enumerate{
+#'   \item {[optimise_OSLintervals]: Approximate the best suiting integration intervals. Use the global
+#'   average curve as time axis template. If none is given, create one using [sum_OSLcurves]}
+#'   \item [decompose_OSLcurve]: {Calculate component intensities for **all** `record_type` measurements.
+#'   Use the `"det"` algorithm if a background correction was performed with [RLum.OSL_correction] or the
+#'   `"det+nls"` algorithm if no background correction was performed. Use the `"empiric"` error estimation approach.}
+#'   \item Create a `html` report to summarize the results (*optional*)
+#'}
 #'
-#' @param record_type
-#' @param decay_rates
-#' (optional) user-defined component decay rates
+#' Data sets must be formatted as [RLum.Analysis-class] objects and
+#' should have been processed with [RLum.OSL_correction] and [RLum.OSL_global_fitting] beforehand.
+#' Output objects are also [RLum.Analysis-class] objects and are
+#' meant for equivalent dose determination with [Luminescence::analyse_SAR.CWOSL].
 #'
-#' @param error_calculation
-#' @param report
-#' @param image_format
-#' @param verbose
+#' If `report = TRUE`, a `html` report of the results is rendered by the [rmarkdown-package]
+#' and saved in the working directory, which is usually the directory of the data file.
+#' This report can be displayed, shared and published online without any requirements to
+#' the OS or installed software. But an internet connection is needed to display
+#' the *MathJax* encoded equations and special characters.
+#' The *Rmarkdown* source code of the report can be found with the following command:
+#'
+#' `system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")`
+#'
+#'
+#'
+#'
+#' @param object [RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
+#' Data set of one or multiple CW-OSL measured aliquots. The data set must either
+#' contain a list element `"OSL_COMPONENTS"` or the parameter `decay_rates` must
+#' be defined
+#'
+#' @param record_type [character] (*with default*):
+#' Type of records, selected by the [RLum.Analysis-class] attribute `@recordType`.
+#' Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`
+#'
+#' @param K [numeric] (*with default*):
+#' Number of components. Should be chosen after OSL component evaluation with
+#'
+#' @param decay_rates [numeric] vector or [data.frame] (*optional*):
+#' User-defined component decay rates. If the
+#'
+#' @param report [logical] (*with default*):
+#' Creates a `html` report, saves it in the working directory and opens it in your
+#' standard browser. The report contains the results and further information
+#' on the data processing
+#'
+#' @param image_format [character] (*with default*):
+#' Image format of the automatically saved graphs if `report = TRUE`.
+#' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
+#' and more, see [ggplot2::ggsave]. The images are saved in the working directory subfolder `/report_figures`
+#'
+#' @param verbose [logical] (*with default*):
+#' Enables console text output
+#'
+#'
+#' @section Last updates:
+#'
+#' 2020-11-07, DM: Added roxygen documentation; Auto-switch between "det" and "det+nls" depending on background correction
+#'
+#' @author
+#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
+#'
+#' Please cite the package the following way:
+#'
+#' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+#'
+#' @seealso [RLum.OSL_global_fitting], [decompose_OSLcurve], [optimise_OSLintervals], [Luminescence::analyse_SAR.CWOSL]
+#'
+#' @references
+#'
+#' Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fischer, M., Fuchs, M., 2012.
+#' Introducing an R package for luminescence dating analysis. Ancient TL, 30 (1), 1-8.
+#'
+#' Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and
+#' its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
 #'
 #' @return
+#'
+#' The input `object`, a [list] of [RLum.Analysis-class] objects is returned but with
+#' a new list element `object[["DECOMPOSITION"]]`, containing:
+#'
+#' \itemize{
+#'   \item `$decompositon.input` [data.frame]: Set of input components. Relevant is just the column `$lambda`
+#'   \item `$results` [data.frame]: Overview table of decomposition
+#'   \item `$parameters` [list]: Input and algorithm parameters
+#' }
+#'
+#' The [RLum.Data.Curve-class] attribute `@info` of each CW-OSL record contains the
+#' new entry `$COMPONENTS` with the curve-individual signal component parameters.
+#' It can be read for examle by:
+#'
+#'  `object[[i]]@records[[j]]@info[["COMPONENTS"]]`
+#'
 #' @examples
+#'
+#' # 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+#' # measured in a lexsyg research with green LED stimulation
+#' data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
+#' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
+#'
+#' # Separate components and create report
+#' data_set_decomposed <- RLum.OSL_decomposition(data_set, decay_rates = c(0.8, 0.05))
+#'
+#' @md
+#' @export
 
 RLum.OSL_decomposition <- function(
   object,
-  K = 3,
   record_type = "OSL",
+  K = 3,
   decay_rates = NULL,
-  error_calculation = "empiric",   # "poisson", "empiric", "nls", numeric value
   report = TRUE,
   image_format = "pdf",
   verbose = TRUE
 ){
+  ### Changelog
+  # * 2020-May,   DM: First reasonable version
+  # * 2020-11-07, DM: Added roxygen documentation; Auto-switch between "det" and "det+nls" depending on background correction
+  #
   ### ToDo's
-  # - read 'lambda.error' if available and transfer it to decompose_OSLcurve for better error calculation
-  # - collect warnings from [decompose_OSLcurve()] and others and display them bundled with record-index at the end
+  # * read 'lambda.error' if available and transfer it to decompose_OSLcurve for better error calculation
+  # * collect warnings from [decompose_OSLcurve()] and others and display them bundled with record-index at the end
+  # * switch between "det" and "det+nls" automatically, depending on whether the data set was background corrected or not
 
 
   # hidden parameters
   background_fitting <- FALSE
-  algorithm <- "det+nls" # "det", "nls", "det+nls"
+  error_calculation <- "empiric" # "poisson", "empiric", "nls", numeric value
+
 
   # get name of the input object
   object_name <- deparse(substitute(object))
@@ -78,7 +178,20 @@ RLum.OSL_decomposition <- function(
 
   if (length(data_set) == 0) stop("Input object contains no RLum.Analysis data")
 
-  ##### Get the decay rates ######
+  ################### Find out, which algorithm to use ###################
+
+  # default
+  algorithm <- "det+nls" # "det", "nls", "det+nls"
+
+  # Was there a background correction?
+  if ("CORRECTION" %in% names(data_set_overhang)){
+    if ("background_curve" %in% names(data_set_overhang[["CORRECTION"]])
+        | (data_set_overhang[["CORRECTION"]]$parameters$subtract_offset > 0)) {
+
+      algorithm <- "det" }}
+
+
+  ################### Get the decay rates ###################
 
   global_curve <- NULL
   component_table <- NULL
@@ -97,7 +210,7 @@ RLum.OSL_decomposition <- function(
     }
 
 
-  } else if (is(decay_rates, "data.frame") && ("lambda" %in% colnames(decay_rates))) {
+  } else if ((class(decay_rates) == "data.frame") && ("lambda" %in% colnames(decay_rates))) {
     component_table <- decay_rates
 
   } else if (is.numeric(decay_rates) && (length(decay_rates < 8))) {
@@ -115,16 +228,8 @@ RLum.OSL_decomposition <- function(
   # Whit NLS, just the nls() errors are available
   if ((algorithm == "nls") &! (error_calculation == "nls")) {
     if (verbose) warning("When algorithm 'nls' is chosen, error.calculation must be also 'nls'. Argument changed to error.calculation='nls'")
-    error_calculation <- "nls"
-  }
+    error_calculation <- "nls"}
 
-  ## Little function to measure elapsed time ##
-
-  time_duration <- function(start, end){
-  v1 <- strptime(durations, format='%H:%M:%S')
-  v1$hour * 3600 + v1$min * 60 + v1$sec
-  return()
-  }
 
   ################################ STEP 2.1: Integration intervals ################################
   if (verbose) cat("STEP 2.1 ----- Define signal bin intervals -----\n")
@@ -139,13 +244,12 @@ RLum.OSL_decomposition <- function(
                                   verbose = verbose)
 
     if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
-    time.start <- Sys.time()
-  }
+    time.start <- Sys.time()}
 
   if (verbose) cat("Iterate minimum denominator determinant:\n[optimise_OSLintervals()]: ")
   component_table <- optimise_OSLintervals(component_table,
                                            global_curve,
-                                           background.fitting = background_fitting,
+                                           background.component = background_fitting,
                                            verbose = verbose)
 
   if(verbose)  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
@@ -157,7 +261,7 @@ RLum.OSL_decomposition <- function(
   if (verbose) cat("STEP 2.2 ----- Decompose each ", record_type," curve -----\n")
   if (verbose) cat("Calculate signal intensity n in each", record_type, " by '", algorithm,"' algorithm with", error_calculation, "error estimation\n")
   if (verbose) cat("Table of input decay constants and signal bin intervals for [decompose_OSLcurve()]:\n")
-  if (verbose) print(subset(component_table, select = c(name, lambda, t.start, t.end, ch.start, ch.end)))
+  if (verbose) print(subset(component_table, select = c("name", "lambda", "t.start", "t.end", "ch.start", "ch.end")))
 
   time.start <- Sys.time()
 
@@ -221,7 +325,7 @@ RLum.OSL_decomposition <- function(
   ################################ STEP 2.3: Report  ################################
 
   if (report) {
-    if(("rmarkdown" %in% rownames(installed.packages())) && ("kableExtra" %in% rownames(installed.packages()))) {
+    if(("rmarkdown" %in% rownames(utils::installed.packages())) && ("kableExtra" %in% rownames(utils::installed.packages()))) {
 
       if(verbose) cat("STEP 2.3 ----- Create report -----\n")
       if(verbose) cat("This process can take a few minutes...\n")
@@ -258,7 +362,7 @@ RLum.OSL_decomposition <- function(
 
         # ToDo: Replace the following try() outside the big try
         try({
-          browseURL(output_file)
+          utils::browseURL(output_file)
           cat("Open", toupper(report_format), "report in your systems standard browser\n")})
 
         if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")})
