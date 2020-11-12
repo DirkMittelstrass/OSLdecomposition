@@ -15,7 +15,7 @@ params:
   image_format: !r c("png")
   image_path: !r c(NULL)
 ---
-Report of the [Mittelstraß *et al.* (2019)](#disclaimer) Step 2 analysis of the data set **`r object_name`** performed with the function `RLum.OSL_decomposition()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` executed at `r Sys.time()`.
+Report of the [Mittelstraß *et al.* (2021)](#disclaimer) Step 2 analysis of the data set **`r object_name`** performed with the function `RLum.OSL_decomposition()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` executed at `r Sys.time()`.
 
 ***
 
@@ -354,6 +354,8 @@ Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fuchs, M., 2012. Introducing
 http://ancienttl.org/ATL_30-1_2012/ATL_30-1_Kreutzer_p1-8.pdf
 
 Mittelstraß, D., Kreutzer, S., Richter, D., 2013. An analytical method to separate signal components of CW-OSL measurements of quartz.
+
+Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz, Master thesis, TU Dresden, Dresden. <br> https://iktp.tu-dresden.de/IKTP/pub/19/Dirk_Mittelstrass_Master.pdf
 
 Ritz, C., Streibig, J.C., 2008. Nonlinear regression with R, Use R! Springer, New York.<br>
 https://doi.org/10.1007/978-0-387-09616-2

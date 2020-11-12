@@ -222,8 +222,8 @@ RLum.OSL_global_fitting <- function(object,
       try({
 
         # for test purposes only:
-        #rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step1.Rmd"
-        rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
+        rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step1.Rmd"
+        #rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
 
         output_path <- getwd()
         output_file <- paste0(output_path, "/", "report_Step1.", report_format)

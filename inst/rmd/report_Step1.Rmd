@@ -15,16 +15,13 @@ params:
   image_format: !r c("png")
   image_path: !r c(NULL)
 ---
-Average curve analysis of the data set **`r object_name`** performed by the function `RLum.OSL_global_fitting()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` executed at `r Sys.time()`.
-
-***
 
 ```{r step1_setup, include=FALSE}
 
  #   mathjax: local
   #  self_contained: false
 
-Last_changed <- "2020-10-30"
+Last_changed <- "2020-11-11"
 
 library(kableExtra)
 library(knitr)
@@ -32,7 +29,7 @@ library(ggplot2)
 library(gridExtra)
 library(scales)
 
-plot_theme <- theme_minimal()
+plot_theme <- theme_classic()
 
 knitr::opts_chunk$set(fig.width=7,
                       fig.asp=.6,
@@ -51,14 +48,21 @@ for (j in 1:length(data_set)) {
   n.curves <- n.curves + sum(names(data_set[[j]]) == record_type)}
 ```
 
+`r record_type` signal component identification report for data set **`r object_name`** analysed by function `RLum.OSL_global_fitting()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` and performed at `r Sys.time()`.
+
+***
+
+
 <font color="black">
 
-## Fitting results {.tabset .tabset-pills}
+## Results 
 
-This report displays the results of [Step 1](#basics) in the component separation analysis workflow described in [Mittelstraß *et al.* (2019)](#disclaimer). The goal of Step 1 is to evaluate the number of components $K$ and determine their decay constants $\lambda_i$. To achieve this, we assume constant CW-OSL decay rates over all measurements of the data set and calculate one [global average curve](#M1). On this, we perform a series of [multi-exponential decay model fittings](#M2) with an increasing number of components *K*:
+In the following, the results of CW-OSL analysis step 1 as described in [Mittelstraß *et al.* (2021)](#disclaimer) are displayed, see section [Methods](#basics) for details. Constant signal component decay rates $\lambda$ over all measurements were assumed and one [global average CW-OSL curve](#Overview) was calculated. On this, a series of [multi-exponential decay model fittings](#Overview) with an increasing number of components $K$ was performed. The resulting CW-OSL models can be compared by their photoionisation cross sections $\sigma$ and their fitting quality to select the best suiting set of signal components.
 
-### Global average
-```{r step1_draw_global_curve, fig.width=7, fig.asp=.5}
+### OSL plots {.tabset .tabset-pills}
+
+#### Global average
+```{r step1_draw_global_curve, fig.width=7, fig.asp=.4}
 
 sum_OSLcurves(data_set,
               record_type = record_type,
@@ -69,7 +73,7 @@ sum_OSLcurves(data_set,
               verbose = FALSE,
               filename = paste0(image_path, "step1_fig1_1_global_average.", image_format))
 
-cat(paste0("<br><i><b>Figure 1.1:</b> <u>Blue line</u>: Global average curve built from the arithmetic mean of all curves. <br><u>Grey points</u>: Data points of all measurements. <u>Red</u>: First CW-OSL curve of the first aliquot in the data set.</i><br><br>"))
+cat(paste0("<br><i><b>Figure 1.1:</b> <u>Red line</u>: Global average curve built from the arithmetic mean of all curves. <br><u>Grey points</u>: Data points of all measurements.</i><br><br>"))
 ```
 
 
@@ -78,13 +82,15 @@ cat(paste0("<br><i><b>Figure 1.1:</b> <u>Blue line</u>: Global average curve bui
 
 # Define dynamic Rmarkdown code
 dynamic_code <- c(
-    "### K = {{i}}\n",
+    "#### K = {{i}}\n",
     "```{r tab_{{i}}}\n",
     "plot_OSLcurve(fit_data$curve, 
                 fit_data$component.tables[[{{i}}]], 
                 title = NULL,
+                show.legend = TRUE,
+                theme.set = plot_theme,
                 filename = paste0(image_path, \"step1_fig1_{{i+1}}_K={{i}}_fitting.\", image_format))\n",
-    "cat(paste0(\"<br><i><b>Figure 1.{{i+1}}:</b> Fit model with K = {{i}} (black), global average curve (grey) and signal components (colored)<br>\", \"<u>Upper left</u>: Linear diagram. <u>Upper right</u>: pseudoLM-OSL diagram<br>\",\"<u>Lower left</u>: Residual curve between fitting and global average curve<br>\",\"<u>Lower right</u>: Fitting result table with estimated type of component names</i><br><br>\"))",
+    "cat(paste0(\"<br><i><b>Figure 1.{{i+1}}:</b> Fit model with K = {{i}} signal components<br>\", \"<u>Upper left</u>: CW-OSL plot of global average curve and fitting model.<br>\", \"<u>Upper right</u>: pseudoLM-OSL transformed plot<br>\",\"<u>Lower left</u>: Residual curve between fitting and global average curve<br>\",\"<u>Lower right</u>: Estimated type of quartz OSL component (colored), photoionisation cross sections $\\\\sigma$, decay rates $\\\\lambda$, signal intensity $n$ and share at initial signal $I_0$.</i><br><br>\"))",
     "```\n"
   )
 
@@ -98,18 +104,9 @@ tabs <- lapply(as.list(1:nrow(fit_data$F.test)),
 `r knitr::knit(text = unlist(tabs))`
 
 
-## Model selection
+### Photoionisation cross section
 
-Selecting the best fitting model is not trivial. According to the literature, CW-OSL measurements of quartz are sufficiently described by three components ($K = 3$) in the most cases [Bailey et al. 1997](#ref). To prove this default hypothesis or to find out if a model with another number of components suites the data set better, the following analysis tools shall help to select the correct number of components $K$:
-
-1. Comparision of the photo-ionisation cross-section with literature values
-2. Evaluation of the fitting quality by an F-test
-3. (ToDo:) Evaluation of the decomposition quality by signal bin overdispersion
-
-### Photo-ionisation cross-section
-
-
-Under the assumption the provided optical stimulation parameters ($\lambda_{stim}=$ `r fit_data$parameters$stimulation.wavelength` $\mathrm{nm}, \Phi_{stim}=$ `r fit_data$parameters$stimulation.intensity` $\mathrm{\frac{mW}{cm^2}}$) are correct, the found decay rates can be translated into [photo-ionisation crosssection values](#M3) and set into relation with quartz OSL literature values:
+Under the assumption that the provided optical stimulation parameters ($\lambda_{stim}=$ `r fit_data$parameters$stimulation.wavelength` $\mathrm{nm}, \Phi_{stim}=$ `r fit_data$parameters$stimulation.intensity` $\mathrm{\frac{mW}{cm^2}}$) were correct, the found decay rates were translated into [photoionisation cross section values](#M3) and set into relation with quartz OSL literature values:
 
 ```{r step1_draw_crosssections_diagram, fig.width=10, fig.asp=0.32}
 
@@ -125,17 +122,17 @@ plot_PhotoCrosssections(fit_data,
 
 # <font color=\"black\"> </font>
 
-  cat("<br><i><b>Figure 2:</b> Comparison of the photo-ionisation cross-sections calculated from the signal component decay rates assuming a stimulation light intensity of", fit_data$parameters$stimulation.intensity, "mW/cm² and a stimulation light wavelength of", fit_data$parameters$stimulation.wavelength,"nm.</i><br><br>")
+  cat("<br><i><b>Figure 2:</b> Photoionisation cross section comparison assuming a stimulation light intensity of", fit_data$parameters$stimulation.intensity, "mW/cm² and a stimulation light wavelength of", fit_data$parameters$stimulation.wavelength,"nm.</i><br><br>")
 ```
 
-Please be aware that stimulation intensity value are prone to false estimations. Such false estimations lead to systematic shifts in the photo-ionisation cross-sections compared to the literature values. To manually correct for these shifts, apply the following rules when setting `RLum.OSL_global_fitting(stimulation_intensity = ?)`:
+Systematic shifts in the photoionisation cross sections are likely when compared to literature values. These are caused by false estimates of the effective stimulation intensity. To manually correct for these shifts, apply the following rules when setting `RLum.OSL_global_fitting(stimulation_intensity = ?)`:
 
-* <b>Increase</b> intensity value to shift the fitted cross-sections towards <b>right</b>
-* <b>Decrease</b> intensity value to shift the fitted cross-sections towards <b>left</b>
+* <b>Increase</b> stimulation intensity to shift the cross sections towards <b>right</b>
+* <b>Decrease</b> stimulation intensity to shift the cross sections towards <b>left</b>
 
-### F-test
+### Component number selection
 
-[Bluszcz & Adamiec (2006)](#ref) suggest the use of a [F-test](#M4). The *F*-value measures the improvement in the fitting quality from an additional component by comparing the residual square sum (*RSS*) of the new model with the previous model. Simulations (see Mittelstrass (2019)) show that a threshold of $F = 150$ is ideal to detect the correct number of components for quartz CW-OSL measurements. Falls the *F*-value below thiw threshold, the model with $(K-1)$-components is selected.
+Selecting those fitting model with the physically correct number of components $K$ is not trivial. According to [Bailey et al. (1997)](#ref), [Mittelstrass (2019)](#ref) and others, are most quartz samples  sufficiently described by three CW-OSL components. Thus, the $K = 3$ fitting is chosen as default model. However, additional OSL components might give a significant signal contribution and might make the $K = 3$ model insufficient. Or in a measurement are just two components apparent. Therefore, an $F$-test is performed like suggested by [Bluszcz & Adamiec (2006)](#ref). The test criterion $F_K$ measures the improvement in the fitting quality by an additional component, see section [F-test](#M4) for details. Falls $F_K$ below the preset threshold value of $F_K <  $ `r fit_data$parameters$F.threshold`, the model with $(K-1)$-components is selected as best model. 
 
 
 ```{r step1_fitting_table}
@@ -150,7 +147,7 @@ F_table <- cbind(data.frame(K = row_index), F_table)
 
 colnames(F_table) <- c("  $K$  ", paste0("$\\lambda_", row_index,"$ $(s^{-1})$"), "RSS","$F_K$")
 
-cat(paste0("<br><i><b>Table 2:</b> Decay constants and fitting quality parameters in dependence of component number $K$. <br><u>RSS</u>: Residual square sum. <u>$F_K$</u>:  Measure of fitting improvement.</i><br><u>Green stripe</u>: Model selected by the F-test<br>"))
+cat(paste0("<br><i><b>Table 2:</b> Decay rates and fitting quality parameters in dependence of component number $K$. <br><u>RSS</u>: Residual square sum. <u>$F_K$</u>:  Measure of fitting improvement.</i><br><u>Green stripe</u>: Model proposed by the F-test<br>"))
 
 # print F-test table
 kable(F_table, escape = TRUE, align = "c") %>% 
@@ -158,12 +155,20 @@ kable(F_table, escape = TRUE, align = "c") %>%
   row_spec(fit_data$K.selected, background = "lightgreen")
 ```
 
-In our experience however, the F-test performed on real data sets tend to select the $K=4$ model, while the $K=3$ model leads to more plausible results.
-
+```{r eval=FALSE, include=FALSE}
 
 ### Signal bin overdispersion
 
-*The idea is the following: Incorrect decay rates lead to lopsided residual curves over the signal bin intervals in the decomposition process. These lopsided residuals can be detected by taking the signal bin variance in relation to the poisson distribution variance. The result is a kind of "overdispersion" value for each signal bin in each OSL record. The K = ? model where the median of these overdispersions is minimal, should be the best suiting model for the majority of CW-OSL curves*
+# 1. Comparision of the photoionisation cross section with literature values
+# 2. Evaluation of the fitting quality by an F-test and the *reduced Chi²*
+# 3. (ToDo:) Evaluation of the decomposition quality by signal bin overdispersion
+
+# *The idea is the following: Incorrect decay rates lead to lopsided residual curves over the signal bin intervals in the decomposition process. These lopsided residuals can be detected by taking the signal bin variance in relation to the poisson distribution variance. The result is a kind of "overdispersion" value for each signal bin in each OSL record. The K = ? model where the median of these overdispersions is minimal, should be the best suiting model for the majority of CW-OSL curves*
+
+```
+
+
+
 
 
 
@@ -176,7 +181,7 @@ In our experience however, the F-test performed on real data sets tend to select
 
 
 
-## Methods
+## Methods 
 
 ```{r eval=FALSE, include=FALSE}
 <i><u>Further content planned for this chapter:</u>
@@ -190,15 +195,14 @@ In our experience however, the F-test performed on real data sets tend to select
 ```
 
 
-### Data analysis workflow {#basics}
+### Basics {#basics}
 
-
-We assume that all CW-OSL signal curves in this data set can be sufficently described by a sum of exponential decays with first order kinetics:
+The data analysis approach assumes that all CW-OSL signal curves in this data set can be sufficently described by a sum of exponential decays with first order kinetics:
 
 $$I(t) = \sum_{i=1}^K n_ie^{-\lambda_it}$$
 Here, $I(t)$ is the CW-OSL signal, $K$ is the number of signal components. Each component is defined by its intensity $n$ and its decay rate $\lambda$.  
 
-To get component-seperated dose information, we divide the data analysis process into multiple steps:
+To achieve component-seperated dose information, the data analysis process is divided into multiple steps:
 
 <center>
 
@@ -206,30 +210,30 @@ To get component-seperated dose information, we divide the data analysis process
 
 </center>
 
-### Global average curve {#M1}
+### Step 1 overview {#Overview}
 
-For calculating the decay parameters, one representative OSL curve is needed. This is provided by combining all measurements to one global average curve. Each data point of this global curve represents the arithmetic mean of all data point values of the same channel in all OSL curves. This increases the signal-to-noise ratio by about one to two orders of magnitude, but still maintains the decay parameter information.  
+This report covers the Step 1 analysis, which can be outlined as following:
 
-### Multi-exponential fitting {#M2}
+<center>
 
-We take the global mean curve and perform multiple cycles of multi-exponential nonlinear regression. In each cycle, the number of components *K* increases by one. With increasing number of components, decreases the residual curve between the fitted model curve and the measured data and the fit gets better. 
+![](details_Step1.png)
+</center>
 
-The underlying algorithm was proposed and described by [Bluszcz & Adamiec (2006)](#ref).
+Details on step 1.1 and step 1.2 can be found in [Mittelstrass (2019)](#ref) and the *R* function documentation, accessible through the commands `?sum_OSLcurves` and `?fit_OSLcurve`. 
 
-*... EXPAND TEXT HERE ...*
+### Photoionisation cross sections {#M3}
 
-
-### Photo-ionisation cross-sections {#M3}
-
-The decay constant $\lambda_{k}$ of each component can be translated into the photo-ionisation cross-section $\sigma_{k}$ of the associated defect state: 
+The signal decay rate $\lambda_{k}$ of each component is translated into the photoionisation cross section $\sigma_{k}$ of the associated defect state by: 
 
 $$\sigma_{k}=\lambda_{k} {hc \over \Phi_{stim}\lambda_{stim}}$$
-Here, $h$ is the [Planck constant](https://en.wikipedia.org/wiki/Planck_constant), $c$ is the [speed of light](https://en.wikipedia.org/wiki/Speed_of_light), $\Phi_{stim}$ is the stimulation light intensity and $\lambda_{stim}$ is the stimulation light wavelength. If this wavelength is about ~ 470 nm and the measured sample material is quartz, then the resulting photo-ionisation cross-section can be compared with literature values, see figure 2. For the automatic assignement of component names, an approximated 2-$\sigma$ bandwidth of the average literature value was used.
+Here, $h$ is the [Planck constant](https://en.wikipedia.org/wiki/Planck_constant), $c$ is the [speed of light](https://en.wikipedia.org/wiki/Speed_of_light), $\Phi_{stim}$ is the stimulation light intensity and $\lambda_{stim}$ is the stimulation light wavelength. If this wavelength is about ~ 470 nm and the measured sample material is quartz, then the resulting photoionisation cross sections can be compared with literature values, see figure 2. For the automatic assignement of component names, an approximated 2-$\sigma$ bandwidth of the average literature value was used.
 
-Please be aware that the stimulation light intensity, displayed by your OSL/TL reader, might differ from the actual stimulation light intensity. Degrading of the LEDs/lasers and the stimulation narrowing filters as well as a dirty chamber window glass can lead to significantly lower light intensities at the sample. In addition, the effective light intensity in the bulk material of the sample depends on reflectance and transmittance of the sample carrier, the fixation and the sample itself.
+Please be aware that the stimulation light intensity, displayed by your OSL/TL reader, might differ from the actual stimulation light intensity. Degrading of the LEDs/lasers and the stimulation narrowing filters as well as a dirty chamber window glass can lead to significantly lower light intensities at the sample. In addition, the effective light intensity in the bulk material of the sample depends on reflectance and transmittance of the sample carrier, the fixation and the sample itself. Systematic shifts in the photoionisation cross section values are therefore likely.
 
 
 ### F-test {#M4}
+
+The test criterion $F_K$ measures the improvement in the fitting quality by an additional component by comparing the residual square sum (*RSS*) of the new model with the previous model. Simulations (see Mittelstrass (2019)) show that a threshold of $F = 150$ is ideal to detect the correct number of components for quartz CW-OSL measurements. 
 
 But which of these fittings gives back a sufficient model of the global mean curve, without over-fitting it? One solution is to compare the residual square sum (*RSS*) of each fitting with the *RSS* value of the previous fitting. [Bluszcz & Adamiec (2006)](#ref) propose to use a *F*-test:  
 
@@ -278,7 +282,7 @@ https://doi.org/10.1016/S1350-4487(03)00052-0
 Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fuchs, M., 2012. Introducing an R package for luminescence dating analysis. Ancient TL 30.<br>
 http://ancienttl.org/ATL_30-1_2012/ATL_30-1_Kreutzer_p1-8.pdf
 
-Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz, Master thesis, TU Dresden, Dresden. <br> https://iktp.tu-dresden.de/IKTP/forschung/Pub.php
+Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz, Master thesis, TU Dresden, Dresden. <br> https://iktp.tu-dresden.de/IKTP/pub/19/Dirk_Mittelstrass_Master.pdf
 
 Singarayer, J.S., Bailey, R.M., 2003. Further investigations of the quartz optically stimulated luminescence components using linear modulation. Radiation Measurements, Proceedings of the 10th international Conference on Luminescence and Electron-Spin Resonance Dating (LED 2002) 37, 451–458.<br>
 https://doi.org/10.1016/S1350-4487(03)00062-3
@@ -324,7 +328,7 @@ colnames(para_table) <- c("","")
 kable(para_table, escape = TRUE, align = "l",) %>%
   kable_styling(bootstrap_options = c("condensed"), full_width = FALSE, position = "left") %>%
   pack_rows("Settings", 1, 4) %>%
-  pack_rows("Photo-ionisation cross-section parameter", 5, 6) %>%
+  pack_rows("Photoionisation cross section parameter", 5, 6) %>%
   pack_rows("Global curve properties", 7, 11)
 
 ```
@@ -350,7 +354,7 @@ print(sessionInfo(), locale = FALSE)
 
 ```{r step1_show_component_table, eval=FALSE, include=FALSE}
 
-cat(paste0("<br><i><b>Table 1:</b> Signal components of the K = ", fit_data$K.selected," multi-exponential decay model chosen as best suiting fitting by an F-test. Each signal component is defined by its intensity $n$ and its decay contant $\\lambda$, which can be converted in the photo-ionisation cross-section $\\sigma$.<br><u>First channel share</u>: Average contribution to the signal at beginning of the measurement.<br><u>Bleaching grade</u>: Average approximated defect state depletion during the stimulation.</i><br>"))
+cat(paste0("<br><i><b>Table 1:</b> Signal components of the K = ", fit_data$K.selected," multi-exponential decay model chosen as best suiting fitting by an F-test. Each signal component is defined by its intensity $n$ and its decay contant $\\lambda$, which can be converted in the photoionisation cross section $\\sigma$.<br><u>First channel share</u>: Average contribution to the signal at beginning of the measurement.<br><u>Bleaching grade</u>: Average approximated defect state depletion during the stimulation.</i><br>"))
 
 component_table <- fit_data$components
 

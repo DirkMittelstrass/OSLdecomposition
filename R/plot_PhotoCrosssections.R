@@ -1,12 +1,12 @@
-#' Plot comparison of CW-OSL component crosssections of different models
+#' Plot comparison of CW-OSL component photoionisation cross sections of different models
 #'
 #' Function takes the `output.complex = TRUE` output of [fit_OSLcurve] and draws the
-#' photo-ionisation cross-sections of different models in relation to each other.
+#' photoionisation cross sections of different models in relation to each other.
 #' If a stimulation wavelength between 465 and 480 nm was chosen,
-#' the photo-ionisation cross-sections are set into relation with literature values
+#' the photoionisation cross sections are set into relation with literature values
 #' from Singarayer and Bailey (2003), Jain et al. (2003) and Durcan and Duller (2011).
 #'
-#' The photo-ionisation cross-section ranges of the reference components are defined as following:
+#' The photoionisation cross section ranges of the reference components are defined as following:
 #'
 #'  \tabular{lll}{
 #'  **Component** \tab **Lower limit (cm^2)** \tab **Upper limit (cm^2)**\cr
@@ -24,11 +24,11 @@
 #' Output object of [fit_OSLcurve] with `output.complex = TRUE`
 #'
 #' @param stimulation.intensity [numeric] (*optional*):
-#' Intensity of optical stimulation in mW / cm². Used to calculate the photo-ionisation cross-sections.
+#' Intensity of optical stimulation in mW / cm². Used to calculate the photoionisation cross sections.
 #' If not given, the input value for [fit_OSLcurve] is used
 #'
 #' @param stimulation.wavelength [numeric] (*optional*):
-#' Wavelength of optical stimulation in nm. Used to calculate the photo-ionisation cross-sections.
+#' Wavelength of optical stimulation in nm. Used to calculate the photoionisation cross sections.
 #' If not given, the input value for [fit_OSLcurve] is used
 #'
 #' @param K.selected [numeric] (*optional*):
@@ -256,7 +256,7 @@ plot_PhotoCrosssections <- function(
 
   # rotate diagramm and delete unnecessary visual elements
   p <- p + ggplot2::coord_flip() +
-    ggplot2::ylab(expression("photoionisation cross-section (cm^2)")) +
+    ggplot2::ylab(expression(italic(sigma) ~~ (cm^2))) +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
           axis.title.y = ggplot2::element_blank(),
           axis.text = ggplot2::element_text(colour = "black", size = 10),

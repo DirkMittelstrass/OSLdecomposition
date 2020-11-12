@@ -65,7 +65,7 @@
 #'
 #' @section Last updates:
 #'
-#' 2020-11-03, DM: Refactored code; Changed parameter `display` choices and added parameters `theme.set` and `show.legend`
+#' 2020-11-11, DM: Improved parameter table
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -103,7 +103,7 @@
 plot_OSLcurve <- function(curve = NULL,
                           components,
                           display = "detailed",
-                          show.legend = FALSE,
+                          show.legend = TRUE,
                           show.intervals = FALSE,
                           theme.set = ggplot2::theme_classic(),
                           title = NULL,
@@ -120,6 +120,7 @@ plot_OSLcurve <- function(curve = NULL,
 # * 2020-08-04, DM: Added subtitles and RSS info
 # * 2020-09-02, DM: Added graphic saving with [ggplot2::ggsave]
 # * 2020-11-03, DM: Refactored code; Changed parameter `display` choices and added parameters `theme.set` and `show.legend`
+# * 2020-11-11, DM: Improved parameter table
 #
 # ToDo:
 # * ! Put the ggplot building (or at least its style options) in its own sub-function
@@ -301,7 +302,7 @@ plot_OSLcurve <- function(curve = NULL,
 
   if ((display == "detailed") | (display == "LM")) {
 
-    subtitle <- "pseudoLM-OSLL"
+    subtitle <- "pseudoLM-OSL"
     if (display == "LM") subtitle <- NULL
 
     # transform data
@@ -391,25 +392,37 @@ plot_OSLcurve <- function(curve = NULL,
       # Table styles can be found at:
       # Link: rpkgs.datanovia.com/ggpubr/reference/ggtexttable.html
 
+      ### Build Names and Lambda column
       p.colnames <- c("      ",
-                      expression(italic(lambda) ~~ (s^-1)),
-                      expression(italic(n)))
+                      expression(italic(lambda) ~~ (s^-1)))
 
-      #print.lambda <- components$lambda
-      print.lambda <- formatC(components$lambda, digits = 3)
+      print.lambda <- prettyNum(components$lambda, digits = 3)
       print.lambda[print.lambda == "NA"] <- ""
 
       p.table <- data.frame(name = components$name,
-                            lambda = print.lambda,
-                            n = prettyNum(round(components$n)))
+                            lambda = print.lambda)
 
-      # add "prettyNum()" to shorten big n numbers
-      if ("n.error" %in% colnames(components)) {
+      ### Are photo cross-sections given?
+      if ("cross.section" %in% colnames(components)){
         p.table <- data.frame(p.table,
-                              n.error = prettyNum(round(components$n.error)))
-        p.colnames <- c(p.colnames,
-                        expression(sigma[italic(n)]))
-      }
+                              cross = prettyNum(components$cross.section, digits = 3))
+        p.colnames <- c(p.colnames, expression(italic(sigma) ~~ (cm^2)))}
+
+      ### Add Intensity column
+      p.table <- data.frame(p.table,
+                            n = prettyNum(round(components$n)))
+      p.colnames <- c(p.colnames, expression(italic(n)))
+
+      if ("n.error" %in% colnames(components)) {
+        p.table$n <- paste0(p.table$n, " ± ", prettyNum(round(components$n.error)))}
+
+      ### Are shares of initial signal given?
+      if ("initial.signal" %in% colnames(components)){
+        p.table <- data.frame(p.table,
+                              initial = scales::percent(components$initial.signal,
+                                                        suffix = "%",
+                                                        accuracy = 1))
+        p.colnames <- c(p.colnames, expression(italic(I)[0]))}
 
       #if ("n.residual" %in% colnames(components)) {
       #  p.table <- data.frame(p.table,

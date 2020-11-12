@@ -1,7 +1,7 @@
 Package: OSLdecomposition
 Type: Package
 Title: Identify and separate CW-OSL signal components
-Version: 0.11.10
+Version: 0.11.12
 Authors@R: c(
     person("Dirk", "Mittelstrass", email = "dirk.mittelstrass@luminescence.de", role = c("aut", "cre")),
     person("Christoph", "Schmidt", role = c("aut"), comment = c(ORCID = "0000-0002-2309-3209")),

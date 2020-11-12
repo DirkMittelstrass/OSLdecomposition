@@ -32,17 +32,17 @@
 #' Thus, the *K* - 1 model will be recommended as fitting solution.
 #'
 #'
-#' **Photo-ionisation cross-sections**
+#' **Photoionisation cross sections**
 #'
 #' While the function is suited for the analysis of a wide variety of multi-exponential decay problems,
 #' it is target to CW-OSL measurements of quartz under SAR protocol conditions (470 nm stimulation at 125 °C).
 #' To simplify the assignemt of the found components to OSL components found in published literature,
-#' photo-ionisation cross-sections are calculated using the `stimulation.wavelength` \eqn{\lambda_{stim}}  and
+#' photoionisation cross sections are calculated using the `stimulation.wavelength` \eqn{\lambda_{stim}}  and
 #' `stimulation.intensity` \eqn{\Phi_{stim}}:
 #'
 #' \deqn{\sigma_k=\lambda_k {hc / \Phi_{stim}\lambda_{stim}}}
 #'
-#' with \eqn{\sigma_k} the photo-ionisation cross-section of component *k* in cm^2,
+#' with \eqn{\sigma_k} the photoionisation cross section of component *k* in cm^2,
 #' \eqn{\lambda_k} the CW-OSL decay constant in s^-1, *h* the Planck constant and *c* the speed of light.
 #'
 #' If a `stimulation.intensity` larger or equal than 460 nm and lower or equal than 485 nm is defined,
@@ -72,14 +72,14 @@
 #' *K* < 7 is recommended
 #'
 #' @param F.threshold [numeric] (*with default*):
-#' Fitting stop criterion. If the F-value is lower than this threshold, the fitting procedure stops and the K - 1 fitting is returned
+#' Fitting stop criterion. If the F-value is lower than this threshold, the fitting procedure stops and the K - 1 fit is returned
 #'
 #' @param stimulation.intensity [numeric] (*with default*):
-#' Intensity of optical stimulation in *mW / cm²*. Used to calculate photo-ionisation cross-sections.
+#' Intensity of optical stimulation in *mW / cm²*. Used to calculate photoionisation cross sections.
 #'
 #' @param stimulation.wavelength [numeric] (*with default*):
-#' Wavelength of optical stimulation in *nm*. Used to calculate photo-ionisation cross-sections.
-#' If a wavelength between 465 and 480 nm is chosen, the photo-ionisation cross-sections are set into
+#' Wavelength of optical stimulation in *nm*. Used to calculate photoionisation cross sections.
+#' If a wavelength between 465 and 480 nm is chosen, the cross sections are set into
 #' relation with literature values to name the signal components
 #'
 #' @param verbose [logical] (*with default*):
@@ -129,7 +129,7 @@
 #' @return
 #'
 #' If `output.complex = FALSE`, a [data.frame] is returned. It contains the signal decay rates
-#' and signal intensities of the best suiting fitting. The fitting was either chosen by the F-test or
+#' and signal intensities of the best fit. The best fit was either chosen by the F-test or
 #' the last sucessful fitting iteration.
 #'
 #' If `output.complex = TRUE`, a [list] of objects is returned:
@@ -137,13 +137,13 @@
 #' \tabular{lll}{
 #'  **Element** \tab **Type** \tab **Description**\cr
 #'  `decay.rates` \tab `numeric` \tab [vector] of the best suiting decay rates \cr
-#'  `K.selected` \tab `numeric` \tab number of components of the best suiting fitting \cr
+#'  `K.selected` \tab `numeric` \tab number of components of the best fit \cr
 #'  `F.test` \tab `data.frame` \tab table containing the F-test parameter and the decay rates of each fitting model \cr
 #'  `F.test.print` \tab `data.frame` \tab the same table as above, but formated for pretty console and report output \cr
 #'  `info.text` \tab `character` \tab collected messages from the algorithms \cr
 #'  `component.tables` \tab `list` \tab result [data.frame]s for all tested models \cr
 #'  `curve` \tab `data.frame` \tab fitted time-signal-curve \cr
-#'  `components` \tab `data.frame` \tab best suiting fitting; same object as `output.complex = FALSE` returns \cr
+#'  `components` \tab `data.frame` \tab best fit; same object as `output.complex = FALSE` returns \cr
 #'  `fit.results` \tab `list` \tab [list] of [nls] objects for all tested models \cr
 #'  `plot.data` \tab `data.frame` \tab factorized results for overview plotting with [plot_PhotoCrosssections] \cr
 #'  `parameters` \tab `list` \tab function arguments and the needed computing time
@@ -471,7 +471,7 @@ fit_OSLcurve <- function(
                        data.frame(lambda = lambda,
                                   lambda.low = lambda - lambda_error,
                                   lambda.up = lambda + lambda_error,
-                                  name = factor(paste0("Fit with K = ", K)),
+                                  name = factor(paste0("Best fit with K = ", K)),
                                   x = K))
     #x <- x + 1
 
