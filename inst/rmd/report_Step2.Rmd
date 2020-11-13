@@ -15,13 +15,11 @@ params:
   image_format: !r c("png")
   image_path: !r c(NULL)
 ---
-Report of the [Mittelstraß *et al.* (2021)](#disclaimer) Step 2 analysis of the data set **`r object_name`** performed with the function `RLum.OSL_decomposition()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` executed at `r Sys.time()`.
 
-***
 
 ```{r step2_setup, include=FALSE}
 
-Last_changed <-"2020-09-03" 
+Last_changed <-"2020-11-13" 
 
 # ToDo's:
 # * Bug: The barplots sort the columns alphabetically
@@ -84,6 +82,14 @@ record_type <- dec_data$parameters$record_type
 background_fitting <- dec_data$parameters$background_fitting
 input_table <- dec_data$decompositon.input
 ```
+
+`r record_type` signal component identification report for data set **`r object_name`** analysed by function `RLum.OSL_global_fitting()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` and performed at `r Sys.time()`.
+
+***
+
+Report of the [Mittelstraß *et al.* (2021)](#disclaimer) Step 2 analysis of the data set **`r object_name`** performed with the function `RLum.OSL_decomposition()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` executed at `r Sys.time()`.
+
+***
 
 
 ## Basics
