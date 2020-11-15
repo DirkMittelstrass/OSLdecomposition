@@ -246,7 +246,7 @@ RLum.OSL_decomposition <- function(
     if(verbose) cat("(time needed:", round(as.numeric(Sys.time() - time.start), digits = 2),"s)\n\n")
     time.start <- Sys.time()}
 
-  if (verbose) cat("Iterate minimum denominator determinant:\n[optimise_OSLintervals()]: ")
+  if (verbose) cat("Find intervals with lowest component cross correlation by maximising the denominator determinant in Cramers rule:\n")
   component_table <- optimise_OSLintervals(component_table,
                                            global_curve,
                                            background.component = background_fitting,
@@ -338,8 +338,8 @@ RLum.OSL_decomposition <- function(
 
         report_format <- "html"
         # for test purposes:
-        #rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
-        rmd_path <- system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")
+        rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
+        #rmd_path <- system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")
 
         output_path <- getwd()
         output_file <- paste0(output_path, "/", "report_Step2.", report_format)

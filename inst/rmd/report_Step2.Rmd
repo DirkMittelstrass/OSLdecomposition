@@ -19,7 +19,7 @@ params:
 
 ```{r step2_setup, include=FALSE}
 
-Last_changed <-"2020-11-13" 
+Last_changed <-"2020-11-16" 
 
 # ToDo's:
 # * Bug: The barplots sort the columns alphabetically
@@ -52,14 +52,25 @@ knitr::opts_chunk$set(fig.width=7,
                       echo=FALSE,
                       cache=FALSE)
 ## set ggplot design 
-# (just for directly plotted diagrams. sub-function plot are not affected)
-theme_set(theme_minimal())
+plot_theme <- theme_classic()
+theme_set(plot_theme)
 graph_colors <- c("red3","green3","royalblue3","darkorchid","gold","brown","pink")
+text_format <- ggplot2::theme(axis.title = ggplot2::element_text(size = 9),
+                     plot.subtitle = ggplot2::element_text(size = 10, face = "bold"),
+                     legend.position = c(1, 1), legend.justification = c("right", "top"),
+                     legend.title = ggplot2::element_blank(),
+                     legend.text = ggplot2::element_text(size = 9))
 
 # Not every list element in the data set may contain the selected record_type
 # so we have to collect the data indices in a seperate list
 record <- list()
 n.curves <- 0
+
+# assign some local objects just for better readable code:
+K <- nrow(dec_data$decompositon.input)
+record_type <- dec_data$parameters$record_type
+background_fitting <- dec_data$parameters$background_fitting
+input_table <- dec_data$decompositon.input
 
 for (j in 1:length(data_set)) {
 
@@ -76,11 +87,7 @@ for (j in 1:length(data_set)) {
     record[[""]] <- list(sequence = j, 
                          index = index)}}
 
-# assign some local objects just for better readable code:
-K <- nrow(dec_data$decompositon.input)
-record_type <- dec_data$parameters$record_type
-background_fitting <- dec_data$parameters$background_fitting
-input_table <- dec_data$decompositon.input
+
 ```
 
 `r record_type` signal component identification report for data set **`r object_name`** analysed by function `RLum.OSL_global_fitting()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` and performed at `r Sys.time()`.
@@ -154,6 +161,20 @@ for (j in 1:length(record)) {
 
   colnames(aliquot_table) <- c("record index", "irradiation time (s)")
   
+  ### Define Lx and Tx data points
+  
+  result <- data.frame(result, type = factor("?", levels = c("?", "Lx", "Tx")))
+  
+  # Where is the highest regenerated dose?
+  max_Lx <- which.max(result$IRR_TIME[2:length(result$IRR_TIME)]) + 1
+  
+  # get a index sequence: i = 3, 5, 7, 9
+  i_Lx <- 1:((max_Lx - 1)/2) * 2 + 1
+  result$type[i_Lx] <- "Lx"
+  
+  i_Tx <- 1:(nrow(result)/2) * 2
+  result$type[i_Tx] <- "Tx"
+  
   for (k in 1:K) {
     
     intensities <- result[,colnames(result) == paste0("n.", k)]
@@ -168,11 +189,22 @@ for (j in 1:length(record)) {
     # Include component only in the bar-plot if it is bleached to at least 50 %
     bleaching_grade <- 1 - sum(result[,colnames(result) == paste0("n.residual.", k)], na.rm = TRUE) / 
                            sum(intensities, na.rm = TRUE)
-    if (bleaching_grade > 0.5) {
+    if (bleaching_grade >= 0.5) {
          # Append current component to Figure 2 plot data
-      plot_table <- rbind(plot_table, data.frame(x_axis = 1:length(intensities),
-                                               y_axis = intensities,
-                                               component = input_table$name[k]))}}
+      plot_table <- rbind(plot_table, 
+                          data.frame(x_axis = 1:length(intensities),
+                                     y_axis = intensities,
+                                     y_lower = intensities - sigmas,
+                                     y_upper = intensities + sigmas,
+                                     component = factor(input_table$name[k], 
+                                                        levels = input_table$name),
+                                     type = result$type))
+      
+      
+      }
+    }
+  
+  
   
   intensity_tables[[j]] <- aliquot_table
   barplots[[j]] <- plot_table
@@ -211,18 +243,24 @@ tabs <- lapply(as.list(1:length(record)),
 
 The behaviour of the signal component intensities in the course of measurement sequences contains information about irradiation and bleaching response and thermal- or photo-transfer effects of the associated defect states. Figure 1 gives a first graphical overview of the results shown in table 1. Signal components with bleaching grades under 50 % are excluded for figure 1 to prevent scaling issues.
 
+To prevent scaling issues and data misinterpretations, just components which were bleached to at least 95 % during the analysed time window were used.
+
 ```{r step2_create_result_tabs2} 
 dynamic_code <- c("#### #{{j}}\n",
                   
     # Draw the intensity barplot
     "```{r tab_{{j}}_result_barplot}\n",
-    "ggplot(barplots[[{{j}}]], aes(fill=component, y=y_axis, x=x_axis)) + ",
-    "geom_bar(position=\"dodge\", stat=\"identity\") + ",
-    "scale_x_continuous(name = paste0(\"measurement no. & received dose\"),",
-                     "breaks = barplot_labels[[{{j}}]]$breaks,",
-                     "labels = barplot_labels[[{{j}}]]$labels) +",
-    "scale_y_continuous(name = \"signal component intensity\", labels = scientific) +", #, labels = scientific
-    "scale_fill_manual(values = graph_colors) + theme(legend.title = element_blank())\n",
+    "ggplot(barplots[[{{j}}]], aes(color = component, y = y_axis, x = x_axis)) +
+     geom_pointrange(aes(ymin = y_lower, ymax = y_upper)) +
+     geom_line(data = barplots[[{{j}}]][barplots[[{{j}}]]$type == \"Lx\",], 
+            aes(color = component), linetype = \"dotted\", show.legend = FALSE) +
+     geom_line(data = barplots[[{{j}}]][barplots[[{{j}}]]$type == \"Tx\",], 
+            aes(color = component), linetype = \"dotted\", show.legend = FALSE) +
+     scale_x_continuous(breaks = barplot_labels[[{{j}}]]$breaks, labels = barplot_labels[[{{j}}]]$labels) +
+     scale_y_continuous(labels = scales::label_number_auto()) + 
+     labs(subtitle = \"Signal component intensities over measurement sequence\", 
+       x = \"Measurement no. / Received dose (s)\", y = \"Intensity\") +
+     scale_fill_manual(values = graph_colors) + text_format",
     "```\n",
     "<i><b>Figure 1.`r {{j}}`:</b> `r record_type` signal component intensities ",
     "of measurement sequence `r {{j}}`. Just component which are bleached to at least 50 % during",
