@@ -57,7 +57,8 @@
 #' @param image_format [character] (*with default*):
 #' Image format of the automatically saved graphs if `report = TRUE`.
 #' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
-#' and more, see [ggplot2::ggsave]. The images are saved in the working directory subfolder `/report_figures`
+#' and more, see [ggplot2::ggsave]. The images are saved in the working directory subfolder `/report_figures`.
+#' Set `image_format = NULL` if no images shall be saved
 #'
 #' @param verbose [logical] (*with default*):
 #' Enables console text output
@@ -343,10 +344,12 @@ RLum.OSL_decomposition <- function(
 
         output_path <- getwd()
         output_file <- paste0(output_path, "/", "report_Step2.", report_format)
-        image_path <- paste0(output_path, "/report_figures/")
 
-        if (!(dir.exists(image_path))) dir.create(image_path)
-        cat("Save", toupper(image_format), "images to:", image_path, "\n")
+        image_path <- NULL
+        if (!is.null(image_format)) {
+
+          image_path <- paste0(output_path, "/report_figures/")
+          if (!(dir.exists(image_path))) dir.create(image_path)}
 
         rmarkdown::render(rmd_path,
                           params = list(dec_data = dec_data,
@@ -358,12 +361,13 @@ RLum.OSL_decomposition <- function(
                           output_format = paste0(report_format,"_document"),
                           quiet = TRUE)
 
-        cat("Save", toupper(report_format), "report to:", output_file, "\n")
+        cat("Saved", toupper(report_format), "report to:", output_file, "\n")
+        if (!is.null(image_format)) cat("Saved", toupper(image_format), "images to:", image_path, "\n")
 
         # ToDo: Replace the following try() outside the big try
         try({
           utils::browseURL(output_file)
-          cat("Open", toupper(report_format), "report in your systems standard browser\n")})
+          cat("Opened", toupper(report_format), "report in your systems standard browser\n")})
 
         if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")})
 

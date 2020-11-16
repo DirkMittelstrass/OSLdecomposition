@@ -43,6 +43,12 @@
 #' Draws vertical lines into the residual plot showing the signal bin intervals for Step 2 CW-OSL
 #' decomposition (if available)
 #'
+#' @param show.crosssec [logical] (*with default*):
+#' Displays photoionisation cross section values in the component table (if available)
+#'
+#' @param show.initial [logical] (*with default*):
+#' Displays signal share at the first channel in the component table (if available)
+#'
 #' @param theme.set [ggplot2] object (*with default*):
 #' Graphical theme of the output plot. Input is forwarded to [ggplot2::theme_set].
 #' Recommended themes are `ggplot2::theme_minimal()`, `ggplot2::theme_classic()` and `ggplot2::theme_bw()`,
@@ -50,7 +56,9 @@
 #' a full list
 #'
 #' @param title [character] (*with default*):
-#' Plot title. Set `title = NULL` for no title
+#' Plot title. Overrides automatic titles but affects just first (upper left)
+#' graph in case of multi-graph display setting.
+#' Set `title = NULL` for auto-title and `title = ""` for no title
 #'
 #' @param hide.plot [logical] (*with default*):
 #' If true, plot is not drawn but can still be saved as files or catched by `A <- plot_OSLcurve()`.
@@ -65,7 +73,7 @@
 #'
 #' @section Last updates:
 #'
-#' 2020-11-11, DM: Improved parameter table
+#' 2020-11-16, DM: Added parameter `show.crosssec` and `show.initial`
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -105,6 +113,8 @@ plot_OSLcurve <- function(curve = NULL,
                           display = "detailed",
                           show.legend = TRUE,
                           show.intervals = FALSE,
+                          show.crosssec = FALSE,
+                          show.initial = FALSE,
                           theme.set = ggplot2::theme_classic(),
                           title = NULL,
                           hide.plot = FALSE,
@@ -121,18 +131,13 @@ plot_OSLcurve <- function(curve = NULL,
 # * 2020-09-02, DM: Added graphic saving with [ggplot2::ggsave]
 # * 2020-11-03, DM: Refactored code; Changed parameter `display` choices and added parameters `theme.set` and `show.legend`
 # * 2020-11-11, DM: Improved parameter table
+# * 2020-11-16, DM: Added parameter `show.crosssec` and `show.initial`
 #
 # ToDo:
-# * ! Put the ggplot building (or at least its style options) in its own sub-function
-# * ! Enable option to display legends
-# * Change big numbers to scientific format
-# * Restructure options of 'display' argument
 # * When drawing components without curve, skip residual curve
 # * Display fitting formula
-#
-# * Get rid of library 'ggpubr' to decrease dependencies
 # * Add argument ggsave.control() to give direct control about image saving
-# * Add table column for the lambda error
+# * Add lambda error in the component table
 
 
   # necessary libraries: gridExtra, ggplot2, ggpubr, scales
@@ -241,8 +246,16 @@ plot_OSLcurve <- function(curve = NULL,
 
   if ((display == "detailed") | (display == "lin") | (display == "compare_lin")) {
 
-    subtitle <- "CW-OSL"
-    if (display == "lin") subtitle <- NULL
+    if (is.null(title)) {
+
+      subtitle <- "CW-OSL"
+     # if (display == "lin") subtitle <- NULL
+
+    }else{
+
+      subtitle <- title
+      title <- NULL}
+
 
     p.lin <- ggplot2::ggplot(data, ggplot2::aes(x = time, y = signal, colour = graph,
                                                 size = graph, shape = graph, linetype = graph)) +
@@ -262,8 +275,15 @@ plot_OSLcurve <- function(curve = NULL,
 
   if ((display == "log") | (display == "compare_log")) {
 
-    subtitle <- "CW-OSL (logarithmic scale)"
-    if (display == "log") subtitle <- NULL
+    if (is.null(title)) {
+
+      subtitle <- "CW-OSL (logarithmic scale)"
+      #if (display == "log") subtitle <- NULL
+
+    }else{
+
+      subtitle <- title
+      title <- NULL}
 
     p.log <- ggplot2::ggplot(data, ggplot2::aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
       ggplot2::geom_point(na.rm = TRUE) + ggplot2::geom_line(na.rm = TRUE) +
@@ -282,6 +302,15 @@ plot_OSLcurve <- function(curve = NULL,
 
   if (display == "loglog") {
 
+    if (is.null(title)) {
+
+      subtitle <- "CW-OSL (double logarithmic scale)"
+
+    }else{
+
+      subtitle <- title
+      title <- NULL}
+
     p.loglog <- ggplot2::ggplot(data, ggplot2::aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +
       ggplot2::geom_point(na.rm = TRUE) + ggplot2::geom_line(na.rm = TRUE) +
       ggplot2::scale_y_log10(limits = log_limits,
@@ -294,7 +323,7 @@ plot_OSLcurve <- function(curve = NULL,
       ggplot2::scale_size_manual(values = graph.sizes, labels = graph.labels, guide = guide) +
       ggplot2::scale_shape_manual(values = graph.shapes, labels = graph.labels, guide = guide) +
       ggplot2::scale_linetype_manual(values = graph.lines, labels = graph.labels, guide = guide) +
-      ggplot2::labs(x = "Time (s)", y = "Signal (cts)") +
+      ggplot2::labs(subtitle = subtitle, x = "Time (s)", y = "Signal (cts)") +
       text_format}
 
 
@@ -302,8 +331,15 @@ plot_OSLcurve <- function(curve = NULL,
 
   if ((display == "detailed") | (display == "LM")) {
 
-    subtitle <- "pseudoLM-OSL"
-    if (display == "LM") subtitle <- NULL
+    if (is.null(title)) {
+
+      subtitle <- "pseudoLM-OSL"
+      #if (display == "LM") subtitle <- NULL
+
+    }else{
+
+      subtitle <- title
+      title <- NULL}
 
     # transform data
     P = 2*max(time)
@@ -332,7 +368,16 @@ plot_OSLcurve <- function(curve = NULL,
       (display == "compare_log") | (display == "res")) {
 
     res <- curve$residual
-    res_text <- paste0("Residual (RSS = ", formatC(sum(res^2, na.rm = TRUE)), ")")
+
+    if (is.null(title)) {
+
+      res_text <- paste0("Residual (RSS = ", prettyNum(sum(res^2, na.rm = TRUE), digits = 1), ")")
+
+    }else{
+
+      res_text <- title
+      title <- NULL}
+
 
     # set y-axis
     res.max <- ceiling(abs(max(res))) + 1
@@ -403,7 +448,7 @@ plot_OSLcurve <- function(curve = NULL,
                             lambda = print.lambda)
 
       ### Are photo cross-sections given?
-      if ("cross.section" %in% colnames(components)){
+      if (show.crosssec & ("cross.section" %in% colnames(components))){
         p.table <- data.frame(p.table,
                               cross = prettyNum(components$cross.section, digits = 3))
         p.colnames <- c(p.colnames, expression(italic(sigma) ~~ (cm^2)))}
@@ -417,19 +462,12 @@ plot_OSLcurve <- function(curve = NULL,
         p.table$n <- paste0(p.table$n, " ± ", prettyNum(round(components$n.error)))}
 
       ### Are shares of initial signal given?
-      if ("initial.signal" %in% colnames(components)){
+      if (show.initial & ("initial.signal" %in% colnames(components))){
         p.table <- data.frame(p.table,
                               initial = scales::percent(components$initial.signal,
                                                         suffix = "%",
                                                         accuracy = 1))
         p.colnames <- c(p.colnames, expression(italic(I)[0]))}
-
-      #if ("n.residual" %in% colnames(components)) {
-      #  p.table <- data.frame(p.table,
-      #                        n.residual = prettyNum(round(components$n.residual)))
-      #  p.colnames <- c(p.colnames,
-      #                  expression(tail[italic(n)]))
-      #  p.table$n.residual[is.na(p.table$n.residual)] <- ""}
 
 
       colnames(p.table) <- p.colnames
@@ -489,48 +527,48 @@ plot_OSLcurve <- function(curve = NULL,
                     rep(4, 5 + tab.shift)),
                   ncol = 2)
 
-    plot_object <- gridExtra::arrangeGrob(p.lin, p.res, p.LM, p.tab, layout_matrix = lay, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.lin, p.res, p.LM, p.tab, layout_matrix = lay)
 
 
   } else if (display == "compare_lin") {
 
     lay <- rbind(c(1), c(1), c(2), c(3))
 
-    plot_object <- gridExtra::arrangeGrob(p.lin, p.res, p.tab, layout_matrix = lay, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.lin, p.res, p.tab, layout_matrix = lay)
 
   } else if (display == "compare_log") {
 
     lay <- rbind(c(1), c(1), c(2), c(3))
 
-    plot_object <- gridExtra::arrangeGrob(p.log, p.res, p.tab, layout_matrix = lay, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.log, p.res, p.tab, layout_matrix = lay)
 
   } else if (display == "lin") {
 
-    plot_object <- gridExtra::arrangeGrob(p.lin, nrow = 1, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.lin, nrow = 1)
 
   } else if (display == "log") {
 
-    plot_object <- gridExtra::arrangeGrob(p.log, nrow = 1, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.log, nrow = 1)
 
   } else if (display == "loglog") {
 
-    plot_object <- gridExtra::arrangeGrob(p.loglog, nrow = 1, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.loglog, nrow = 1)
 
   } else if (display == "LM") {
 
-    plot_object <- gridExtra::arrangeGrob(p.LM, nrow = 1, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.LM, nrow = 1)
 
   } else if (display == "res") {
 
-    plot_object <- gridExtra::arrangeGrob(p.res, nrow = 1, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.res, nrow = 1)
 
   } else if (display == "tab") {
 
-    plot_object <- gridExtra::arrangeGrob(p.tab, nrow = 1, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.tab, nrow = 1)
 
   } else if (display == "raw") {
 
-    plot_object <- gridExtra::arrangeGrob(p.raw, nrow = 1, top = title)
+    plot_object <- gridExtra::arrangeGrob(p.raw, nrow = 1)
 
   } else {
 
@@ -541,7 +579,8 @@ plot_OSLcurve <- function(curve = NULL,
   # save plot as file
   if (!is.null(filename)) {
 
-    try(ggplot2::ggsave(filename, plot = plot_object, units = "cm"), silent = FALSE)}
+    try(suppressMessages(ggplot2::ggsave(filename, plot = plot_object, units = "cm")),
+        silent = FALSE)}
 
   # show plot
   if (!hide.plot) gridExtra::grid.arrange(plot_object)

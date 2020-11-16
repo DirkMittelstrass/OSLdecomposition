@@ -12,7 +12,7 @@ params:
   fit_data: !r list(NULL)
   data_set: !r list(NULL)
   object_name: !r c("")
-  image_format: !r c("png")
+  image_format: !r c(NULL)
   image_path: !r c(NULL)
 ---
 
@@ -21,7 +21,7 @@ params:
  #   mathjax: local
   #  self_contained: false
 
-Last_changed <- "2020-11-13"
+Last_changed <- "2020-11-16"
 
 library(kableExtra)
 library(knitr)
@@ -30,6 +30,7 @@ library(gridExtra)
 library(scales)
 
 plot_theme <- theme_classic()
+image_file <- NULL
 
 knitr::opts_chunk$set(fig.width=7,
                       fig.asp=.6,
@@ -48,7 +49,7 @@ for (j in 1:length(data_set)) {
   n.curves <- n.curves + sum(names(data_set[[j]]) == record_type)}
 ```
 
-`r record_type` signal component identification report for data set **`r object_name`** analysed by function `RLum.OSL_global_fitting()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` and performed at `r Sys.time()`.
+`r record_type` signal component identification report for data set **`r object_name`** analysed by function `RLum.OSL_global_fitting()` at `r Sys.time()`; *R* package [**OSLdecomposition**](http://luminescence.de/) version  `r packageVersion("OSLdecomposition")` by [Mittelstraß *et al.* (2019)](#disclaimer)
 
 ***
 
@@ -64,6 +65,8 @@ Constant signal component decay rates $\lambda$ over all measurements were assum
 #### Global average
 ```{r step1_draw_global_curve, fig.width=7, fig.asp=.4}
 
+if (!is.null(image_format)) image_file <- paste0(image_path, "step1_fig1_1_global_average.", image_format)
+
 sum_OSLcurves(data_set,
               record_type = record_type,
               output.plot = TRUE,
@@ -71,26 +74,29 @@ sum_OSLcurves(data_set,
               plot.first = FALSE,
               title = NULL,
               verbose = FALSE,
-              filename = paste0(image_path, "step1_fig1_1_global_average.", image_format))
+              filename = image_file)
 
 cat(paste0("<br><i><b>Figure 1.1:</b> <u>Red line</u>: Global average curve built from the arithmetic mean of all curves. <br><u>Grey points</u>: Data points of all measurements.</i><br><br>"))
 ```
 
 
 
-```{r step1_define_fitting_tabs}
+```{r step1_draw_fittings}
 
 # Define dynamic Rmarkdown code
 dynamic_code <- c(
     "#### K = {{i}}\n",
     "```{r tab_{{i}}}\n",
+    "if (!is.null(image_format)) image_file <- paste0(image_path, \"step1_fig1_{{i+1}}_K={{i}}_fitting.\", image_format)\n",
     "plot_OSLcurve(fit_data$curve, 
                 fit_data$component.tables[[{{i}}]], 
                 title = NULL,
                 show.legend = TRUE,
+                show.crosssec = TRUE,
+                show.initial = FALSE,
                 theme.set = plot_theme,
-                filename = paste0(image_path, \"step1_fig1_{{i+1}}_K={{i}}_fitting.\", image_format))\n",
-    "cat(paste0(\"<br><i><b>Figure 1.{{i+1}}:</b> Fit model with K = {{i}} signal components<br>\", \"<u>Upper left</u>: CW-OSL plot of global average curve and fitting model.<br>\", \"<u>Upper right</u>: pseudoLM-OSL transformed plot<br>\",\"<u>Lower left</u>: Residual curve between fitting and global average curve<br>\",\"<u>Lower right</u>: Estimated type of quartz OSL component (colored), photoionisation cross sections $\\\\sigma$, decay rates $\\\\lambda$, signal intensity $n$ and share at initial signal $I_0$.</i><br><br>\"))",
+                filename = image_file)\n",
+    "cat(paste0(\"<br><i><b>Figure 1.{{i+1}}:</b> Fit model with K = {{i}} signal components<br>\", \"<u>Upper left</u>: CW-OSL plot of global average curve and fitting model.<br>\", \"<u>Upper right</u>: pseudoLM-OSL transformed plot<br>\",\"<u>Lower left</u>: Residual curve between fitting and global average curve<br>\",\"<u>Lower right</u>: Estimated type of quartz OSL component (colored), photoionisation cross sections $\\\\sigma$, decay rates $\\\\lambda$ and signal intensity $n$.</i><br><br>\"))",
     "```\n"
   )
 
@@ -115,10 +121,12 @@ Under the assumption that the provided optical stimulation parameters ($\lambda_
 #cross.plot.height <- (cross.plot.height + 2 + K.selected) * 0.01
 #knitr::opts_current$set(fig.asp = cross.plot.height)
 
+if (!is.null(image_format)) image_file <- paste0(image_path, "step1_fig2_cross-sections.", image_format)
+
 plot_PhotoCrosssections(fit_data,
                         stimulation.intensity = fit_data$parameters$stimulation.intensity,
                         stimulation.wavelength = fit_data$parameters$stimulation.wavelength,
-                        filename = paste0(image_path, "step1_fig2_cross-sections.", image_format))
+                        filename = image_file)
 
 # <font color=\"black\"> </font>
 

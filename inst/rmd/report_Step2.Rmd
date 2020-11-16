@@ -12,7 +12,7 @@ params:
   dec_data: !r list(NULL)
   data_set: !r list(NULL)
   object_name: !r c("")
-  image_format: !r c("png")
+  image_format: !r c(NULL)
   image_path: !r c(NULL)
 ---
 
@@ -61,6 +61,8 @@ text_format <- ggplot2::theme(axis.title = ggplot2::element_text(size = 9),
                      legend.title = ggplot2::element_blank(),
                      legend.text = ggplot2::element_text(size = 9))
 
+image_file <- NULL
+
 # Not every list element in the data set may contain the selected record_type
 # so we have to collect the data indices in a seperate list
 record <- list()
@@ -90,59 +92,7 @@ for (j in 1:length(data_set)) {
 
 ```
 
-`r record_type` signal component identification report for data set **`r object_name`** analysed by function `RLum.OSL_global_fitting()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` and performed at `r Sys.time()`.
-
-***
-
-Report of the [Mittelstraß *et al.* (2021)](#disclaimer) Step 2 analysis of the data set **`r object_name`** performed with the function `RLum.OSL_decomposition()` from the **R** package `OSLdecomposition`  `r packageVersion("OSLdecomposition")` executed at `r Sys.time()`.
-
-***
-
-
-## Basics
-<font color="black">
-
-We assume that all CW-OSL signal curves in this data set can be sufficently described by a sum of exponential decays with first order kinetics:
-
-$$I(t) = \sum_{i=1}^K n_ie^{-\lambda_it}$$
-Here, $I(t)$ is the CW-OSL signal, $K$ is the number of signal components. Each component is defined by its intensity $n$ and its decay rate $\lambda$.  
-
-To get component-seperated dose information, we divide the data analysis process into multiple steps:
-
-<center>
-
-![](overview_Step2.png)
-
-</center>
-
-This report displays the results of Step 2, performed by `OSLdecomposition::RLum.OSL_decomposition()`. In  Step 1 we determined the number of components $K$ and their decay rates $\lambda_1, ..., \lambda_K$:
-
-```{r step2_decay_rate_list}
-cat(paste0("* $K=", K,"$\n"))
-for (k in 1:K) {
-  cat(paste0("* $\\lambda_", k,"=", round(input_table$lambda[k], digits = 4),
-             "$ $s^{-1}$ (", input_table$name[k],")\n"))}
-```
-
-We assume that the decay rates $\lambda$ are similar for all measurements and set them as global constants. Thus, each CW-OSL decay curve can be described by:
-
-```{r step2_draw_formula}
-append_B <- ""
-if (background_fitting) append_B <- "+B"
-
-# Draw basic formula
-cat("$$I(t) = ", paste(paste0("n_",1:K, "e^{-",round(input_table$lambda, digits = 4),"t}"), collapse = "+"), append_B, "$$")
-```
-
-
-To calculate `r paste0("$",paste(paste0("n_",1:K), collapse =","),"$")` for all CW-OSL measurements, we divide each signal curve into *K* = `r K` [signal bins](#bins), build an equation system and [solve this analytical](#decomposition).
-
-
-## Results
-
-The processed data set consists of `r length(data_set)` `RLum.Analysis` objects. Each `RLum.Analysis` object represents one measurement sequence and therefore one aliquot, or one grain in case of single grain data.
-
-```{r step2_create_tab_data} 
+```{r step2_prepare_data} 
 ### This chunk rearranges the data for the dynamic tabs, no direct output is produced
 
 intensity_tables <- list()
@@ -189,7 +139,7 @@ for (j in 1:length(record)) {
     # Include component only in the bar-plot if it is bleached to at least 50 %
     bleaching_grade <- 1 - sum(result[,colnames(result) == paste0("n.residual.", k)], na.rm = TRUE) / 
                            sum(intensities, na.rm = TRUE)
-    if (bleaching_grade >= 0.5) {
+    if (bleaching_grade >= 0.95) {
          # Append current component to Figure 2 plot data
       plot_table <- rbind(plot_table, 
                           data.frame(x_axis = 1:length(intensities),
@@ -215,9 +165,158 @@ for (j in 1:length(record)) {
 }
 ```
 
+
+`r record_type` component separation report for data set **`r object_name`** analysed by function `RLum.OSL_decomposition()` at `r Sys.time()`; *R* package [**OSLdecomposition**](http://luminescence.de/) version  `r packageVersion("OSLdecomposition")` by [Mittelstraß *et al.* (2019)](#disclaimer)
+
+***
+
+<font color="black">
+
+## Results
+
+The decompositon process calculates the signal component intensities $n$ and their standard deviations $\sigma$. The intensity values $n$ equal the areas under the component curves (including the remaining virtual signal beyond the stimulation end) and have the same unit as the detector signal (usually *counts* or *mA*). 
+
+The processed data set consists of `r length(data_set)` `RLum.Analysis` objects. Each `RLum.Analysis` object represents one measurement sequence and therefore one aliquot, or one grain in case of single grain data.
+
+This report displays the results of Step 2, performed by `OSLdecomposition::RLum.OSL_decomposition()`. In  Step 1 we determined the number of components $K$ and their decay rates $\lambda_1, ..., \lambda_K$:
+
+```{r step2_decay_rate_list}
+cat(paste0("* $K=", K,"$\n"))
+for (k in 1:K) {
+  cat(paste0("* $\\lambda_", k,"=", round(input_table$lambda[k], digits = 4),
+             "$ $s^{-1}$ (", input_table$name[k],")\n"))}
+```
+
+We assume that the decay rates $\lambda$ are similar for all measurements and set them as global constants. Thus, each CW-OSL decay curve can be described by:
+
+```{r step2_draw_formula}
+append_B <- ""
+if (background_fitting) append_B <- "+B"
+
+# Draw basic formula
+cat("$$I(t) = ", paste(paste0("n_",1:K, "e^{-",round(input_table$lambda, digits = 4),"t}"), collapse = "+"), append_B, "$$")
+```
+
+
+
+### First two records {.tabset .tabset-pills}
+
+With all parameters of our fundamental equation now known, the CW-OSL decay curve can now be modelled. The plots in figure 2 allow the evaluation of the model quality for the first two measurements in each sequence.
+
+```{r step2_draw_OSLcurves} 
+# Define dynamic Rmarkdown code
+dynamic_code <- c(
+  
+    # Tab header
+    "#### #{{j}}\n",
+    
+    # Start dynamic code section with an R chunk
+    "```{r tab_{{j}}_OSL_plots, fig.asp=0.8}\n", 
+    
+    # Create first plot (Natural dose)
+    "record_1 <- data_set[[record[[{{j}}]]$sequence]]@records[[record[[{{j}}]]$index[1]]]\n",
+    "plot_1 <- plot_OSLcurve(record_1, record_1@info$COMPONENTS,
+                             display = \"compare_lin\", title = \"Natural dose CW-OSL\",
+                             show.intervals = TRUE, show.crosssec = FALSE, show.legend = FALSE,
+                             show.initial = TRUE, hide.plot = TRUE)\n",
+    
+    # Create second plot (Test dose)
+    "record_2 <- data_set[[record[[{{j}}]]$sequence]]@records[[record[[{{j}}]]$index[2]]]\n",
+    "plot_2 <- plot_OSLcurve(record_2, record_2@info$COMPONENTS,
+                             display = \"compare_lin\", title = \"First test dose CW-OSL\",
+                             show.intervals = TRUE, show.crosssec = FALSE, show.legend = FALSE,
+                             show.initial = TRUE, hide.plot = TRUE)\n",
+    
+    # Put plots side by side and display them
+    "grid.arrange(plot_1, plot_2, layout_matrix = t(matrix(c(1, 2))))\n",
+    
+    # Save image
+    "if (!is.null(image_format)) {
+        image_file <- paste0(image_path, \"step2_fig2_{{j}}_First_records_aliquot_{{j}}.\", image_format)\n
+        try(suppressMessages(ggplot2::ggsave(image_file, units = \"cm\")), silent = FALSE)}\n",
+    
+    # end R chunk
+    "```\n",
+    
+    # Write captions
+    "<i><b>Figure 2.`r {{j}}`:</b> Signal components and residual curve of first two `r record_type` records.<br>",
+    "<u>Upper left:</u> First CW-OSL measurement (index = `r record[[{{j}}]]$index[1]`),",
+    " usually natural or recovered dose signal ($L_n$).<br>",
+    "<u>Upper right:</u> Second CW-OSL measurement (index = `r record[[{{j}}]]$index[2]`),",
+    " usually test-dose signal ($T_n$).<br>",
+    "<u>Middle</u>: Residual curves between decomposition model and measurement<br>",
+    "<u>Lower right</u>: Estimated type of quartz OSL component (colored), decay rates $\\\\lambda$, signal intensity $n$ and share at first channel $I_0$.</i><br><br>\n")
+
+
+### ALTERNATIVE MORE VARIABLE (but buggy) PLOT ASSIGNEMENT:
+#    "plot_objects <- list()\n",
+#    "for (i in record_index[[{{j}}]][1:2]) {\n",
+#    "record <- data_set[[{{j}}]]@records[[i]]\n",
+#    "plot_objects <- c(plot_objects, 
+#                      plot_OSLcurve(record,
+#                                     record@info$COMPONENTS,
+#                                     display = \"compare_lin\",
+#                                     hide_plot = TRUE))}\n",
+
+tabs <- lapply(as.list(1:length(record)), function(j) knitr::knit_expand(text = dynamic_code))
+```
+`r knitr::knit(text = unlist(tabs))`
+
+<br><br>
+
+
+
+### Intensity over sequence {.tabset .tabset-pills}
+
+The behaviour of the signal component intensities in the course of measurement sequences contains information about irradiation and bleaching response and thermal- or photo-transfer effects of the associated defect states. Figure 1 gives a first graphical overview of the results shown in table 1. Signal components with bleaching grades under 50 % are excluded for figure 1 to prevent scaling issues.
+
+To prevent scaling issues and data misinterpretations, just components which were bleached to at least 95 % during the analysed time window were used.
+
+```{r step2_create_result_tabs2} 
+
+dynamic_code <- c(
+  
+  # Define tab
+  "#### #{{j}}\n", 
+                  
+  # Start dynamic code section with an R chunk
+  "```{r tab_{{j}}_result_barplot}\n",
+  
+  # Create plot
+  "ggplot(barplots[[{{j}}]], aes(color = component, y = y_axis, x = x_axis)) +
+   geom_pointrange(aes(ymin = y_lower, ymax = y_upper)) +
+   geom_line(data = barplots[[{{j}}]][barplots[[{{j}}]]$type == \"Lx\",], 
+          aes(color = component), linetype = \"dotted\", show.legend = FALSE) +
+   geom_line(data = barplots[[{{j}}]][barplots[[{{j}}]]$type == \"Tx\",], 
+          aes(color = component), linetype = \"dotted\", show.legend = FALSE) +
+   scale_x_continuous(breaks = barplot_labels[[{{j}}]]$breaks, labels = barplot_labels[[{{j}}]]$labels) +
+   scale_y_continuous(labels = scales::label_number_auto()) + 
+   labs(subtitle = \"Signal component intensities over measurement sequence\", 
+     x = \"Measurement no. / Received dose (s)\", y = \"Intensity\") +
+   scale_colour_manual(values = graph_colors) + scale_fill_manual(values = graph_colors) + text_format\n",
+  
+  # Save image
+  "if (!is.null(image_format)) {
+      image_file <- paste0(image_path, \"step2_fig1_{{j}}_Intensities_aliquot_{{j}}.\", image_format)\n
+      try(suppressMessages(ggplot2::ggsave(image_file, units = \"cm\")), silent = FALSE)}\n",
+  
+  # end R chunk
+  "```\n",
+  
+  # Write captions
+  "<i><b>Figure 1.`r {{j}}`:</b> `r record_type` signal component intensities ",
+  "of measurement sequence `r {{j}}`. Just component which are bleached to at least 50 % during",
+  "at the end of the curve are displayed.",
+  "   </i><br><br>\n")
+
+tabs <- lapply(as.list(1:length(record)),
+                function(j) knitr::knit_expand(text = dynamic_code))
+```
+`r knitr::knit(text = unlist(tabs))`
+
+
 ### Intensitiy tables {.tabset .tabset-pills}
 
-The decompositon process calculates the signal component intensities $n$ and their standard deviations $\sigma$. The intensity values $n$ equal the areas under the component curves (including the remaining virtual signal beyond the stimulation end) and have the same unit as the detector signal (usually *counts* or *mA*). Be aware that the uncertainty values $\sigma$ account just for the signal noise. Errors in the decay rate values or the decay kinetics may lead to intensity value $n$ discrepancies without increasing the uncertainty value $\sigma$ enough to sufficiently account for them.
 
 ```{r step2_create_result_tabs1} 
 # Define dynamic Rmarkdown code, structured in tabs
@@ -239,92 +338,40 @@ tabs <- lapply(as.list(1:length(record)),
 ```
 `r knitr::knit(text = unlist(tabs))`
 
-### Intensity plots {.tabset .tabset-pills}
 
-The behaviour of the signal component intensities in the course of measurement sequences contains information about irradiation and bleaching response and thermal- or photo-transfer effects of the associated defect states. Figure 1 gives a first graphical overview of the results shown in table 1. Signal components with bleaching grades under 50 % are excluded for figure 1 to prevent scaling issues.
-
-To prevent scaling issues and data misinterpretations, just components which were bleached to at least 95 % during the analysed time window were used.
-
-```{r step2_create_result_tabs2} 
-dynamic_code <- c("#### #{{j}}\n",
-                  
-    # Draw the intensity barplot
-    "```{r tab_{{j}}_result_barplot}\n",
-    "ggplot(barplots[[{{j}}]], aes(color = component, y = y_axis, x = x_axis)) +
-     geom_pointrange(aes(ymin = y_lower, ymax = y_upper)) +
-     geom_line(data = barplots[[{{j}}]][barplots[[{{j}}]]$type == \"Lx\",], 
-            aes(color = component), linetype = \"dotted\", show.legend = FALSE) +
-     geom_line(data = barplots[[{{j}}]][barplots[[{{j}}]]$type == \"Tx\",], 
-            aes(color = component), linetype = \"dotted\", show.legend = FALSE) +
-     scale_x_continuous(breaks = barplot_labels[[{{j}}]]$breaks, labels = barplot_labels[[{{j}}]]$labels) +
-     scale_y_continuous(labels = scales::label_number_auto()) + 
-     labs(subtitle = \"Signal component intensities over measurement sequence\", 
-       x = \"Measurement no. / Received dose (s)\", y = \"Intensity\") +
-     scale_fill_manual(values = graph_colors) + text_format",
-    "```\n",
-    "<i><b>Figure 1.`r {{j}}`:</b> `r record_type` signal component intensities ",
-    "of measurement sequence `r {{j}}`. Just component which are bleached to at least 50 % during",
-    "the measurement time are displayed.",
-    "   </i><br><br>\n")
-
-tabs <- lapply(as.list(1:length(record)),
-                function(j) knitr::knit_expand(text = dynamic_code))
-```
-`r knitr::knit(text = unlist(tabs))`
-
-### CW-OSL curves {.tabset .tabset-fade .tabset-pills}
-
-With all parameters of our fundamental equation now known, the CW-OSL decay curve can now be modelled. The plots in figure 2 allow the evaluation of the model quality for the first two measurements in each sequence.
-
-
-The residual plot shows the scattering of the measured signal around the modelled CW-OSL curve (lower plot in figure 2). Is the residual plot dominated by statistical noise, the model can be expected as valid. Systematic deviations in parts of the plot indicate at least one of the following systematic errors:
-
-* Incorrect decay constants 
-* Not-first-order decay kinetics
-* Insufficient number of signal components (under-fitting)
-* Unstable light stimulation
-* Inadequate or missing background correction
-
-```{r step2_draw_OSLcurves, fig.asp=.8, eval = TRUE} 
-# Define dynamic Rmarkdown code
-dynamic_code <- c(
-  
-    # Tab header
-    "#### #{{j}}\n",
-    
-    # Draw the OSL plots of the first two records side by side
-    "```{r tab_{{j}}_OSL_plots}\n", 
-    "record_1 <- data_set[[record[[{{j}}]]$sequence]]@records[[record[[{{j}}]]$index[1]]]\n",
-    "plot_1 <- plot_OSLcurve(record_1, record_1@info$COMPONENTS,
-                             display = \"compare_lin\", hide.plot = TRUE)\n",
-    "record_2 <- data_set[[record[[{{j}}]]$sequence]]@records[[record[[{{j}}]]$index[2]]]\n",
-    "plot_2 <- plot_OSLcurve(record_2, record_2@info$COMPONENTS,
-                             display = \"compare_lin\", hide.plot = TRUE)\n",
-    "grid.arrange(plot_1, plot_2, layout_matrix = t(matrix(c(1,2))))\n",
-    "```\n",
-    "<i><b>Figure 2.`r {{j}}`:</b> Signal components and residual curve of first two `r record_type` records.<br>",
-    "<u>Left:</u> First record (index = `r record[[{{j}}]]$index[1]`),",
-    " usually natural or recovered dose signal ($L_n$).<br>",
-    "<u>Right:</u> Second record (index = `r record[[{{j}}]]$index[2]`),",
-    " usually test-dose signal ($T_n$).</i><br><br>\n")
-
-### ALTERNATIVE MORE VARIABLE (but buggy) PLOT ASSIGNEMENT:
-#    "plot_objects <- list()\n",
-#    "for (i in record_index[[{{j}}]][1:2]) {\n",
-#    "record <- data_set[[{{j}}]]@records[[i]]\n",
-#    "plot_objects <- c(plot_objects, 
-#                      plot_OSLcurve(record,
-#                                     record@info$COMPONENTS,
-#                                     display = \"compare_lin\",
-#                                     hide_plot = TRUE))}\n",
-
-tabs <- lapply(as.list(1:length(record)), function(j) knitr::knit_expand(text = dynamic_code))
-```
-`r knitr::knit(text = unlist(tabs))`
-
-<br><br>
 
 ## Methods
+
+### Basics
+
+
+We assume that all CW-OSL signal curves in this data set can be sufficently described by a sum of exponential decays with first order kinetics:
+
+$$I(t) = \sum_{i=1}^K n_ie^{-\lambda_it}$$
+Here, $I(t)$ is the CW-OSL signal, $K$ is the number of signal components. Each component is defined by its intensity $n$ and its decay rate $\lambda$.  
+
+To get component-seperated dose information, we divide the data analysis process into multiple steps:
+
+<center>
+
+![](overview_Step2.png)
+
+</center>
+
+### Step 2 overview {#Overview}
+
+This report covers the Step 1 analysis, which can be outlined as following:
+
+<center>
+
+![](details_Step2.png)
+</center>
+
+Details on step 2.1 and step 2.2 can be found in [Mittelstraß (2019)](#ref) and the *R* function documentation, accessible through the commands `?optimise_OSLintervals` and `?decompose_OSLcurve`. 
+
+Step 2.1 used the differential evolution approach (see [Price et al. 2006](#ref)) which was performed by the function `DEoptim` from the package `DEoptim` [(Ardia et al. 2020)](#ref).  .... The Levenberg-Marquardt fitting was performed by the function `nlsLM` from the package `minpack.lm` [(Elzhov et al. 2016)](#ref).
+
+
 
 ### Signal bin intervals {#bins}
 
@@ -367,6 +414,18 @@ The decomposition process is performed by `decompose_OSLcurve()` for each measur
 
 This approach (despite step 3) to decompose CW-OSL curves was first presented by [Mittelstraß *et al.* (2014)](#ref). An introduction in the mathematical concepts can be found for example in [Bevington and Robinson (1992)](#ref) or [Bronštejn *et al.* (1989)](#ref).
 
+### Error estimation
+
+Be aware that the uncertainty values $\sigma$ account just for the signal noise. Errors in the decay rate values or the decay kinetics may lead to intensity value $n$ discrepancies without increasing the uncertainty value $\sigma$ enough to sufficiently account for them.
+
+
+The residual plot shows the scattering of the measured signal around the modelled CW-OSL curve (lower plot in figure 2). Is the residual plot dominated by statistical noise, the model can be expected as valid. Systematic deviations in parts of the plot indicate at least one of the following systematic errors:
+
+* Incorrect decay constants 
+* Not-first-order decay kinetics
+* Insufficient number of signal components (under-fitting)
+* Unstable light stimulation
+* Inadequate or missing background correction
 
 ## Acknowledgment {#disclaimer}
 
@@ -400,9 +459,6 @@ http://ancienttl.org/ATL_30-1_2012/ATL_30-1_Kreutzer_p1-8.pdf
 Mittelstraß, D., Kreutzer, S., Richter, D., 2013. An analytical method to separate signal components of CW-OSL measurements of quartz.
 
 Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz, Master thesis, TU Dresden, Dresden. <br> https://iktp.tu-dresden.de/IKTP/pub/19/Dirk_Mittelstrass_Master.pdf
-
-Ritz, C., Streibig, J.C., 2008. Nonlinear regression with R, Use R! Springer, New York.<br>
-https://doi.org/10.1007/978-0-387-09616-2
 
 Wickham, H., 2016. ggplot2: elegant graphics for data analysis, Second edition. ed, Use R! Springer, Cham.<br>
 https://ggplot2.tidyverse.org/

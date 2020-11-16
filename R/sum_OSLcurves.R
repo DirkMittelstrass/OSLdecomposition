@@ -275,7 +275,8 @@ sum_OSLcurves <- function(
 
     # save plot as file
     if (!is.null(filename)) {
-      try(ggplot2::ggsave(filename, plot = plot_object, units = "cm"), silent = FALSE)}
+      try(suppressMessages(ggplot2::ggsave(filename, plot = plot_object, units = "cm")),
+          silent = FALSE)}
 
     # show plot
    gridExtra::grid.arrange(plot_object)

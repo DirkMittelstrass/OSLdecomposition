@@ -266,7 +266,8 @@ plot_PhotoCrosssections <- function(
 
   # save plot as file
   if (!is.null(filename)) {
-    try(ggplot2::ggsave(filename, plot = p, units = "cm"), silent = FALSE)}
+    try(suppressMessages(ggplot2::ggsave(filename, plot = p, units = "cm")),
+        silent = FALSE)}
 
   # show plot
   if (!hide.plot) gridExtra::grid.arrange(p, nrow = 1, top = title)
