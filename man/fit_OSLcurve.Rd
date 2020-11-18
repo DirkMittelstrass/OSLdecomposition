@@ -26,14 +26,14 @@ Maximum number of components \emph{K}. The computing time increases exponentiall
 \emph{K} < 7 is recommended}
 
 \item{F.threshold}{\link{numeric} (\emph{with default}):
-Fitting stop criterion. If the F-value is lower than this threshold, the fitting procedure stops and the K - 1 fitting is returned}
+Fitting stop criterion. If the F-value is lower than this threshold, the fitting procedure stops and the K - 1 fit is returned}
 
 \item{stimulation.intensity}{\link{numeric} (\emph{with default}):
-Intensity of optical stimulation in \emph{mW / cm²}. Used to calculate photo-ionisation cross-sections.}
+Intensity of optical stimulation in \emph{mW / cm²}. Used to calculate photoionisation cross sections.}
 
 \item{stimulation.wavelength}{\link{numeric} (\emph{with default}):
-Wavelength of optical stimulation in \emph{nm}. Used to calculate photo-ionisation cross-sections.
-If a wavelength between 465 and 480 nm is chosen, the photo-ionisation cross-sections are set into
+Wavelength of optical stimulation in \emph{nm}. Used to calculate photoionisation cross sections.
+If a wavelength between 465 and 480 nm is chosen, the cross sections are set into
 relation with literature values to name the signal components}
 
 \item{verbose}{\link{logical} (\emph{with default}):
@@ -49,7 +49,7 @@ See \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further informa
 }
 \value{
 If \code{output.complex = FALSE}, a \link{data.frame} is returned. It contains the signal decay rates
-and signal intensities of the best suiting fitting. The fitting was either chosen by the F-test or
+and signal intensities of the best fit. The best fit was either chosen by the F-test or
 the last sucessful fitting iteration.
 
 If \code{output.complex = TRUE}, a \link{list} of objects is returned:
@@ -57,13 +57,13 @@ If \code{output.complex = TRUE}, a \link{list} of objects is returned:
 \tabular{lll}{
 \strong{Element} \tab \strong{Type} \tab \strong{Description}\cr
 \code{decay.rates} \tab \code{numeric} \tab \link{vector} of the best suiting decay rates \cr
-\code{K.selected} \tab \code{numeric} \tab number of components of the best suiting fitting \cr
+\code{K.selected} \tab \code{numeric} \tab number of components of the best fit \cr
 \code{F.test} \tab \code{data.frame} \tab table containing the F-test parameter and the decay rates of each fitting model \cr
 \code{F.test.print} \tab \code{data.frame} \tab the same table as above, but formated for pretty console and report output \cr
 \code{info.text} \tab \code{character} \tab collected messages from the algorithms \cr
 \code{component.tables} \tab \code{list} \tab result \link{data.frame}s for all tested models \cr
 \code{curve} \tab \code{data.frame} \tab fitted time-signal-curve \cr
-\code{components} \tab \code{data.frame} \tab best suiting fitting; same object as \code{output.complex = FALSE} returns \cr
+\code{components} \tab \code{data.frame} \tab best fit; same object as \code{output.complex = FALSE} returns \cr
 \code{fit.results} \tab \code{list} \tab \link{list} of \link{nls} objects for all tested models \cr
 \code{plot.data} \tab \code{data.frame} \tab factorized results for overview plotting with \link{plot_PhotoCrosssections} \cr
 \code{parameters} \tab \code{list} \tab function arguments and the needed computing time
@@ -102,17 +102,17 @@ in the fitting model. If \emph{F_K} falls below the threshold value (\code{F.thr
 with \emph{K} components is apparently not significantly better than the \emph{K} - 1 model of the previous fitting cycle.
 Thus, the \emph{K} - 1 model will be recommended as fitting solution.
 
-\strong{Photo-ionisation cross-sections}
+\strong{Photoionisation cross sections}
 
 While the function is suited for the analysis of a wide variety of multi-exponential decay problems,
 it is target to CW-OSL measurements of quartz under SAR protocol conditions (470 nm stimulation at 125 °C).
 To simplify the assignemt of the found components to OSL components found in published literature,
-photo-ionisation cross-sections are calculated using the \code{stimulation.wavelength} \eqn{\lambda_{stim}}  and
+photoionisation cross sections are calculated using the \code{stimulation.wavelength} \eqn{\lambda_{stim}}  and
 \code{stimulation.intensity} \eqn{\Phi_{stim}}:
 
 \deqn{\sigma_k=\lambda_k {hc / \Phi_{stim}\lambda_{stim}}}
 
-with \eqn{\sigma_k} the photo-ionisation cross-section of component \emph{k} in cm^2,
+with \eqn{\sigma_k} the photoionisation cross section of component \emph{k} in cm^2,
 \eqn{\lambda_k} the CW-OSL decay constant in s^-1, \emph{h} the Planck constant and \emph{c} the speed of light.
 
 If a \code{stimulation.intensity} larger or equal than 460 nm and lower or equal than 485 nm is defined,

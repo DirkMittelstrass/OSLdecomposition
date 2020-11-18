@@ -459,7 +459,7 @@ plot_OSLcurve <- function(curve = NULL,
       p.colnames <- c(p.colnames, expression(italic(n)))
 
       if ("n.error" %in% colnames(components)) {
-        p.table$n <- paste0(p.table$n, " ± ", prettyNum(round(components$n.error)))}
+        p.table$n <- paste0(p.table$n, " \u00b1 ", prettyNum(round(components$n.error)))}
 
       ### Are shares of initial signal given?
       if (show.initial & ("initial.signal" %in% colnames(components))){

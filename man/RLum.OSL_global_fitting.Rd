@@ -44,7 +44,8 @@ on the data processing}
 \item{image_format}{\link{character} (\emph{with default}):
 Image format of the automatically saved graphs if \code{report = TRUE}.
 Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
-and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in the working directory subfolder \verb{/report_figures}}
+and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in the working directory subfolder \verb{/report_figures}.
+Set \code{image_format = NULL} if no images shall be saved}
 
 \item{verbose}{\link{logical} (\emph{with default}):
 Enables console text output}

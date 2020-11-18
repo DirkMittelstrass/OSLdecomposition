@@ -8,8 +8,10 @@ plot_OSLcurve(
   curve = NULL,
   components,
   display = "detailed",
-  show.legend = FALSE,
+  show.legend = TRUE,
   show.intervals = FALSE,
+  show.crosssec = FALSE,
+  show.initial = FALSE,
   theme.set = ggplot2::theme_classic(),
   title = NULL,
   hide.plot = FALSE,
@@ -37,6 +39,12 @@ Draws a legend in the top right corner of the first graph}
 Draws vertical lines into the residual plot showing the signal bin intervals for Step 2 CW-OSL
 decomposition (if available)}
 
+\item{show.crosssec}{\link{logical} (\emph{with default}):
+Displays photoionisation cross section values in the component table (if available)}
+
+\item{show.initial}{\link{logical} (\emph{with default}):
+Displays signal share at the first channel in the component table (if available)}
+
 \item{theme.set}{\link{ggplot2} object (\emph{with default}):
 Graphical theme of the output plot. Input is forwarded to \link[ggplot2:theme_get]{ggplot2::theme_set}.
 Recommended themes are \code{ggplot2::theme_minimal()}, \code{ggplot2::theme_classic()} and \code{ggplot2::theme_bw()},
@@ -44,7 +52,9 @@ see \link[ggplot2:ggtheme]{ggplot2::theme_bw} or \href{https://ggplot2.tidyverse
 a full list}
 
 \item{title}{\link{character} (\emph{with default}):
-Plot title. Set \code{title = NULL} for no title}
+Plot title. Overrides automatic titles but affects just first (upper left)
+graph in case of multi-graph display setting.
+Set \code{title = NULL} for auto-title and \code{title = ""} for no title}
 
 \item{hide.plot}{\link{logical} (\emph{with default}):
 If true, plot is not drawn but can still be saved as files or catched by \code{A <- plot_OSLcurve()}.
@@ -83,7 +93,7 @@ See also Bos and Wallinga (2012) for a detailed explanation and discussion
 \section{Last updates}{
 
 
-2020-11-03, DM: Refactored code; Changed parameter \code{display} choices and added parameters \code{theme.set} and \code{show.legend}
+2020-11-16, DM: Added parameter \code{show.crosssec} and \code{show.initial}
 }
 
 \examples{

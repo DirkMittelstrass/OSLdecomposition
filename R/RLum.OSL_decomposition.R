@@ -339,8 +339,8 @@ RLum.OSL_decomposition <- function(
 
         report_format <- "html"
         # for test purposes:
-        rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
-        #rmd_path <- system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")
+        #rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
+        rmd_path <- system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")
 
         output_path <- getwd()
         output_file <- paste0(output_path, "/", "report_Step2.", report_format)

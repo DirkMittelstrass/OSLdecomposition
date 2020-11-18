@@ -58,7 +58,8 @@ for (j in 1:length(data_set)) {
 
 ## Results 
 
-Constant signal component decay rates $\lambda$ over all measurements were assumed and one [global average CW-OSL curve](#Overview) was calculated. On this, a series of [multi-exponential decay model fittings](#Overview) with an increasing number of components $K$ was performed. The resulting CW-OSL models can be compared by their photoionisation cross sections $\sigma$ and their fitting quality to select the best suiting set of signal components.
+[Step 1](#basics) of a component-resolved dose calculation is the identification of the components occurring in the data set. 
+Constant signal component decay rates $\lambda$ over all measurements were assumed and one global average CW-OSL curve was calculated. On this, a series of multi-exponential decay model fittings with an increasing number of components $K$ was performed. The resulting CW-OSL models can be compared by their photoionisation cross sections $\sigma$ and their fitting quality to select the best suiting set of signal components. See section [Methods](#Overview) for details.
 
 ### OSL plots {.tabset .tabset-pills}
 
@@ -209,9 +210,10 @@ kable(F_table, escape = TRUE, align = "c") %>%
 
 ### Basics {#basics}
 
-The data analysis approach assumes that all CW-OSL signal curves in this data set can be sufficently described by a sum of exponential decays with first order kinetics:
+The data analysis approach assumes that all CW-OSL signal curves in a data set can be sufficently described by a sum of exponential decays with first order kinetics:
 
 $$I(t) = \sum_{i=1}^K n_ie^{-\lambda_it}$$
+
 Here, $I(t)$ is the CW-OSL signal, $K$ is the number of signal components. Each component is defined by its intensity $n$ and its decay rate $\lambda$.  
 
 To achieve component-seperated dose information, the data analysis process is divided into multiple steps:
@@ -222,7 +224,7 @@ To achieve component-seperated dose information, the data analysis process is di
 
 </center>
 
-### Step 1 overview {#Overview}
+### Step 1 workflow {#Overview}
 
 This report covers the Step 1 analysis, which can be outlined as following:
 
@@ -231,8 +233,9 @@ This report covers the Step 1 analysis, which can be outlined as following:
 ![](details_Step1.png)
 </center>
 
-Details on step 1.1 and step 1.2 can be found in [Mittelstraß (2019)](#ref) and the *R* function documentation, accessible through the commands `?sum_OSLcurves` and `?fit_OSLcurve`. Step 1.2 is based on the ideas of [Bluszcz & Adamiec (2006)](#ref). 
-The differential evolution (see [Price et al. 2006](#ref)) was performed by the function `DEoptim` from the package `DEoptim` [(Ardia et al. 2020)](#ref) and deployed `decompose_OSLcurve` (see Step2) for the calculation of the linear parameters. The Levenberg-Marquardt fitting was performed by the function `nlsLM` from the package `minpack.lm` [(Elzhov et al. 2016)](#ref).
+Detailed explanations on step 1.1 and step 1.2 can be found in [Mittelstraß (2019)](#ref). Practical advice can be found in the *R* documentations `?sum_OSLcurves` and `?fit_OSLcurve`.
+
+Step 1.2 is based on the ideas of [Bluszcz & Adamiec (2006)](#ref). The differential evolution (see [Price et al. 2006](#ref)) was performed by the function `DEoptim` from the package `DEoptim` [(Ardia et al. 2020)](#ref) and deployed `decompose_OSLcurve` (see Step2) for the calculation of the linear parameters. The Levenberg-Marquardt fitting was performed by the function `nlsLM` from the package `minpack.lm` [(Elzhov et al. 2016)](#ref).
 
 
 ### Photoionisation cross sections {#M3}
@@ -247,7 +250,7 @@ Here, $h$ is the Planck constant, $c$ is the speed of light, $\Phi_{stim}$ is th
 
 ### F-test {#M4}
 
-[Bluszcz & Adamiec (2006)](#ref) proposed the use of an *F*-test to compare CW-OSL models. The test criterion $F_K$ measures the improvement in the fitting quality from an additional component by comparing the residual square sum (*RSS*) of the $K-1$ model with the new $K$ model:
+[Bluszcz & Adamiec (2006)](#ref) proposed the use of an *F*-test to compare CW-OSL models by their fitting quality. The test criterion $F_K$ measures the improvement caused by an additional component. It compares the residual square sum (*RSS*) of the $K-1$ model with the new $K$ model:
 
 $$F_K = \frac{(RSS_{K-1} - RSS_K)/2}{RSS_K(N - 2K)} $$
 

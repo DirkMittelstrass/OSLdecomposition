@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_PhotoCrosssections.R
 \name{plot_PhotoCrosssections}
 \alias{plot_PhotoCrosssections}
-\title{Plot comparison of CW-OSL component crosssections of different models}
+\title{Plot comparison of CW-OSL component photoionisation cross sections of different models}
 \usage{
 plot_PhotoCrosssections(
   fit.list,
@@ -19,11 +19,11 @@ plot_PhotoCrosssections(
 Output object of \link{fit_OSLcurve} with \code{output.complex = TRUE}}
 
 \item{stimulation.intensity}{\link{numeric} (\emph{optional}):
-Intensity of optical stimulation in mW / cm². Used to calculate the photo-ionisation cross-sections.
+Intensity of optical stimulation in mW / cm². Used to calculate the photoionisation cross sections.
 If not given, the input value for \link{fit_OSLcurve} is used}
 
 \item{stimulation.wavelength}{\link{numeric} (\emph{optional}):
-Wavelength of optical stimulation in nm. Used to calculate the photo-ionisation cross-sections.
+Wavelength of optical stimulation in nm. Used to calculate the photoionisation cross sections.
 If not given, the input value for \link{fit_OSLcurve} is used}
 
 \item{K.selected}{\link{numeric} (\emph{optional}):
@@ -44,13 +44,13 @@ and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}}
 }
 \description{
 Function takes the \code{output.complex = TRUE} output of \link{fit_OSLcurve} and draws the
-photo-ionisation cross-sections of different models in relation to each other.
+photoionisation cross sections of different models in relation to each other.
 If a stimulation wavelength between 465 and 480 nm was chosen,
-the photo-ionisation cross-sections are set into relation with literature values
+the photoionisation cross sections are set into relation with literature values
 from Singarayer and Bailey (2003), Jain et al. (2003) and Durcan and Duller (2011).
 }
 \details{
-The photo-ionisation cross-section ranges of the reference components are defined as following:
+The photoionisation cross section ranges of the reference components are defined as following:
 
 \tabular{lll}{
 \strong{Component} \tab \strong{Lower limit (cm^2)} \tab \strong{Upper limit (cm^2)}\cr
