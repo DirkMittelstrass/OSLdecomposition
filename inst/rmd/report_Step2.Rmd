@@ -27,10 +27,10 @@ Last_changed <-"2020-11-18"
 
 ### Planned further features:
 #
-# * Change tab headers #{{j}} to record$sequence based nummeration
 # * alternative bar-plot arrangement with all natural dose measurements in one plot etc.
-# * Add kableExtra::add_header_above() with component names in table 1
-# * barplot with initial signal compositions
+# * Split figure 1 into K separate plots, one for each component
+# * Add K exta tabs to figure 1: For each component one plot with all aliquots in them
+# * plot with initial signal compositions
 # * Scatterplots or full correlogram of the components and the irradiation time
 #     Hint: search for "Correlogram"
 #     or: http://www.sthda.com/english/wiki/correlation-analyses-in-r
@@ -110,7 +110,7 @@ for (j in 1:length(record)) {
   
   plot_table <- data.frame(NULL)
 
-  colnames(aliquot_table) <- c("record index", "irradiation time (s)")
+  colnames(aliquot_table) <- c("data index", "dose (s)")
   
   ### Define Lx and Tx data points
   
@@ -134,8 +134,11 @@ for (j in 1:length(record)) {
     
     # Append current component to Table 1 table
     new_col <- data.frame(row = paste0(round(intensities), " ± ", round(sigmas)))
-    colnames(new_col) <- paste0("$n_", k, " ± \\sigma_", k, "$ (", input_table$name[k] ,")")
+    colnames(new_col) <- input_table$name[k]
+   # colnames(new_col) <- paste0("$n_", k, " ± \\sigma_", k, "$ (", input_table$name[k] ,")")
     aliquot_table <- cbind(aliquot_table, new_col)
+    
+
     
     # Include component only in the bar-plot if it is bleached to at least 50 %
     bleaching_grade <- 1 - sum(result[,colnames(result) == paste0("n.residual.", k)], na.rm = TRUE) / 
@@ -153,6 +156,15 @@ for (j in 1:length(record)) {
       }
     }
   
+  # Also append column with initial signal percentage
+  for (k in 1:K) {
+    
+    initial_signals <- result[,colnames(result) == paste0("initial.signal.", k)]
+    new_col <- data.frame(row = scales::percent(initial_signals, accuracy = 0.1, suffix = " %"))
+    colnames(new_col) <- input_table$name[k]
+    aliquot_table <- cbind(aliquot_table, new_col)
+    
+  }
   
   intensity_tables[[j]] <- aliquot_table
   barplots[[j]] <- plot_table
@@ -244,7 +256,7 @@ dynamic_code <- c(
     "<u>Upper right:</u> Second CW-OSL measurement (index = `r record[[{{j}}]]$index[2]`),",
     " usually test-dose signal ($T_n$).<br>",
     "<u>Middle</u>: Residual curves between decomposition model and measurement<br>",
-    "<u>Lower right</u>: Estimated type of quartz OSL component (colored), decay rates $\\\\lambda$, signal intensity $n$ and share at first channel $I_0$.</i><br><br>\n")
+    "<u>Lower right</u>: Estimated type of quartz OSL component (colored), decay rates $\\lambda$, signal intensity $n$ and share at first channel $I_0$.</i><br><br>\n")
 
 
 ### ALTERNATIVE MORE VARIABLE (but buggy) PLOT ASSIGNEMENT:
@@ -267,7 +279,7 @@ tabs <- lapply(as.list(1:length(record)), function(j) knitr::knit_expand(text = 
 
 ### Intensity over sequence {.tabset .tabset-pills}
 
-The behaviour of the signal component intensities in the course of measurement sequences contains information about irradiation and bleaching response and thermal- or photo-transfer effects of the associated defect states. Fig. 2 gives an overview of the progression of the component intensities in the course of the measurement sequences. Just components which were bleached to at least 50 % during the analysed time window are displayed, to prevent scaling issues and data misinterpretation due to background correction issues.
+The behaviour of the signal component intensities in the course of measurement sequences contains information about irradiation and bleaching response and thermal- or photo-transfer effects of the associated defect states. Fig. 2 gives an overview of the progression of the component intensities in the course of the measurement sequences. Just components which were bleached to at least 95 % during the analysed time window are displayed, to prevent scaling issues and data misinterpretation due to background correction issues.
 
 ```{r step2_create_result_tabs2} 
 
@@ -302,7 +314,7 @@ dynamic_code <- c(
   
   # Write captions
   "<i><b>Figure 1.`r {{j}}`:</b> `r record_type` signal component intensities ",
-  "of measurement sequence `r {{j}}`. Just component which are bleached to at least 50 % during",
+  "of measurement sequence `r {{j}}`. Just component which are bleached to at least 95 % during",
   "at the end of the curve are displayed.",
   "   </i><br><br>\n")
 
@@ -312,21 +324,28 @@ tabs <- lapply(as.list(1:length(record)),
 `r knitr::knit(text = unlist(tabs))`
 
 
-### Intensitiy tables {.tabset .tabset-pills}
+### Result summary {.tabset .tabset-pills}
 
-*explanation*
+The following tables summarize all in Step 2 calculated values for each `RLum.Analysis` object (= aliquot). The column *record index* refers to the index needed to plot a single measurement by calling:
+
+```{r single_plot_explanation, eval=FALSE, include=TRUE}
+plot_OSLcurve(data_set[[aliquot_index]]@records[[record_index]])
+```
+
+
 
 ```{r step2_create_result_tabs1} 
 # Define dynamic Rmarkdown code, structured in tabs
 dynamic_code <- c("#### #{{j}}\n",
                   
 # Print the full intensity table
-    "<i><b>Table 1.`r {{j}}`:</b> Signal component intensities $n$ and their standard deviation $\\sigma$ calculated by the decomposition process.</i><br>",
+    "<i><b>Table 1.`r {{j}}`:</b> Result summary for aliquot #{{j}}. </i><br>",
     "```{r tab_{{j}}_result_table}\n",
    # "kable_table <- intensity_tables[[{{j}}]]\n",
     "kable(intensity_tables[[{{j}}]], escape = TRUE, row.names = FALSE, align = \"c\") %>%\n",
-    "kable_styling(bootstrap_options = c(\"striped\", \"condensed\"), fixed_thead = TRUE)",
-    "```\n",
+    "add_header_above(c(\" \" = 2,\"Component intensity $n ± \\\\sigma$\" = K,\"Contribution to first channel\" = K))%>%\n",
+    "kable_styling(bootstrap_options = c(\"striped\", \"condensed\", \"scale_down\"),  fixed_thead = TRUE)",
+    "```\n",  #font_size = 9,
     "<br><br>\n")
 
 tabs <- lapply(as.list(1:length(record)),
@@ -370,16 +389,13 @@ Detailed explanations on step 2.1 and step 2.2 can be found in [Mittelstraß (20
 
 ### Signal bin intervals {#bins}
 
-In step 2.1 ... *rework necessary*
+In step 2.1, optimum signal bin intervals for the decomposition process are defined. `optimise_OSLintervals()` determines iteratively those integration intervals which asure the maximum mathematical independence between the signal components. This minimizes the impact of eventual systematic errors from the Step 1 data analysis. The `optimise_OSLintervals()` output depends just on the decay rates and the channel settings, not on the specific CW-OSL measurements.
 
-To calculate `r paste0("$",paste(paste0("n_",1:K), collapse =","),"$")` for all measurements, we divide each signal curve into *K* = `r K` signal bins, build an equation system and solve this analytical. The time intervals which define the signal bins can, in principle, be chosen freely. Nonetheless, precision, stability and the propagation of errors depend on the specific interval definition. `optimise_OSLintervals()` determines iteratively those integration intervals which asure the maximum mathematical independence between the signal components. This minimizes the impact of eventual systemativ errors from the decay rate evaluation (Step 1). The interval definition depends just on the decay rates and the channel width and number, not on the specific CW-OSL measurements.
 
-tep 2.1 used the differential evolution approach (see [Price et al. 2006](#ref)) which was performed by the function `DEoptim` from the package `DEoptim` [(Ardia et al. 2020)](#ref).
 
 <i><b>Table 2:</b> Time intervals for the signal bin integration $I_{bin}=\int_{t_{start}}^{t_{end}}I(t)dt$. If the components decay rates were determined by a global average curve, the global average bin values are given by $\overline{I}_{bin}$</i><br>
 
 ```{r step2_bin_interval_table}
-#subset(component_table, select = c(name, lambda, t.start, t.end, ch.start, ch.end)))
 
 interval_table <- data.frame(bin.no = c(1:K),
                              t.start = dec_data$decompositon.input$t.start,
@@ -396,29 +412,27 @@ if ("bin" %in% colnames(dec_data$decompositon.input)) {
 }
 
 kable(interval_table, escape = TRUE, align = "c",) %>%
-  kable_styling(bootstrap_options = c("condensed", "striped"), full_width = TRUE, position = "left")
+  kable_styling(bootstrap_options = c("condensed", "striped"), full_width = TRUE, position = "center")
 
 ```
 
+Step 2.1 used the differential evolution approach of [Price et al. (2006)](#ref)), implemented by [Ardia et al. (2020)](#ref) in the function `DEoptim` from the package `DEoptim`.
 
 ### Decomposition {#decomposition}
 
-Step 2.2 is performed by `decompose_OSLcurve()` for each measurement saperately and can be summarized as following:
+In Step 2.2, the decomposition process is performed by `decompose_OSLcurve()` for each record saperately and can be summarized as following:
 
-1. Set value of each signal bin equal to the integrated form of the [basic equation](#Basics) and get $K$ equations with just the component intensities $n_1$ to $n_K$ unknown.
-2. Build an equation system, solve it by [Cramer's rule](https://en.wikipedia.org/wiki/Cramer%27s_rule) and get $n_1$ to $n_K$.
-3. Refine $n_1$ to $n_K$ by a Levenberg-Marquardt fitting performed by the function `nlsLM` from the package `minpack.lm` [(Elzhov et al. 2016)](#ref). This step is optional and enhances the result reliability in presence of an uncorrected signal background level. But it decreases error estimation accuracy. 
-4. Calculate the standard deviation for each signal bin by comparing the modelled CW-OSL curve with the real measurement data.
-5. Apply the propagation of uncertainty method onto Cramer's rule and calculate the uncertainties $\sigma_1$ to $\sigma_K$ for all each component intensities.
+1. Set value of each signal bin equal to the integrated [basic equation](#Basics). Obtain a system of $K$ equations with just the component intensities $n_1$ to $n_K$ unknown.
+2. Solve equation system by [Cramer's rule](https://en.wikipedia.org/wiki/Cramer%27s_rule) and get $n_1$ to $n_K$.
+3. (*Optional*) Refine $n_1$ to $n_K$ by a Levenberg-Marquardt fitting performed by the function `nlsLM` from the package `minpack.lm` [(Elzhov et al. 2016)](#ref). This step enhances the result reliability in presence of an uncorrected signal background level but decreases the error estimation accuracy. 
+4. Calculate the standard deviation for each signal bin by comparing the modelled CW-OSL curve with the actual measurement data.
+5. Apply the [propagation of uncertainty for independent variables](https://en.wikipedia.org/wiki/Propagation_of_uncertainty) method onto Cramer's rule and calculate the standard deviation $\sigma_1$ to $\sigma_K$ for each component intensity.
 
 This approach (despite step 3) was first presented by [Mittelstraß *et al.* (2014)](#ref) and further developed by [Mittelstraß (2019)](#ref). An introduction in the mathematical concepts can be found for example in [Bevington and Robinson (1992)](#ref) or [Bronštejn *et al.* (1989)](#ref).
 
 ### Error estimation
 
-Be aware that error values $\sigma$ are account just for statistical noise (e. g. [shot noise](https://en.wikipedia.org/wiki/Shot_noise) and [dark current noise](https://en.wikipedia.org/wiki/Dark_current_(physics))). Errors in the decay rates or not-first-order OSL kinetics may also cause errors in $n$ without increasing $\sigma$ enough to sufficiently account for them.
-
-
-The residual plot shows the scattering of the measured signal around the modelled CW-OSL curve (lower plot in figure 2). Is the residual plot dominated by statistical noise, the model can be expected as valid. Systematic deviations in parts of the plot indicate at least one of the following systematic errors:
+The intensity error values $\sigma$  account just for statistical noise (e. g. [shot noise](https://en.wikipedia.org/wiki/Shot_noise) and [dark current noise](https://en.wikipedia.org/wiki/Dark_current_(physics))). Other sources of error are not sufficiently accounted for. But they might be detectable through not-statistical scattering in the residual plot (lower plot in figure 1). Is the residual plot dominated by statistical noise, the CW.OSL model can be expected as valid. If not, one of the following systematic errors is likely:
 
 * Incorrect decay constants 
 * Not-first-order decay kinetics
@@ -426,38 +440,48 @@ The residual plot shows the scattering of the measured signal around the modelle
 * Unstable light stimulation
 * Inadequate or missing background correction
 
-## Acknowledgment {#disclaimer}
+## General remarks {#disclaimer}
 
-This report was automatically generated by functions of the **R** package `OSLdecomposition` written and maintained by Dirk Mittelstraß (<dirk.mittelstrass@luminescence.de>). The data handling and the results are complementary to the functions and concepts of the **R** package `Luminescence` ([link](https://cran.r-project.org/package=Luminescence)) introduced by [Kreutzer *et al.* (2012)](#ref). For the dynamic creation of this HTML report, the **R** packages `knitr` and `rmarkdown` are used, see [Xie (2015)](#ref) and [Xie *et al.* (2018)](#ref). All diagrams are drawn with `ggplot2` [(Wickham 2016)](#ref).
+This report was automatically generated by functions of the **R** package `OSLdecomposition` written and maintained by Dirk Mittelstraß (<dirk.mittelstrass@luminescence.de>). This package is preferably used together with the **R** package `Luminescence` ([link](https://cran.r-project.org/package=Luminescence)) by [Kreutzer *et al.* (2012)](#ref). For the dynamic creation of this HTML report, the **R** packages `knitr` and `rmarkdown` are used, see [Xie (2015)](#ref) and [Xie *et al.* (2018)](#ref). All diagrams are drawn with `ggplot2` [(Wickham 2016)](#ref).
 
-You can use, share and publish this report and the containing results at will, as long as you have the consent of the measurement data maintainer. If this report or its results are published, however, it is requested to refer to the main **R** package `OSLdecomposition` including its version number (`r packageVersion("OSLdecomposition")`). It is also demanded to include the following reference into your publication:
+The data analysis method covered with this report was developed for CW-OSL SAR protocol measured quartz samples, see [Murray and Wintle (2000)](#ref). It might be also useful for the analysis of Al2O3 or feldspar samples measured with SAR-like protocols. You can use, share and publish this report and the containing results at will. But we demand to refer to the **R** package `OSLdecomposition` including its version number (`r packageVersion("OSLdecomposition")`) if you publish the results in a peer-reviewed journal. Please include the following reference to your publication:
 
 -------------------
 
-**Mittelstraß D., Schmidt C., Beyer J., and Straessner A., 2019. Automated identification and separation of quartz CW-OSL signal components with R. talk presented at the Central European Conference on Luminescence and Trapped-Charge dating: DLED 2019, Bingen, Germany**<br>
-http://luminescence.de/OSLdecomp_talk.pdf <br>
+Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz, Master thesis, TU Dresden, Dresden. <br> https://iktp.tu-dresden.de/IKTP/pub/19/Dirk_Mittelstrass_Master.pdf  <br>
 *(reference will be replaced as soon as peer-reviewed publication is accepted)*
 
 -------------------
 
-There, you can find a full description of the method and the algorithms involved, as well as some simulation-based performance tests. 
+We allow and encourage you to add the HTML file of this report to the electronical supplement of your publication.  
 
-It is allowed and encouraged to add the HTML file of this report to the electronical supplement of your publication.  
 
 
 ## References {#ref}
+
+Ardia, D., Mullen, K.M., Peterson, B.G., Ulrich, J., 2020. DEoptim: Differential Evolution in R.<br>
+https://CRAN.R-project.org/package=DEoptim
 
 Bevington, P.R., Robinson, D.K., 1992. Data reduction and error analysis for the physical sciences, 2nd ed. ed. McGraw-Hill, New York.<br>
 http://hosting.astro.cornell.edu/academics/courses/astro3310/Books/Bevington_opt.pdf
 
 Bronštejn, I.N., Semendjaev, K.A., Grosche, G., 1989. Taschenbuch der Mathematik, 24. Aufl. ed. Verl. Nauka, Moskau.
 
+Elzhov, T.V., Mullen, K.M., Spiess, A.-N., Bolker, B., 2016. minpack.lm: R Interface to the Levenberg-Marquardt Nonlinear Least-Squares Algorithm Found in MINPACK, Plus Support for Bounds.<br>
+https://CRAN.R-project.org/package=minpack.lm
+
 Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fuchs, M., 2012. Introducing an R package for luminescence dating analysis. Ancient TL 30.<br>
 http://ancienttl.org/ATL_30-1_2012/ATL_30-1_Kreutzer_p1-8.pdf
 
-Mittelstraß, D., Kreutzer, S., Richter, D., 2013. An analytical method to separate signal components of CW-OSL measurements of quartz.
+Mittelstraß, D., Kreutzer, S., Richter, D., 2013. An analytical method to separate signal components of CW-OSL measurements of quartz. talk presented at the Central European Conference on Luminescence and Trapped-Charge dating: DLED 2013, Freiberg, Germany
 
-Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz, Master thesis, TU Dresden, Dresden. <br> https://iktp.tu-dresden.de/IKTP/pub/19/Dirk_Mittelstrass_Master.pdf
+Mittelstraß D., Schmidt C., Beyer J., and Straessner A., 2019. Automated identification and separation of quartz CW-OSL signal components with R. talk presented at the Central European Conference on Luminescence and Trapped-Charge dating: DLED 2019, Bingen, Germany<br>
+http://luminescence.de/OSLdecomp_talk.pdf
+
+Murray, A. S. and Wintle, A. G., 2000. Luminescence dating of quartz using an improved single-aliquot regenerative-dose protocol. Radiation Measurements 32 <br>
+https://doi.org/10.1016/S1350-4487(99)00253-X
+
+Price, K.V., Storn, R.M., Lampinen, J.A., 2006. Differential Evolution - A Practical Approach to Global Optimization, Natural Computing. Springer-Verlag.
 
 Wickham, H., 2016. ggplot2: elegant graphics for data analysis, Second edition. ed, Use R! Springer, Cham.<br>
 https://ggplot2.tidyverse.org/

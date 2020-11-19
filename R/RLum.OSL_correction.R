@@ -153,6 +153,7 @@ RLum.OSL_correction <- function(
   # * deploy Luminescence::verify_SingleGrainData() for 'check_single_grain_signal'
   # * handle previous CORRECTION steps
   # * new 'reduce data' argument to delete all unnecessary data (like TL curves etc.)
+  # * IMPORTANT: If a RLum.object is manipulated, change its @info accordingly
 
   #library(Luminescence)
 

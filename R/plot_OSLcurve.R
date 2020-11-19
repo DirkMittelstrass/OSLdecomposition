@@ -26,12 +26,12 @@
 #' @param curve [data.frame] or [matrix] or [RLum.Data.Curve-class] (*optional*):
 #' CW-OSL curve x-Axis: `$time` or first column as measurement time (must have constant time intervals);
 #' y-Axis: `$signal` or second column as luminescence signal.
-#' Other columns will be plotted as component curves, in case no argument `components` is defined.
+#' Other columns will be plotted as component curves, in case no input object `components` is defined.
 #' If no input is given, a CW-OSL curve will be simulated with the parameters of `components`
 #'
 #' @param components [data.frame] (*optional*):
-#' Table with OSL component parameters. Overrides component curves provides by `curve`.
-#' Need to have at least the columns: `$names`, `$lambda` and `$n`
+#' Table with OSL component parameters. Overrides component information eventually provided by
+#' `curve` input object. Need to have at least the columns: `$names`, `$lambda` and `$n`
 #'
 #' @param display [character] (*with default*):
 #' Arrangement of graphs, see section **Details**
@@ -71,9 +71,10 @@
 #' and more, see [ggplot2::ggsave]
 #'
 #'
-#' @section Last updates:
+#' @section Last update:
 #'
-#' 2020-11-16, DM: Added parameter `show.crosssec` and `show.initial`
+#' 2020-11-19, DM: RLum.Data.Curves can now be displayed without 'components'
+#' if RLum.OSL_decomposition was already performed at data set
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -109,7 +110,7 @@
 #' @md
 #' @export
 plot_OSLcurve <- function(curve = NULL,
-                          components,
+                          components = NULL,
                           display = "detailed",
                           show.legend = TRUE,
                           show.intervals = FALSE,
@@ -132,6 +133,7 @@ plot_OSLcurve <- function(curve = NULL,
 # * 2020-11-03, DM: Refactored code; Changed parameter `display` choices and added parameters `theme.set` and `show.legend`
 # * 2020-11-11, DM: Improved parameter table
 # * 2020-11-16, DM: Added parameter `show.crosssec` and `show.initial`
+# * 2020-11-19, DM: RLum.Data.Curves can now be displayed without 'components' if RLum.OSL_decomposition was already performed at data set
 #
 # ToDo:
 # * When drawing components without curve, skip residual curve
@@ -174,6 +176,8 @@ plot_OSLcurve <- function(curve = NULL,
 
   ###################### INPUT DATA  ######################
 
+  if (is.null(curve) && is.null(components)) stop("[plot_OSLcurve()]: Either 'curve' or 'components' must be defined")
+
   # Create curve from component table if not given
   if (is.null(curve) && !is.null(components)) {
 
@@ -190,7 +194,25 @@ plot_OSLcurve <- function(curve = NULL,
     if(!((class(curve) == "RLum.Data.Curve") | (class(curve) == "data.frame") | (class(curve) == "matrix"))){
       stop("[plot_OSLcurve()] Error: Input object is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!") }
 
-    if(class(curve) == "RLum.Data.Curve") curve <- as.data.frame(Luminescence::get_RLum(curve))
+    if(class(curve) == "RLum.Data.Curve") {
+
+      # if no component table is given, check if the data set was already decomposed by RLum.OSL_decomposition
+      if (is.null(components)) {
+
+        if ("COMPONENTS" %in% names(curve@info)) {
+
+          components <- curve@info$COMPONENTS
+
+        }else{
+
+          # switch to simple plot
+          display <- "raw"}}
+
+      # now transform the RLum object into a simple table. There is no need to keep all the extra info
+      curve <- as.data.frame(Luminescence::get_RLum(curve))
+
+
+    }
 
     if (!("time" %in% colnames(curve)) |
         !("signal" %in% colnames(curve))) {
@@ -227,8 +249,8 @@ plot_OSLcurve <- function(curve = NULL,
 
     # set legend text
     graph.labels <- c("", colnames(curve)[X])
-    graph.labels[1] <- "measured"
-    graph.labels[2] <- "fitted"
+    graph.labels[1] <- "Measurement"
+    graph.labels[2] <- "Model"
 
     # rearrange data to work in ggplot-function
     for (i in X) {

@@ -110,8 +110,8 @@
 #' data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 #' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 #'
-#' # Separate components and create report
-#' data_set_decomposed <- RLum.OSL_decomposition(data_set, decay_rates = c(0.8, 0.05))
+#' # Separate components and display report
+#' data_set <- RLum.OSL_decomposition(data_set, decay_rates = c(0.8, 0.05))
 #'
 #' @md
 #' @export
@@ -339,8 +339,8 @@ RLum.OSL_decomposition <- function(
 
         report_format <- "html"
         # for test purposes:
-        #rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
-        rmd_path <- system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")
+        rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
+        #rmd_path <- system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")
 
         output_path <- getwd()
         output_file <- paste0(output_path, "/", "report_Step2.", report_format)

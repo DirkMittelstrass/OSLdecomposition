@@ -215,7 +215,7 @@ decompose_OSLcurve <- function(
   # ToDo:
   # * Enable the input of a list of curves
   # * Replace Cramers rule equations with 'solve()' to increase performance and to increase precision if a
-  #   determinant converges towards zero
+  #   determinant converges towards zero, see https://en.wikipedia.org/wiki/Numerical_stability
   # * In some very rare cases, negative values for n.error are returned. How can that happen?
   # * Test and expand interval determination algorithm in case of very few (N ~ K) data points
   # * Enhance Auto-interval finder to work when 'background.fitting = TRUE'
