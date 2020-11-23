@@ -99,19 +99,22 @@
 #'
 #' The [RLum.Data.Curve-class] attribute `@info` of each CW-OSL record contains the
 #' new entry `$COMPONENTS` with the curve-individual signal component parameters.
-#' It can be read for examle by:
+#' It can be read for example by:
 #'
 #'  `object[[i]]@records[[j]]@info[["COMPONENTS"]]`
 #'
 #' @examples
 #'
-#' # 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+#' #'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
 #' # measured in a lexsyg research with green LED stimulation
 #' data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 #' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 #'
-#' # Separate components and display report
-#' data_set <- RLum.OSL_decomposition(data_set, decay_rates = c(0.8, 0.05))
+#' \dontrun
+#' # Separate components and create report
+#' data_set_decomposed <- RLum.OSL_decomposition(
+#' data_set, decay_rates = c(0.8, 0.05))
+#' }
 #'
 #' @md
 #' @export
@@ -339,8 +342,8 @@ RLum.OSL_decomposition <- function(
 
         report_format <- "html"
         # for test purposes:
-        rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
-        #rmd_path <- system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")
+        #rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
+        rmd_path <- system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")
 
         output_path <- getwd()
         output_file <- paste0(output_path, "/", "report_Step2.", report_format)
