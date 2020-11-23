@@ -12,6 +12,7 @@ RLum.OSL_global_fitting(
   stimulation_intensity = 35,
   stimulation_wavelength = 470,
   report = TRUE,
+  report_dir = NULL,
   image_format = "pdf",
   verbose = TRUE
 )
@@ -40,6 +41,10 @@ Wavelength of optical stimulation in \emph{nm}. Used to calculate photo-ionisati
 Creates a \code{html} report, saves it in the working directory and opens it in your
 standard browser. The report contains the results and further information
 on the data processing}
+
+\item{report_dir}{\link{character} (\emph{optional}): if \code{report = TRUE}, the output dir
+of the report can be chosen. The default is \code{NULL}, which uses a temporary folder
+that is deleted the moment the R session is closed.}
 
 \item{image_format}{\link{character} (\emph{with default}):
 Image format of the automatically saved graphs if \code{report = TRUE}.
@@ -113,10 +118,14 @@ data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
 
 # Identify components and create report
-data_set_fitted <- RLum.OSL_global_fitting(data_set_corrected,
-                                           K_maximum = 3,
-                                           stimulation_intensity = 50,
-                                           stimulation_wavelength = 530)
+\dontrun{
+data_set_fitted <- RLum.OSL_global_fitting(
+ data_set_corrected,
+ K_maximum = 3,
+ stimulation_intensity = 50,
+ stimulation_wavelength = 530)
+}
+
 
 }
 \references{

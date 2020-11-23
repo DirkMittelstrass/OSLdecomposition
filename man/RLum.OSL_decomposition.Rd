@@ -10,6 +10,7 @@ RLum.OSL_decomposition(
   K = 3,
   decay_rates = NULL,
   report = TRUE,
+  report_dir = NULL,
   image_format = "pdf",
   verbose = TRUE
 )
@@ -34,6 +35,10 @@ User-defined component decay rates. If the}
 Creates a \code{html} report, saves it in the working directory and opens it in your
 standard browser. The report contains the results and further information
 on the data processing}
+
+\item{report_dir}{\link{character} (\emph{optional}): if \code{report = TRUE}, the output dir
+of the report can be chosen. The default is \code{NULL}, which uses a temporary folder
+that is deleted the moment the R session is closed.}
 
 \item{image_format}{\link{character} (\emph{with default}):
 Image format of the automatically saved graphs if \code{report = TRUE}.
