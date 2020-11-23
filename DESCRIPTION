@@ -9,11 +9,12 @@ Authors@R: c(
     person("Jan", "Beyer", role = c("ths"), comment = c(ORCID = "0000-0002-1403-395X")),
     person("Johannes", "Heitmann", role = c("ths")),
     person("Arno", "Straessner", role = c("ths"), comment = c(ORCID = "0000-0003-2460-6659")))
-Description: Function library for the indentification and separation of exponentially decaying signal components in
-    continous-wave optically stimulated luminescence (CW-OSL) measurements. A special emphasis is laid on
-    luminescence dating with quartz, which is known for systematic errors due to CW-OSL signal components with unequal 
-    physical behavior. Together with the package ‘Luminescence’, this package allows for automatized component resolved
-    age determination of quartz samples.
+Description: Function library for the identification and separation of exponentially 
+    decaying signal components in continuous-wave optically stimulated luminescence (CW-OSL) measurements.
+    A special emphasis is laid on luminescence dating with quartz, which is known for
+    systematic errors due to CW-OSL signal components with unequal physical behaviour.
+    This package enables an automatised workflow for signal component deconvolution
+    in combination with the R package 'Luminescence'.
 Depends: R (>= 3.6.0)
 License: GPL-3
 Encoding: UTF-8
