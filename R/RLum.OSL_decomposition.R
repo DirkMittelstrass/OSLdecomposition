@@ -50,7 +50,7 @@
 #' User-defined component decay rates. If the
 #'
 #' @param report [logical] (*with default*):
-#' Creates a `html` report, saves it in the working directory and opens it in your
+#' Creates a `html` report, saves it in the `report_dir` directory and opens it in your
 #' standard browser. The report contains the results and further information
 #' on the data processing
 #'
@@ -61,7 +61,7 @@
 #' @param image_format [character] (*with default*):
 #' Image format of the automatically saved graphs if `report = TRUE`.
 #' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
-#' and more, see [ggplot2::ggsave]. The images are saved in the working directory subfolder `/report_figures`.
+#' and more, see [ggplot2::ggsave]. The images are saved in the `report_dir` subfolder `/report_figures`.
 #' Set `image_format = NULL` if no images shall be saved
 #'
 #' @param verbose [logical] (*with default*):
@@ -136,6 +136,7 @@ RLum.OSL_decomposition <- function(
   ### Changelog
   # * 2020-May,   DM: First reasonable version
   # * 2020-11-07, DM: Added roxygen documentation; Auto-switch between "det" and "det+nls" depending on background correction
+  # * 2020-11-23, SK: Moved report call into utils.R
   #
   ### ToDo's
   # * read 'lambda.error' if available and transfer it to decompose_OSLcurve for better error calculation

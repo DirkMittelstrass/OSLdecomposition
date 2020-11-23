@@ -480,6 +480,8 @@ plot_OSLcurve <- function(curve = NULL,
                             n = prettyNum(round(components$n)))
       p.colnames <- c(p.colnames, expression(italic(n)))
 
+      #p.colnames <- c(p.colnames, paste0(expression(italic(n)), " \u00b1 ", expression(italic(sigma[n]))))
+
       if ("n.error" %in% colnames(components)) {
         p.table$n <- paste0(p.table$n, " \u00b1 ", prettyNum(round(components$n.error)))}
 

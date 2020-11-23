@@ -49,7 +49,7 @@
 #' Wavelength of optical stimulation in *nm*. Used to calculate photo-ionisation cross-sections, see [fit_OSLcurve]
 #'
 #' @param report [logical] (*with default*):
-#' Creates a `html` report, saves it in the working directory and opens it in your
+#' Creates a `html` report, saves it in the `report_dir` directory and opens it in your
 #' standard browser. The report contains the results and further information
 #' on the data processing
 #'
@@ -60,7 +60,7 @@
 #' @param image_format [character] (*with default*):
 #' Image format of the automatically saved graphs if `report = TRUE`.
 #' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
-#' and more, see [ggplot2::ggsave]. The images are saved in the working directory subfolder `/report_figures`.
+#' and more, see [ggplot2::ggsave]. The images are saved in the `report_dir` subfolder `/report_figures`.
 #' Set `image_format = NULL` if no images shall be saved
 #'
 #' @param verbose [logical] (*with default*):
@@ -144,6 +144,7 @@ RLum.OSL_global_fitting <- function(object,
   # Changelog:
   # * 2020-May  , DM: First reasonable version
   # * 2020-11-06, DM: Added roxygen documentation
+  # * 2020-11-23, SK: Moved report call into utils.R
   #
   # ToDo:
   # * Get stimulation.intensity from @info[["LPOWER"]]
