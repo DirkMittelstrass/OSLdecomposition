@@ -54,6 +54,10 @@
 #' standard browser. The report contains the results and further information
 #' on the data processing
 #'
+#' @param report_dir [character] (*optional*): if `report = TRUE`, the output dir
+#' of the report can be chosen. The default is `NULL`, which uses a temporary folder
+#' that is deleted the moment the R session is closed.
+#'
 #' @param image_format [character] (*with default*):
 #' Image format of the automatically saved graphs if `report = TRUE`.
 #' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
@@ -125,6 +129,7 @@ RLum.OSL_decomposition <- function(
   K = 3,
   decay_rates = NULL,
   report = TRUE,
+  report_dir = NULL,
   image_format = "pdf",
   verbose = TRUE
 ){
@@ -327,56 +332,16 @@ RLum.OSL_decomposition <- function(
                    results = results)
 
   ################################ STEP 2.3: Report  ################################
-
   if (report) {
-    if(("rmarkdown" %in% rownames(utils::installed.packages())) && ("kableExtra" %in% rownames(utils::installed.packages()))) {
-
-      if(verbose) cat("STEP 2.3 ----- Create report -----\n")
-      if(verbose) cat("This process can take a few minutes...\n")
-
-      time.start <- Sys.time()
-
-      # the RMD script has to be located in the "/inst" folder of the project
-      # then, it will be installed with the package
-      try({
-
-        report_format <- "html"
-        # for test purposes:
-        #rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd"
-        rmd_path <- system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")
-
-        output_path <- getwd()
-        output_file <- paste0(output_path, "/", "report_Step2.", report_format)
-
-        image_path <- NULL
-        if (!is.null(image_format)) {
-
-          image_path <- paste0(output_path, "/report_figures/")
-          if (!(dir.exists(image_path))) dir.create(image_path)}
-
-        rmarkdown::render(rmd_path,
-                          params = list(dec_data = dec_data,
-                                        data_set = data_set,
-                                        object_name = object_name,
-                                        image_format = image_format,
-                                        image_path = image_path),
-                          output_file = output_file,
-                          output_format = paste0(report_format,"_document"),
-                          quiet = TRUE)
-
-        cat("Saved", toupper(report_format), "report to:", output_file, "\n")
-        if (!is.null(image_format)) cat("Saved", toupper(image_format), "images to:", image_path, "\n")
-
-        # ToDo: Replace the following try() outside the big try
-        try({
-          utils::browseURL(output_file)
-          cat("Opened", toupper(report_format), "report in your systems standard browser\n")})
-
-        if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")})
-
-    } else {
-
-      warning("Packages 'rmarkdown' and 'kableExtra' are needed to create reports. One or both are missing.")}}
+      .render_report(
+        nature = "decomposition",
+        dec_data = dec_data,
+        data_set = data_set,
+        object_name = object_name,
+        image_format = image_format,
+        output_dir = report_dir,
+        verbose = verbose)
+    }
 
   # Return decomposed data
   object <- c(data_set, data_set_overhang, DECOMPOSITION = list(dec_data))
