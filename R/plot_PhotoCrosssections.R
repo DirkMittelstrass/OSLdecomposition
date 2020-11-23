@@ -74,7 +74,7 @@
 #'
 #' @examples
 #'
-#' # Set some arbitaty decay parameter for a dim CW-OSL measurement of quartz
+#' # Set some arbitrary decay parameter for a dim CW-OSL measurement of quartz
 #' name <- c("fast", "medium", "slow")
 #' lambda <- c(2, 0.5, 0.02)
 #' n <- c(1e6, 1e6, 1e7)
@@ -86,10 +86,12 @@
 #' curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
 #'
 #' # Perform nonlinear regression at the simulated curve
+#' \dontrun{
 #' fit_results <- fit_OSLcurve(curve, output.complex = TRUE)
 #'
 #' # Plot the fitting iterations and set them into context
 #' plot_PhotoCrosssections(fit_results)
+#' }
 #'
 #' # How to create figures meant for publication:
 #' # Open new graphics device to set image dimensions manually and save image as vector graphic
