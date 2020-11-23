@@ -90,7 +90,7 @@
 
   try({
     output <- rmarkdown::render(
-      input =  system.file("rmd", rmd_file[nature[1]], package = "OSLdecomposition", mustWork = TRUE),
+      input =  system.file("rmd", rmd_ht[nature[1]], package = "OSLdecomposition", mustWork = TRUE),
       params = input_params,
       output_dir = output_dir,
       output_format = paste0(report_format, "_document"),
