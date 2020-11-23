@@ -343,7 +343,8 @@ RLum.OSL_decomposition <- function(
         verbose = verbose)
     }
 
-  # Return decomposed data
+
+# Return output -----------------------------------------------------------
   object <- c(data_set, data_set_overhang, DECOMPOSITION = list(dec_data))
   invisible(object)
 }

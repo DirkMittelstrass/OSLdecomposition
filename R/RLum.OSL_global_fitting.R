@@ -217,7 +217,7 @@ RLum.OSL_global_fitting <- function(object,
   if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
 
-  # Report output -----------------------------------------------------------
+# Report output -----------------------------------------------------------
   if (report) {
     .render_report(
       nature = "global_fitting",
@@ -229,7 +229,8 @@ RLum.OSL_global_fitting <- function(object,
       verbose = verbose)
   }
 
-  # Return fitted data
+
+# Return ------------------------------------------------------------------
   object <- c(data_set, data_set_overhang, OSL_COMPONENTS = list(fit_data))
   invisible(object)
 }
