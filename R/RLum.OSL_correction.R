@@ -120,10 +120,12 @@
 #' data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
 #'
 #  # Plot background corrected global average CW-OSL curve
+#  \dontrun{
 #' sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSL")
 #'
 #' # Plot background curve
 #' sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSLbackground")
+#' }
 #'
 #' @md
 #' @export

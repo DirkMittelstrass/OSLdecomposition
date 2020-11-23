@@ -76,7 +76,9 @@
 #' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 #'
 #  # Plot all data points and give average CW-OSL curve back
+# \dontrun{
 #' average_curve <- sum_OSLcurves(data_set)
+#' }
 #'
 #' @md
 #' @export
@@ -129,7 +131,6 @@ sum_OSLcurves <- function(
   ##============================================================================##
   # CALC MEAN CURVE
   ##============================================================================##
-
   mean.values <- c(0)
   first.values <- c(0)
   all.values <- NULL
