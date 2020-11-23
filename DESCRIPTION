@@ -1,7 +1,7 @@
 Package: OSLdecomposition
 Type: Package
 Title: Identify and separate CW-OSL signal components
-Version: 0.11.19
+Version: 0.11.18
 Authors@R: c(
     person("Dirk", "Mittelstrass", email = "dirk.mittelstrass@luminescence.de", role = c("aut", "cre")),
     person("Christoph", "Schmidt", role = c("ctb"), comment = c(ORCID = "0000-0002-2309-3209")),
@@ -20,7 +20,7 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
 Imports: 
-    Luminescence,
+    Luminescence (>= 0.9.9),
     methods,
     utils,
     stats,
