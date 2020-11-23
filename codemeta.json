@@ -5,10 +5,10 @@
   ],
   "@type": "SoftwareSourceCode",
   "identifier": "OSLdecomposition",
-  "description": "Function library for the indentification and separation of exponentially decaying signal components in\n    continous-wave optically stimulated luminescence (CW-OSL) measurements. A special emphasis is laid on\n    luminescence dating with quartz, which is known for systematic errors due to CW-OSL signal components with unequal \n    physical behavior. Together with the package ‘Luminescence’, this package allows for automatized component resolved\n    age determination of quartz samples.",
-  "name": "OSLdecomposition: Identify and separate CW-OSL signal components",
+  "description": "Function library for the identification and separation of exponentially \n    decaying signal components in continuous-wave optically stimulated luminescence (CW-OSL) measurements.\n    A special emphasis is laid on luminescence dating with quartz, which is known for\n    systematic errors due to CW-OSL signal components with unequal physical behaviour.\n    This package enables an automatised workflow for signal component deconvolution\n    in combination with the R package 'Luminescence'.",
+  "name": "OSLdecomposition: Identify and Separate Continuous-Wave Optically Stimulated Luminescence Signal Components",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "0.11.18.9000.1",
+  "version": "0.11.18.9000.3",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -64,7 +64,32 @@
       "email": "dirk.mittelstrass@luminescence.de"
     }
   ],
-  "softwareSuggestions": [],
+  "softwareSuggestions": [
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "knitr",
+      "name": "knitr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=knitr"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "kableExtra",
+      "name": "kableExtra",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=kableExtra"
+    }
+  ],
   "softwareRequirements": [
     {
       "@type": "SoftwareApplication",
@@ -174,18 +199,6 @@
     },
     {
       "@type": "SoftwareApplication",
-      "identifier": "knitr",
-      "name": "knitr",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=knitr"
-    },
-    {
-      "@type": "SoftwareApplication",
       "identifier": "rmarkdown",
       "name": "rmarkdown",
       "provider": {
@@ -195,20 +208,9 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=rmarkdown"
-    },
-    {
-      "@type": "SoftwareApplication",
-      "identifier": "kableExtra",
-      "name": "kableExtra",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=kableExtra"
     }
   ],
   "codeRepository": "https://github.com/DirkMittelstrass/OSLdecomposition",
-  "releaseNotes": "https://github.com/DirkMittelstrass/OSLdecomposition/blob/master/NEWS.md"
+  "releaseNotes": "https://github.com/DirkMittelstrass/OSLdecomposition/blob/master/NEWS.md",
+  "readme": "https://github.com/DirkMittelstrass/OSLdecomposition/blob/master/README.md"
 }
