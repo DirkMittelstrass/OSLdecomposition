@@ -59,9 +59,6 @@
 
   }
 
-  ##set timer
-  time.start <- Sys.time()
-
   # the RMD script has to be located in the "/inst" folder of the project
   # then, it will be installed with the package
   ##select RMD-file
@@ -87,6 +84,8 @@
 
   input_params <- input_params[!sapply(input_params, is.null)]
 
+  ##set timer
+  time.start <- Sys.time()
 
   try({
     output <- rmarkdown::render(
