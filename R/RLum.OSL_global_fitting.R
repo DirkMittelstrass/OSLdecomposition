@@ -118,10 +118,14 @@
 #' data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
 #'
 #' # Identify components and create report
-#' data_set_fitted <- RLum.OSL_global_fitting(data_set_corrected,
-#'                                            K_maximum = 3,
-#'                                            stimulation_intensity = 50,
-#'                                            stimulation_wavelength = 530)
+#' \dontrun{
+#' data_set_fitted <- RLum.OSL_global_fitting(
+#'  data_set_corrected,
+#'  K_maximum = 3,
+#'  stimulation_intensity = 50,
+#'  stimulation_wavelength = 530)
+#' }
+#'
 #'
 #' @md
 #' @export
