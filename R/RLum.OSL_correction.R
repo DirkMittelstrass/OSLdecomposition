@@ -433,8 +433,7 @@ RLum.OSL_correction <- function(
   }
 
   ################################ REPORT  ################################
-
-  if (FALSE) {
+  if (!report) {
     if(("rmarkdown" %in% rownames(utils::installed.packages())) && ("kableExtra" %in% rownames(utils::installed.packages()))) {
 
       if(verbose) cat("CORRECTION SUMMARY ----- Create report -----\n")
