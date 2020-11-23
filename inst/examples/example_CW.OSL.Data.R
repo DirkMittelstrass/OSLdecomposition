@@ -1,8 +1,4 @@
 # the following three lines load necessary functions which will be integrated in Luminescence in the future
-.LuminescenceEnv <- new.env(parent = emptyenv())
-source(system.file("beta", "analyse_SAR.CWOSL_beta.R", package = "OSLdecomposition"))
-source(system.file("beta", "calc_OSLLxTxDecomposed.R", package = "OSLdecomposition"))
-
 library(Luminescence)
 library(OSLdecomposition)
 
