@@ -4,6 +4,8 @@
 #'
 #' @param nature [character] (**required**): report nature
 #'
+#' @param dec_data
+#'
 #' @param fit_data
 #'
 #' @param data_set
@@ -29,7 +31,8 @@
 ################################ REPORT  ################################
 .render_report <- function(
   nature = "",
-  fit_data,
+  dec_data = NULL,
+  fit_data = NULL,
   data_set,
   object_name,
   output_dir = tempdir(),
@@ -69,19 +72,26 @@
 
   if(!(nature[1] %in% names(rmd_ht))){
     stop("[.render_report()] report nature unknown, supported are: \n",
-         paste(" ",rmd_ht, " -> '", names(rmd_ht), "'\n"))
+         paste0(" ",rmd_ht, " -> '", names(rmd_ht), "'\n"))
 
   }
+
+  ##preset parameters remove NULL
+  input_params <- list(
+      dec_data = dec_data,
+      fit_data = fit_data,
+      data_set = data_set,
+      object_name = object_name,
+      image_format = image_format,
+      image_path = image_path)
+
+  input_params <- input_params[!sapply(input_params, is.null)]
+
 
   try({
     output <- rmarkdown::render(
       input =  system.file("rmd", rmd_file[nature[1]], package = "OSLdecomposition", mustWork = TRUE),
-      params = list(
-        fit_data = fit_data,
-        data_set = data_set,
-        object_name = object_name,
-        image_format = image_format,
-        image_path = image_path),
+      params = input_params,
       output_dir = output_dir,
       output_format = paste0(report_format, "_document"),
       quiet = TRUE,
