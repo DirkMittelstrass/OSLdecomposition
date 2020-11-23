@@ -153,7 +153,9 @@
 #' @examples
 #'
 #' # Create curve with two components
-#' curve <- cbind(X = c(1, 2, 3, 4, 5, 6, 7, 8, 9), Y = c(42, 20, 12, 7, 5, 4, 3.1, 2.4, 2))
+#' curve <- data.frame(
+#' X = c(1, 2, 3, 4, 5, 6, 7, 8, 9),
+#' Y = c(42, 20, 12, 7, 5, 4, 3.1, 2.4, 2))
 #'
 #' # Perform fitting
 #' components <- fit_OSLcurve(curve, F.threshold = 3)
