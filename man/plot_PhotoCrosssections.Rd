@@ -90,9 +90,11 @@ plot_PhotoCrosssections(fit_results)
 
 # How to create figures meant for publication:
 # Open new graphics device to set image dimensions manually and save image as vector graphic
+\dontrun{
 dev.new(width = 10, height = 3, unit = "cm", noRStudioGD = TRUE)
 plot_PhotoCrosssections(fit_results, filename = paste0(getwd(), "//plot.pdf"))
 dev.off()
+}
 
 }
 \references{

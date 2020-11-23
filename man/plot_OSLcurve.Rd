@@ -6,7 +6,7 @@
 \usage{
 plot_OSLcurve(
   curve = NULL,
-  components,
+  components = NULL,
   display = "detailed",
   show.legend = TRUE,
   show.intervals = FALSE,
@@ -22,12 +22,12 @@ plot_OSLcurve(
 \item{curve}{\link{data.frame} or \link{matrix} or \linkS4class{RLum.Data.Curve} (\emph{optional}):
 CW-OSL curve x-Axis: \verb{$time} or first column as measurement time (must have constant time intervals);
 y-Axis: \verb{$signal} or second column as luminescence signal.
-Other columns will be plotted as component curves, in case no argument \code{components} is defined.
+Other columns will be plotted as component curves, in case no input object \code{components} is defined.
 If no input is given, a CW-OSL curve will be simulated with the parameters of \code{components}}
 
 \item{components}{\link{data.frame} (\emph{optional}):
-Table with OSL component parameters. Overrides component curves provides by \code{curve}.
-Need to have at least the columns: \verb{$names}, \verb{$lambda} and \verb{$n}}
+Table with OSL component parameters. Overrides component information eventually provided by
+\code{curve} input object. Need to have at least the columns: \verb{$names}, \verb{$lambda} and \verb{$n}}
 
 \item{display}{\link{character} (\emph{with default}):
 Arrangement of graphs, see section \strong{Details}}
@@ -90,10 +90,11 @@ PseudoLM-OSL curves are created using the transformation described by Bulur (200
 The stimulation ramp duration is chosen double the CW-OSL duration.
 See also Bos and Wallinga (2012) for a detailed explanation and discussion
 }
-\section{Last updates}{
+\section{Last update}{
 
 
-2020-11-16, DM: Added parameter \code{show.crosssec} and \code{show.initial}
+2020-11-19, DM: RLum.Data.Curves can now be displayed without 'components'
+if RLum.OSL_decomposition was already performed at data set
 }
 
 \examples{

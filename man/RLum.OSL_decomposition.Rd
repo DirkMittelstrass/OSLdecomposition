@@ -56,7 +56,7 @@ a new list element \code{object[["DECOMPOSITION"]]}, containing:
 
 The \linkS4class{RLum.Data.Curve} attribute \verb{@info} of each CW-OSL record contains the
 new entry \verb{$COMPONENTS} with the curve-individual signal component parameters.
-It can be read for examle by:
+It can be read for example by:
 
 \code{object[[i]]@records[[j]]@info[["COMPONENTS"]]}
 }
@@ -99,17 +99,6 @@ The \emph{Rmarkdown} source code of the report can be found with the following c
 2020-11-07, DM: Added roxygen documentation; Auto-switch between "det" and "det+nls" depending on background correction
 }
 
-\examples{
-
-# 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
-# measured in a lexsyg research with green LED stimulation
-data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
-data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
-
-# Separate components and create report
-data_set_decomposed <- RLum.OSL_decomposition(data_set, decay_rates = c(0.8, 0.05))
-
-}
 \references{
 Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fischer, M., Fuchs, M., 2012.
 Introducing an R package for luminescence dating analysis. Ancient TL, 30 (1), 1-8.
