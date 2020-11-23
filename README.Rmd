@@ -15,6 +15,5 @@ knitr::opts_chunk$set(
 library(RLumCarlo)
 ```
 
-# OSLdecomposition 
+# OSLdecomposition: Identify and Separate Continuous-Wave Optically Stimulated Luminescence Signal Components
 
-Dummy README
