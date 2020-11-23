@@ -1,7 +1,7 @@
 # Settings ----------------------------------------------------------------
 library(Luminescence)
 library(OSLdecomposition)
-report <- FALSE #  disable auto-reporting if to save a lot of computing time
+report <- TRUE #  disable auto-reporting if to save a lot of computing time
 
 # Load data ---------------------------------------------------------------
 # FB_10 Gy is a dose recovery test with Fontainebleau quartz
