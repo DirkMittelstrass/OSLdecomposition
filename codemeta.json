@@ -8,7 +8,7 @@
   "description": "Function library for the identification and separation of exponentially \n    decaying signal components in continuous-wave optically stimulated luminescence (CW-OSL) measurements.\n    A special emphasis is laid on luminescence dating with quartz, which is known for\n    systematic errors due to CW-OSL signal components with unequal physical behaviour.\n    This package enables an automatised workflow for signal component deconvolution\n    in combination with the R package 'Luminescence'.",
   "name": "OSLdecomposition: Identify and Separate Continuous-Wave Optically Stimulated Luminescence Signal Components",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "0.11.18.9000.9",
+  "version": "0.11.23",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -21,9 +21,7 @@
       "givenName": "Dirk",
       "familyName": "Mittelstrass",
       "email": "dirk.mittelstrass@luminescence.de"
-    }
-  ],
-  "contributor": [
+    },
     {
       "@type": "Person",
       "givenName": "Christoph",
@@ -35,7 +33,9 @@
       "givenName": "Sebastian",
       "familyName": "Kreutzer",
       "@id": "https://orcid.org/0000-0002-0734-2199"
-    },
+    }
+  ],
+  "contributor": [
     {
       "@type": "Person",
       "givenName": "Jan",
@@ -212,5 +212,6 @@
   ],
   "codeRepository": "https://github.com/DirkMittelstrass/OSLdecomposition",
   "releaseNotes": "https://github.com/DirkMittelstrass/OSLdecomposition/blob/master/NEWS.md",
-  "readme": "https://github.com/DirkMittelstrass/OSLdecomposition/blob/master/README.md"
+  "readme": "https://github.com/DirkMittelstrass/OSLdecomposition/blob/master/README.md",
+  "developmentStatus": "https://www.repostatus.org/#wip"
 }

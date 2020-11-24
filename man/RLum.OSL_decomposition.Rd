@@ -32,7 +32,7 @@ Number of components. Should be chosen after OSL component evaluation with}
 User-defined component decay rates. If the}
 
 \item{report}{\link{logical} (\emph{with default}):
-Creates a \code{html} report, saves it in the working directory and opens it in your
+Creates a \code{html} report, saves it in the \code{report_dir} directory and opens it in your
 standard browser. The report contains the results and further information
 on the data processing}
 
@@ -43,7 +43,7 @@ that is deleted the moment the R session is closed.}
 \item{image_format}{\link{character} (\emph{with default}):
 Image format of the automatically saved graphs if \code{report = TRUE}.
 Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
-and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in the working directory subfolder \verb{/report_figures}.
+and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in the \code{report_dir} subfolder \verb{/report_figures}.
 Set \code{image_format = NULL} if no images shall be saved}
 
 \item{verbose}{\link{logical} (\emph{with default}):
