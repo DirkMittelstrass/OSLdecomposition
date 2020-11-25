@@ -110,6 +110,26 @@ The data preparation tools are executed in the following order:
 2020-11-05, DM: Added roxygen documentation
 }
 
+\examples{
+
+# 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+# measured in a lexsyg research with green LED stimulation
+data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
+data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
+
+# To correct for the background signal, subtracted the average curve from the
+# OSL curves of an empty aliquot (list item 11) from all other OSL records:
+data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
+
+# Plot background corrected global average CW-OSL curve
+\dontrun{
+sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSL")
+
+# Plot background curve
+sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSLbackground")
+}
+
+}
 \references{
 Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fischer, M., Fuchs, M., 2012.
 Introducing an R package for luminescence dating analysis. Ancient TL, 30 (1), 1-8.

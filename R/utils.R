@@ -36,9 +36,8 @@
   fit_data = NULL,
   data_set,
   object_name,
-  output_dir = tempdir(),
-  image_format = "pdf",
-  image_path = normalizePath(paste0(output_dir,"/")),
+  report_dir,
+  image_format = NULL,
   report_format = "html",
   verbose = TRUE
 ){
@@ -53,15 +52,40 @@
          call. = FALSE)
   }
 
-# Set parameters ----------------------------------------------------------
- if(verbose) {
-    cat(toupper(nature), " ----- Create report -----\n")
-    cat("This process can take a few minutes...\n")
+  image_path <- NULL
+
+  # set file path for the report
+  if(is.null(report_dir)){
+
+    output_dir <- tempdir()
+    image_format <- NULL
+
+  } else {
+
+    # If the input was a file path, we need to remove the extension
+    report_dir <- tools::file_path_sans_ext(report_dir)
+
+    # Now add a "/" and normalize the path.
+    # then it doesn't matter if the user put an "/" at the end of the directory
+    output_dir <- normalizePath(paste0(report_dir, "/"))
+
+    # Create Directory if it not already exists
+    dir.create(output_dir, showWarnings = FALSE)
+
+    # We may need also a path for the images
+    if (!is.null(image_format)) {
+
+      image_path <- paste0(output_dir,"report_figures\\")
+      dir.create(image_path, showWarnings = FALSE)}
 
   }
 
+# Set parameters ----------------------------------------------------------
+ if(verbose) cat("This process can take a few minutes...\n")
+
   # the RMD script has to be located in the "/inst" folder of the project
   # then, it will be installed with the package
+
   ##select RMD-file
   rmd_ht <- c(
     correction = "report_Step1.Rmd",
@@ -100,9 +124,14 @@
 
 
     if(verbose) {
-      cat("Save", toupper(report_format), "report to:", output, "\n")
-      cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-    }
+
+      if(!is.null(report_dir)) {
+        cat("Saved", toupper(report_format), "report to:", output_dir, "\n")
+        if(!is.null(image_format)) cat("Saved figures as", toupper(image_format),
+                                       "files to:", normalizePath(paste0(output_dir,"/report_figures/")), "\n")}
+
+      cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")}
+
   })
 
   try({

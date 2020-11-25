@@ -53,12 +53,14 @@
 #' standard browser. The report contains the results and further information
 #' on the data processing
 #'
-#' @param report_dir [character] (*optional*): if `report = TRUE`, the output dir
-#' of the report can be chosen. The default is `NULL`, which uses a temporary folder
-#' that is deleted the moment the R session is closed.
+#' @param report_dir [character] (*optional*):
+#' Path of output directory if `report = TRUE`. If `report_dir = NULL` (default),
+#' a temporary folder is used, which is deleted the moment the R session is closed.
+#' File paths are also allowed as parameter, then a new directory named after the file
+#' will be created
 #'
 #' @param image_format [character] (*with default*):
-#' Image format of the automatically saved graphs if `report = TRUE`.
+#' Image format of the automatically saved graphs if `report = TRUE` and `report_dir` is set.
 #' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
 #' and more, see [ggplot2::ggsave]. The images are saved in the `report_dir` subfolder `/report_figures`.
 #' Set `image_format = NULL` if no images shall be saved
@@ -222,16 +224,17 @@ RLum.OSL_global_fitting <- function(object,
 
 # Report output -----------------------------------------------------------
   if (report) {
+
+    if(verbose) cat("STEP 1.3 ----- Create report -----\n")
+
     .render_report(
       nature = "global_fitting",
       fit_data = fit_data,
       data_set = data_set,
       object_name = object_name,
       image_format = image_format,
-      output_dir = report_dir,
-      verbose = verbose)
-  }
-
+      report_dir = report_dir,
+      verbose = verbose)}
 
 # Return ------------------------------------------------------------------
   object <- c(data_set, data_set_overhang, OSL_COMPONENTS = list(fit_data))

@@ -246,7 +246,7 @@ dynamic_code <- c(
     
     # Save image
     "if (!is.null(image_format)) {
-        image_file <- paste0(image_path, \"step2_fig2_{{j}}_First_records_aliquot_{{j}}.\", image_format)\n
+        image_file <- paste0(image_path, \"step2_fig2_First_records_aliquot_{{j}}.\", image_format)\n
         try(suppressMessages(ggplot2::ggsave(image_file, plot = plot_object, units = \"cm\")), silent = FALSE)}\n",
     
     # end R chunk
@@ -292,7 +292,7 @@ dynamic_code <- c(
   "#### #{{j}}\n", 
                   
   # Start dynamic code section with an R chunk
-  "```{r tab_{{j}}_result_barplot, fig.asp=0.45}\n",
+  "```{r tab_{{j}}_result_barplot, fig.asp=0.5}\n",
   
   # Create plot
   "ggplot(barplots[[{{j}}]], aes(color = component, y = y_axis, x = x_axis)) +
@@ -309,7 +309,7 @@ dynamic_code <- c(
   
   # Save image
   "if (!is.null(image_format)) {
-      image_file <- paste0(image_path, \"step2_fig1_{{j}}_Intensities_aliquot_{{j}}.\", image_format)\n
+      image_file <- paste0(image_path, \"step2_fig1_Intensities_aliquot_{{j}}.\", image_format)\n
       try(suppressMessages(ggplot2::ggsave(image_file, units = \"cm\")), silent = FALSE)}\n",
   
   # end R chunk

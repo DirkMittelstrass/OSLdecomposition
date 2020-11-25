@@ -66,7 +66,7 @@ Constant signal component decay rates $\lambda$ over all measurements were assum
 #### Global average
 ```{r step1_draw_global_curve, fig.width=7, fig.asp=.4}
 
-if (!is.null(image_format)) image_file <- paste0(image_path, "step1_fig1_1_global_average.", image_format)
+if (!is.null(image_format)) image_file <- paste0(image_path, "step1_fig1_global_average.", image_format)
 
 sum_OSLcurves(data_set,
               record_type = record_type,
@@ -88,7 +88,7 @@ cat(paste0("<br><i><b>Figure 1.1:</b> <u>Red line</u>: Global average curve buil
 dynamic_code <- c(
     "#### K = {{i}}\n",
     "```{r tab_{{i}}}\n",
-    "if (!is.null(image_format)) image_file <- paste0(image_path, \"step1_fig1_{{i+1}}_K={{i}}_fitting.\", image_format)\n",
+    "if (!is.null(image_format)) image_file <- paste0(image_path, \"step1_fig1_K={{i}}_fitting.\", image_format)\n",
     "plot_OSLcurve(fit_data$curve, 
                 fit_data$component.tables[[{{i}}]], 
                 title = NULL,

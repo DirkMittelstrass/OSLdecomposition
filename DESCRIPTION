@@ -25,6 +25,7 @@ Imports:
     methods,
     utils,
     stats,
+    tools,
     DEoptim,
     minpack.lm,
     gridExtra,

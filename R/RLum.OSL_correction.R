@@ -443,7 +443,7 @@ RLum.OSL_correction <- function(
       data_set = data_set,
       object_name = object_name,
       image_format = NULL,
-      output_dir = NULL,
+      report_dir = NULL,
       verbose = verbose)}
 
   # Return decomposed data

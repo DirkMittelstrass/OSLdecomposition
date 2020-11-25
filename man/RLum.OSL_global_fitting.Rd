@@ -42,12 +42,14 @@ Creates a \code{html} report, saves it in the \code{report_dir} directory and op
 standard browser. The report contains the results and further information
 on the data processing}
 
-\item{report_dir}{\link{character} (\emph{optional}): if \code{report = TRUE}, the output dir
-of the report can be chosen. The default is \code{NULL}, which uses a temporary folder
-that is deleted the moment the R session is closed.}
+\item{report_dir}{\link{character} (\emph{optional}):
+Path of output directory if \code{report = TRUE}. If \code{report_dir = NULL} (default),
+a temporary folder is used, which is deleted the moment the R session is closed.
+File paths are also allowed as parameter, then a new directory named after the file
+will be created}
 
 \item{image_format}{\link{character} (\emph{with default}):
-Image format of the automatically saved graphs if \code{report = TRUE}.
+Image format of the automatically saved graphs if \code{report = TRUE} and \code{report_dir} is set.
 Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
 and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in the \code{report_dir} subfolder \verb{/report_figures}.
 Set \code{image_format = NULL} if no images shall be saved}
