@@ -229,7 +229,7 @@ decompose_OSLcurve <- function(
   if(!((class(curve)[1] == "RLum.Data.Curve") | (class(curve)[1] == "data.frame") | (class(curve)[1] == "matrix"))){
    stop("[decompose_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
 
-  if(class(curve) == "RLum.Data.Curve") curve <- as.data.frame(Luminescence::get_RLum(curve))
+  if(class(curve)[1] == "RLum.Data.Curve") curve <- as.data.frame(Luminescence::get_RLum(curve))
 
   if (!("time" %in% colnames(curve)) |
       !("signal" %in% colnames(curve))) {
