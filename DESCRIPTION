@@ -29,6 +29,7 @@ Imports:
     DEoptim,
     minpack.lm,
     gridExtra,
+    kableExtra,
     ggplot2,
     scales,
     ggpubr,
