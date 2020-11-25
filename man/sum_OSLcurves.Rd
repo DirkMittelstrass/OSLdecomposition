@@ -10,7 +10,7 @@ sum_OSLcurves(
   aliquot_selection = NULL,
   offset_value = 0,
   verbose = TRUE,
-  output.plot = TRUE,
+  output.plot = FALSE,
   theme.set = ggplot2::theme_classic(),
   plot.first = FALSE,
   title = "default",
@@ -76,6 +76,17 @@ in the source code
 2020-10-30, DM: Overworked plotting; Expanded roxygen documentation
 }
 
+\examples{
+
+# 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+# measured in a lexsyg research with green LED stimulation
+data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
+data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
+
+# Plot all data points and give average CW-OSL curve back
+average_curve <- sum_OSLcurves(data_set)
+
+}
 \seealso{
 \link{fit_OSLcurve}, \link{RLum.OSL_correction}, \link{RLum.OSL_global_fitting}
 }

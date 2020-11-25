@@ -119,8 +119,8 @@
 #' # OSL curves of an empty aliquot (list item 11) from all other OSL records:
 #' data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
 #'
-#  # Plot background corrected global average CW-OSL curve
-#  \dontrun{
+#' # Plot background corrected global average CW-OSL curve
+#' \dontrun{
 #' sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSL")
 #'
 #' # Plot background curve
@@ -436,47 +436,15 @@ RLum.OSL_correction <- function(
 
   ################################ REPORT  ################################
   if (FALSE) {
-    if(("rmarkdown" %in% rownames(utils::installed.packages())) && ("kableExtra" %in% rownames(utils::installed.packages()))) {
 
-      if(verbose) cat("CORRECTION SUMMARY ----- Create report -----\n")
-      if(verbose) cat("This process can take a few minutes...\n")
-
-      time.start <- Sys.time()
-
-      # the RMD script has to be located in the "/inst" folder of the project
-      # then, it will be installed with the package
-      try({
-
-        report_format <- "html"
-        # for test purposes:
-        rmd_path <- "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Correction.Rmd"
-        #rmd_path <- system.file("rmd", "report_Step1.Rmd", package = "OSLdecomposition")
-        output_file <- paste0(getwd(), "/", "report_Correction.", report_format)
-
-        rmarkdown::render(rmd_path,
-                          params = list(dec_data = dec_data,
-                                        data_set = data_set,
-                                        object_name = object_name),
-                          output_file = output_file,
-                          output_format = paste0(report_format,"_document"),
-                          quiet = TRUE)
-
-        cat("Save", toupper(report_format), "report to:", output_file, "\n")
-
-        # ToDo: Replace the following try() outside the big try
-        try({
-          utils::browseURL(output_file)
-          cat("Open", toupper(report_format), "report in the systems standard browser\n")})
-
-
-        if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-
-       }) # end big try()
-
-    } else {
-
-      warning("Packages 'rmarkdown' and 'kableExtra' are needed to create reports. One or both are missing.")}
-  }
+    .render_report(
+      nature = "correction",
+      cor_data = cor_data,
+      data_set = data_set,
+      object_name = object_name,
+      image_format = NULL,
+      output_dir = NULL,
+      verbose = verbose)}
 
   # Return decomposed data
   object <- c(data_set, data_set_overhang, CORRECTION = list(cor_data))

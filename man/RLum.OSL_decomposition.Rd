@@ -9,7 +9,7 @@ RLum.OSL_decomposition(
   record_type = "OSL",
   K = 3,
   decay_rates = NULL,
-  report = TRUE,
+  report = FALSE,
   report_dir = NULL,
   image_format = "pdf",
   verbose = TRUE
@@ -104,6 +104,18 @@ The \emph{Rmarkdown} source code of the report can be found with the following c
 2020-11-07, DM: Added roxygen documentation; Auto-switch between "det" and "det+nls" depending on background correction
 }
 
+\examples{
+
+#'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+# measured in a lexsyg research with green LED stimulation
+data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
+data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
+
+# Separate components
+data_set_decomposed <- RLum.OSL_decomposition(
+data_set, decay_rates = c(0.8, 0.05))
+
+}
 \references{
 Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fischer, M., Fuchs, M., 2012.
 Introducing an R package for luminescence dating analysis. Ancient TL, 30 (1), 1-8.

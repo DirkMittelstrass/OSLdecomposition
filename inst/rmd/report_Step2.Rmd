@@ -316,10 +316,7 @@ dynamic_code <- c(
   "```\n",
   
   # Write captions
-  "<i><b>Figure 1.`r {{j}}`:</b> `r record_type` signal component intensities ",
-  "of measurement sequence `r {{j}}`. Just component which are bleached to at least 95 % during",
-  "at the end of the curve are displayed.",
-  "   </i><br><br>\n")
+  "<i><b>Figure 1.`r {{j}}`:</b> `r record_type` signal component intensities over SAR sequence steps.<br> <u>Dashed line:</u> $T_x$ values; <u>Dotted line:</u> $L_x$ values (dose-response curve only).<br>Just components which are bleached to at least 95 % at the end of the curve are displayed.</i><br><br>\n")
 
 tabs <- lapply(as.list(1:length(record)),
                 function(j) knitr::knit_expand(text = dynamic_code))

@@ -75,10 +75,8 @@
 #' data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 #' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 #'
-#  # Plot all data points and give average CW-OSL curve back
-# \dontrun{
+#' # Plot all data points and give average CW-OSL curve back
 #' average_curve <- sum_OSLcurves(data_set)
-#' }
 #'
 #' @md
 #' @export
@@ -88,7 +86,7 @@ sum_OSLcurves <- function(
   aliquot_selection = NULL,
   offset_value = 0,
   verbose = TRUE,
-  output.plot = TRUE,
+  output.plot = FALSE,
   theme.set = ggplot2::theme_classic(),
   plot.first = FALSE,
   title = "default",

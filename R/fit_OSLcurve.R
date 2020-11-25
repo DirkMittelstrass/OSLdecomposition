@@ -83,13 +83,15 @@
 #' relation with literature values to name the signal components
 #'
 #' @param verbose [logical] (*with default*):
-#' enables console text output
+#' Enables console text output
 #'
 #' @param output.complex [logical] (*with default*):
-#' enables in detail data output. See section **Value** for further information
+#' If `TRUE`, the function returns a list of objects, see section **Value** for further information.
+#' If `FALSE`, the function returns a [data.frame] with the CW-OSL model parameters of the fitting chosen by the F-test.
+#' This ist NOT recommended when fitting a global average curve created by [sum_OSLcurves] as over-fitting is likely in such cases.
 #'
 #' @param parallel.computing [logical] (*with default*):
-#' enables the use of multiple CPU cores. This increases the execution speed significantly
+#' Enables the use of multiple CPU cores. This increases the execution speed significantly
 #' but may need administrator rights and/or a firewall exception.
 #' See [DEoptim::DEoptim.control] for further information
 #'
@@ -97,7 +99,7 @@
 #'
 #' 2020-08-05, Rewrote function to use [DEoptim::DEoptim] and [minpack.lm::nlsLM] (**update may have changed analysis results**)
 #'
-#' 2020-10-27, Completed roxygen documentation (*minor update*)
+#' 2020-11-25, DM: Reworked console output (*minor update*)
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -192,6 +194,7 @@ fit_OSLcurve <- function(
   # * 2020-08-05, DM: Added DEoptim + nlsLM algorithm
   # * 2020-08-10, DM: Optional parallel computing enabled
   # * 2020-10-26, DM: Roxygen documentation
+  # * 2020-11-25, DM: Reworked console output
   #
   # ToDo:
   # * Enhance documentation with more algorithm info and some F.threshold recommendation
@@ -245,7 +248,8 @@ fit_OSLcurve <- function(
   if (silent) options(warn = -1)
 
   # prepare printed table
-  if (verbose) cat("Cycle \t", paste(paste0("       f_", X), collapse = "  "),
+  if (verbose) cat("\nDecay rates (s^-1):\n")
+  if (verbose) cat("Cycle \t", paste(paste0("   Comp. ", X), collapse = "  "),
                    "        RSS     F-value\n")
 
   ###################### Subfunction for DE minimisation ###########################################
@@ -533,38 +537,29 @@ fit_OSLcurve <- function(
   ######### Further console output ######
   if (verbose) {
 
-    cat(paste0("->  ", K_selected,"-component model choosen"), "\n")
+    cat(paste0("-> The F-test suggests the K = ", K_selected," model"), "\n")
 
-    cat("\nSignal component parameter:\n")
-    # Reduce amount of information in the table to avoid user irritation, also round some values
-    print_components <- subset(components,
-                               select = c("name", "lambda", "lambda.error",
-                                          "n", "n.error", "cross.section",
-                                          "initial.signal", "bleaching.grade"))
 
-     for (col in 2:ncol(print_components)) {
-      print_components[,col] <- formatC(print_components[,col], digits = 4)}
+    # Build a nove looking photoionisation cross section table for the console output
+    cat("\nPhotoionisation cross sections (cm^2):\n")
+    cat("Cycle \t", sprintf(" %-19s", paste0("Comp. ", X)), "\n")
 
-    print.data.frame(print_components, row.names = FALSE)
+    most_identified <- NULL
+    for (k in 1:K) {
 
-    # Give advice which components are suited for further analysis
-    bleach <- components$bleaching.grade
-    if (any(bleach < 0.99)) {
+      cross_section <- prettyNum(component_tables[[k]]$cross.section, digits = 3)
+      name <- component_tables[[k]]$name
+      identified <- !grepl("ompo", name, fixed = TRUE)
 
-      if (sum(bleach < 0.99) == nrow(components)) {
-        cat("WARNING: No component was fully bleached during stimulation. Check your experimental settings!\n")
+      cross_section[identified] <- paste0(cross_section[identified], " (", name[identified], ")")
+      cat("K =", k, "\t", sprintf("%-20s", cross_section), "\n")
 
-      } else if (sum(bleach < 0.99)  == 1) {
+      most_identified <- c(most_identified, sum(identified) - k/100)}
 
-        cat(paste0(components$name[bleach < 0.99],
-                   " was not fully bleached during stimulation and is not recommended for further dose evaluation\n"))
-      } else {
+    if (sum(most_identified) > 0) {
+      cat(paste0("-> Most known quartz OSL components found in the K = ",
+                 which(max(most_identified) == most_identified)," model"), "\n")}
 
-        cat(paste0(paste(components$name[bleach < 0.99], collapse = ", "),
-                   " were not fully bleached during stimulation and are not recommended for further dose evaluation\n"))}}
-
-   # print computing time
-   # cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
   }
 

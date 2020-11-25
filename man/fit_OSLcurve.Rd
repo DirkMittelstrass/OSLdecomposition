@@ -37,13 +37,15 @@ If a wavelength between 465 and 480 nm is chosen, the cross sections are set int
 relation with literature values to name the signal components}
 
 \item{verbose}{\link{logical} (\emph{with default}):
-enables console text output}
+Enables console text output}
 
 \item{output.complex}{\link{logical} (\emph{with default}):
-enables in detail data output. See section \strong{Value} for further information}
+If \code{TRUE}, the function returns a list of objects, see section \strong{Value} for further information.
+If \code{FALSE}, the function returns a \link{data.frame} with the CW-OSL model parameters of the fitting chosen by the F-test.
+This ist NOT recommended when fitting a global average curve created by \link{sum_OSLcurves} as over-fitting is likely in such cases.}
 
 \item{parallel.computing}{\link{logical} (\emph{with default}):
-enables the use of multiple CPU cores. This increases the execution speed significantly
+Enables the use of multiple CPU cores. This increases the execution speed significantly
 but may need administrator rights and/or a firewall exception.
 See \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further information}
 }
@@ -137,7 +139,7 @@ Slow4 \tab 1e-21 \tab 1e-20
 
 2020-08-05, Rewrote function to use \link[DEoptim:DEoptim]{DEoptim::DEoptim} and \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} (\strong{update may have changed analysis results})
 
-2020-10-27, Completed roxygen documentation (\emph{minor update})
+2020-11-25, DM: Reworked console output (\emph{minor update})
 }
 
 \examples{

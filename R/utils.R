@@ -31,6 +31,7 @@
 ################################ REPORT  ################################
 .render_report <- function(
   nature = "",
+  cor_data = NULL,
   dec_data = NULL,
   fit_data = NULL,
   data_set,
