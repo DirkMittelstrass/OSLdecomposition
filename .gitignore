@@ -1,4 +1,5 @@
 .Rproj.user
+.Rhistory
 *.html
 Test.Rmd
 _DEV/DEoptim_test.R
