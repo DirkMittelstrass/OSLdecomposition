@@ -43,15 +43,6 @@
 ){
 
 # Pre-check ---------------------------------------------------------------
-  pkgs <- c("rmarkdown", "knitr", "kableExtra")
-  if(!all(pkg_test <- vapply(pkgs, requireNamespace, logical(1), quietly = TRUE))){
-    stop(paste0("Creating reports requires the package(s) '",
-                  paste(pkgs[!pkg_test], collapse = "', '"),"'.\n",
-                "To install this package run install.packages(c('",
-                paste(pkgs[!pkg_test], collapse = "', '"),"')) in your R console."),
-         call. = FALSE)
-  }
-
   image_path <- NULL
 
   # set file path for the report
