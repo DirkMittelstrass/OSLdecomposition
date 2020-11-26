@@ -1,4 +1,8 @@
-#' @title Identify and Separate Continuous-Wave Optically Stimulated Luminescence Signal Components
+#' @title Identify and Separate Continuous-Wave Optically Stimulated Luminescence Signal Components\cr
+#'
+#' \if{html}{
+#' \figure{OSLdecomposition_logo.png}{options: width="50px" alt="luminescence.de"}\cr
+#' }
 #'
 #' @description Function library for the identification and separation of exponentially
 #' decaying signal components in continuous-wave optically stimulated luminescence (CW-OSL) measurements.
