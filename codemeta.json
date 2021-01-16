@@ -14,7 +14,7 @@
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.0.3 (2020-10-10)",
+  "runtimePlatform": "R Under development (unstable) (2021-01-05 r79797)",
   "author": [
     {
       "@type": "Person",
@@ -215,7 +215,5 @@
     }
   ],
   "codeRepository": "https://github.com/DirkMittelstrass/OSLdecomposition",
-  "releaseNotes": "https://github.com/DirkMittelstrass/OSLdecomposition/blob/master/NEWS.md",
-  "readme": "https://github.com/DirkMittelstrass/OSLdecomposition/blob/master/README.md",
   "developmentStatus": "https://www.repostatus.org/#wip"
 }
