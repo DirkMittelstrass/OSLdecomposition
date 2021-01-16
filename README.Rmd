@@ -17,6 +17,8 @@ library(RLumCarlo)
 Identify and Separate Continuous-Wave Optically Stimulated Luminescence (CW-OSL) Signal Components
 
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![R-CMD-check](https://github.com/DirkMittelstrass/OSLdecomposition/workflows/GitHub Actions CI/badge.svg)](https://github.com/DirkMittelstrass/OSLdecomposition/actions)
+
 
 ## License
 
