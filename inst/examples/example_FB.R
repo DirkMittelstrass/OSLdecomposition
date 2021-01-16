@@ -9,7 +9,6 @@ report <- TRUE #  disable auto-reporting if to save a lot of computing time
 data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 FB <- read_BIN2R(data_path, fastForward = TRUE)
 
-
 # Component processing ----------------------------------------------------
 # Background correction is recommended to prevent slow component overestimation.
 # Here, the average curve from the OSL curves of an empty aliquot
@@ -37,13 +36,13 @@ FB_decomposed <- RLum.OSL_decomposition(
 # De analysis and plotting ------------------------------------------------
 # Here, component 2 is the 'fast' component
 FB_fast_De <- analyse_SAR.CWOSL(
-  FB_decomposed,
+  FB_decomposed[1:2],
   signal.integral.min = NA,
   signal.integral.max = NA,
   background.integral.min = NA,
   background.integral.max = NA,
-  OSL.component = 1,
-  plot = FALSE
+  OSL.component = c(1,2),
+  plot = TRUE
 )
 
 # the outlier comes from the background measurements
