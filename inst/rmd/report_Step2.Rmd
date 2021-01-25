@@ -27,8 +27,9 @@ Last_changed <-"2020-11-18"
 
 ### Planned further features:
 #
+# * Figure 2: Use different plotting symbols for Lx and for Tx; Overwork or explain ploted lines
 # * alternative bar-plot arrangement with all natural dose measurements in one plot etc.
-# * Split figure 1 into K separate plots, one for each component
+# * Split Figure 1 into K separate plots, one for each component
 # * Add K exta tabs to figure 1: For each component one plot with all aliquots in them
 # * plot with initial signal compositions
 # * Scatterplots or full correlogram of the components and the irradiation time
@@ -110,7 +111,7 @@ for (j in 1:length(record)) {
   
   plot_table <- data.frame(NULL)
 
-  colnames(aliquot_table) <- c("data index", "dose (s)")
+  colnames(aliquot_table) <- c("record index", "dose (s)")
   
   ### Define Lx and Tx data points
   
@@ -208,7 +209,7 @@ if (background_fitting) append_B <- "+B"
 cat("$$I(t) = ", paste(paste0("n_",1:K, "e^{-",round(input_table$lambda, digits = 4),"t}"), collapse = "+"), append_B, "$$")
 ```
 
-The signal component intensities $n_1$ to $n_K$ were calculated for each of the `r n.curves` CW-OSL measurements. First, `r K` signal bin intervals were defined. The value of each bin was set equal to the formula above, integrated over the bin interval. In consequence, each measurement was described by `r K` equations with `r K` unknown intensity values $n$. These equations systems were solved by an algebraic approach,ee section [Methods](#Overview) for details.
+The signal component intensities $n_1$ to $n_K$ were calculated for each of the `r n.curves` CW-OSL measurements. First, `r K` signal bin intervals were defined. The value of each bin was set equal to the formula above, integrated over the bin interval. In consequence, each measurement was described by `r K` equations with `r K` unknown intensity values $n$. These equations systems were solved by an algebraic approach, section [Methods](#Overview) for details.
 
 
 
@@ -258,8 +259,8 @@ dynamic_code <- c(
     " usually natural or recovered dose signal ($L_n$).<br>",
     "<u>Upper right:</u> Second CW-OSL measurement (index = `r record[[{{j}}]]$index[2]`),",
     " usually test-dose signal ($T_n$).<br>",
-    "<u>Middle</u>: Residual curves between decomposition model and measurement<br>",
-    "<u>Lower right</u>: Estimated type of quartz OSL component (colored), decay rates $\\lambda$, signal intensity $n$ and share at first channel $I_0$.</i><br><br>\n")
+    "<u>Middle left and right</u>: Residual curves between decomposition model and measurement<br>",
+    "<u>Lower left and right</u>: Estimated type of quartz OSL component (colored), decay rates $\\lambda$, signal intensity $n$ and signal contribution to first channel $I_0$.</i><br><br>\n")
 
 
 ### ALTERNATIVE MORE VARIABLE (but buggy) PLOT ASSIGNEMENT:
@@ -282,7 +283,7 @@ tabs <- lapply(as.list(1:length(record)), function(j) knitr::knit_expand(text = 
 
 ### Intensity over sequence {.tabset .tabset-pills}
 
-The behaviour of the signal component intensities in the course of measurement sequences contains information about irradiation and bleaching response and thermal- or photo-transfer effects of the associated defect states. Fig. 2 gives an overview of the progression of the component intensities in the course of the measurement sequences. Just components which were bleached to at least 95 % during the analysed time window are displayed, to prevent scaling issues and data misinterpretation due to background correction issues.
+The behaviour of the signal component intensities in the course of measurement sequences contains information about irradiation and bleaching response and thermal- or photo-transfer effects of the associated defect states. Fig. 2 display the component intensity variations in the course of the measurement sequences. Just components which were bleached to at least 95 % during the analysed time window are displayed, to prevent scaling issues and data misinterpretation due to background correction issues.
 
 ```{r step2_create_result_tabs2} 
 
@@ -326,13 +327,7 @@ tabs <- lapply(as.list(1:length(record)),
 
 ### Result summary {.tabset .tabset-pills}
 
-The following tables summarize all in Step 2 calculated values for each `RLum.Analysis` object (= aliquot). The column *record index* refers to the index needed to plot a single measurement by calling:
-
-```{r single_plot_explanation, eval=FALSE, include=TRUE}
-plot_OSLcurve(data_set[[aliquot_index]]@records[[record_index]])
-```
-
-
+The following tables summarize all in Step 2 calculated values for each `RLum.Analysis` object (= aliquot). The column *record index* refers to the index needed to plot a single measurement by calling: `plot_OSLcurve(data_set[[aliquot_index]]@records[[data_index]])`
 
 ```{r step2_create_result_tabs1} 
 # Define dynamic Rmarkdown code, structured in tabs
@@ -502,7 +497,7 @@ para_table <- data.frame(n = "Analyzed data set", t = object_name)
 para_table <- rbind(para_table, 
                     data.frame(n = "Analyzed record type", t = record_type),
                     data.frame(n = "No. of measurements", t = format(n.curves)),
-                    data.frame(n = "No. of sequences", t = format(length(record))))
+                    data.frame(n = "No. of aliquots", t = format(length(record))))
 
 #  Global curve
 para_table <- rbind(para_table, 

@@ -340,7 +340,7 @@ ch.N <- length(fit_data$curve$time)
 ch.W <- fit_data$curve$time[2]-fit_data$curve$time[1]
 para_table <- rbind(para_table, 
                     data.frame(n = "No. of input measurements", t = format(n.curves)),
-                    data.frame(n = "No. of input sequences", t = format(length(data_set))),
+                    data.frame(n = "No. of input aliquots", t = format(length(data_set))),
                     data.frame(n = "Channel time ", t = paste0("$\\delta$*t* = ", prettyNum(ch.W), " s")),
                     data.frame(n = "Channels ", t = paste0("*N* = ", ch.N)),
                     data.frame(n = "Global curve length ", t = paste0("*t* = *N*$\\delta$*t* = ", prettyNum(ch.W*ch.N), " s")))
