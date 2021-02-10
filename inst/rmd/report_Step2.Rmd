@@ -19,7 +19,7 @@ params:
 
 ```{r step2_setup, include=FALSE}
 
-Last_changed <-"2020-11-18" 
+Last_changed <-"2021-02-09" 
 
 # ToDo's:
 # * Bug: The barplots sort the columns alphabetically
@@ -115,17 +115,21 @@ for (j in 1:length(record)) {
   
   ### Define Lx and Tx data points
   
-  result <- data.frame(result, type = factor("?", levels = c("?", "Lx", "Tx")))
+  result <- data.frame(result, type = factor(" ", levels = c(" ", "Lx", "Tx")))
   
   # Where is the highest regenerated dose?
   max_Lx <- which.max(result$IRR_TIME[2:length(result$IRR_TIME)]) + 1
-  
-  # get a index sequence: i = 3, 5, 7, 9
-  i_Lx <- 1:((max_Lx - 1)/2) * 2 + 1
-  result$type[i_Lx] <- "Lx"
-  
-  i_Tx <- 1:(nrow(result)/2) * 2
-  result$type[i_Tx] <- "Tx"
+  try({
+    
+    # get a index sequence: i = 3, 5, 7, 9
+    i_Lx <- 1:((max_Lx - 1)/2) * 2 + 1
+    result$type[i_Lx] <- "Lx"
+    
+    i_Tx <- 1:(nrow(result)/2) * 2
+    result$type[i_Tx] <- "Tx"
+    
+  }, silent = TRUE)
+
   
   for (k in 1:K) {
     

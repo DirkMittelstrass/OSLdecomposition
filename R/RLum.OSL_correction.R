@@ -11,8 +11,8 @@
 #' The data preparation tools are executed in the following order:
 #' \enumerate{
 #'   \item{`check_consistency`}
-#'   \item{`tailor_records` (*inactive*)}
-#'   \item{`record_cut`}
+#'   \item{`remove_light_off`}
+#'   \item{`shorten_records`}
 #'   \item{`correct_PMTsaturation` (*inactive*)}
 #'   \item{`background_sequence`}
 #'   \item{`check_signal_level` (*inactive*)}
@@ -54,16 +54,16 @@
 #' not the case, will be removed from the data set. Useful to remove no-signal grains from
 #' single grain measurements
 #'
-#' @param tailor_records [logical] (*with default*): **(Has no effect yet)**
+#' @param remove_light_off [logical] (*with default*): **(Has no effect yet)**
 #' Checks if the records contain zero-signal intervals at beginning and/or end of the
 #' measurement and removes them. Useful to tailor single grain measurements
 #'
-#' @param record_cut [numeric] (*with default*):
+#' @param shorten_records [numeric] (*with default*):
 #' Reduce measurement duration to input value (in s).
 #' Long measurement durations can lead to over-fitting at the component identification
 #' of Step 1 which may induce systematic errors, see Mittelstrass (2019). Thus, limiting
 #' the OSL record length ensures sufficient accuracy regarding the Fast and Medium component analysis.
-#' If however, slow decaying components are of interest, set `record_cut = NULL`
+#' If however, slow decaying components are of interest, set `shorten_records = NULL`
 #'
 #' @param correct_PMTsaturation [numeric] (*optional*): **(Has no effect yet)**
 #' Bright CW-OSL signals may lead to detection non-linearity. This
@@ -137,8 +137,8 @@ RLum.OSL_correction <- function(
   subtract_offset = 0,
   check_consistency = TRUE,
   check_signal_level = FALSE,
-  tailor_records = FALSE,
-  record_cut = 20,
+  remove_light_off = FALSE,
+  shorten_records = 20,
   correct_PMTsaturation = NA,
   verbose = TRUE,
   report = FALSE
@@ -157,7 +157,10 @@ RLum.OSL_correction <- function(
   # * new 'reduce data' argument to delete all unnecessary data (like TL curves etc.)
   # * IMPORTANT: If a RLum.object is manipulated, change its @info accordingly
 
-  #library(Luminescence)
+
+  ##########################
+  #### Data preparation ####
+  ##########################
 
   object_name <- deparse(substitute(object))
 
@@ -168,7 +171,7 @@ RLum.OSL_correction <- function(
   # Build overview list
   cor_data <- list(parameters = list(record_type = record_type,
                                      check_consistency = check_consistency,
-                                     tailor_records = tailor_records,
+                                     remove_light_off = remove_light_off,
                                      background_sequence = background_sequence,
                                      check_signal_level = check_signal_level,
                                      subtract_offset = subtract_offset))
@@ -202,6 +205,20 @@ RLum.OSL_correction <- function(
 
   if (!(check_consistency) && !(is.null(background_sequence))) {
     stop("Background correction requires consistent data! Please set 'check_consistency=TRUE' and try again.")}
+
+  ##################################
+  #### Change lenght of records ####
+  ##################################
+
+  manipulate_records <- function(DataSet, RecordType, StartCh = 1, EndCh) {
+
+
+
+  }
+
+  ########################
+  #### Start workflow ####
+  ########################
 
   correction_step <- 0
 
@@ -299,17 +316,75 @@ RLum.OSL_correction <- function(
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
   }
 
-  if (tailor_records) {
-    correction_step <- correction_step + 1 ########################### TAILOR ##############################
+  if (remove_light_off) {
+    correction_step <- correction_step + 1 ###########################  ##############################
     if(verbose) cat("CORRECTION STEP", correction_step,"----- Cut not-stimulated measurement parts -----\n")
     time.start <- Sys.time()
 
-    if(verbose) cat("THIS FUNCTION IS STILL MISSING")
+    # Algorithm: (1) Create a global reference curve of all [record_type] curves
+    # (2) Divide that curve into two halves
+    # (3) Search for the maximum value in the first half, cut all values before
+
+    ref_curve <- sum_OSLcurves(data_set, record_type = record_type, output.plot = FALSE)
+    ref_length <- length(ref_curve$signal)
+
+    # Where is the maximum in the first half?
+    ref_curve_max <- max(ref_curve$signal[1:ceiling(ref_length / 2)])
+    light_on <- which(ref_curve$signal == ref_curve_max)
+
+
+    # To get the light-off time, we calculate the second differential
+    # Its minimum ist that negative curvature data point which is caused by the light-off event
+    ref_diff2 <-  c(diff(c(0, diff(ref_curve$signal))), 0)
+    ref_diff2_min <- min(ref_diff2_min[floor(ref_length / 2):ref_length])
+
+    light_off <- which(ref_diff2 == ref_diff2_min)
+
+    # be sure, the light-off event is not just a noise artifact ...
+    if ((ref_diff2_min >= 0) &
+        (ref_curve$signal[light_off] < 2 * ref_curve$signal[light_off + 1])) {
+
+      # ... or set end of stimulation equal to end of the measurement
+      light_off <- ref_length}
+
+    if ((light_on == 1) & (light_off == ref_length)) {
+
+      if(verbose) cat("No measurement parts with stimulation light turned off could be detected\n")
+
+    } else {
+
+      stimulated <- c(light_on:light_off)
+      before <- ref
+      records_changed <- 0
+
+      # go through all records
+      for (j in 1:length(data_set)) {
+        for (i in c(1:length(data_set[[j]]@records))) {
+          if (data_set[[j]]@records[[i]]@recordType == record_type) {
+
+            # read record
+            time <- data_set[[j]]@records[[i]]@data[,1]
+            signal <- data_set[[j]]@records[[i]]@data[,2]
+
+            # reduce record
+            time <- time[1:length(stimulated)]
+            signal <- signal[stimulated]
+
+            # write record
+            data_set[[j]]@records[[i]]@data <- matrix(c(time, signal), ncol = 2)
+
+            records_changed <- records_changed + 1 }}}
+
+
+      if(verbose) cat("Measurement duration of", records_changed, "records reduced to", shorten_records, "s\n")
+    }
+
+
 
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")}
 
 
-  if (is.numeric(record_cut) && (record_cut > 0)) {
+  if (is.numeric(shorten_records) && (shorten_records > 0)) {
     correction_step <- correction_step + 1 ########################## CUT ###############################
     if(verbose) cat("CORRECTION STEP", correction_step,"----- Cut records at specific time -----\n")
     time.start <- Sys.time()
@@ -324,18 +399,18 @@ RLum.OSL_correction <- function(
           channel_width <- time[2] - time[1]
 
           ##### cut curve, if too long #####
-          if (max(time) > record_cut) {
+          if (max(time) > shorten_records) {
 
             # reduce channel number and write record back into the RLum object
-            time <- time[1:ceiling(record_cut/channel_width)]
-            signal <- signal[1:ceiling(record_cut/channel_width)]
+            time <- time[1:ceiling(shorten_records / channel_width)]
+            signal <- signal[1:ceiling(shorten_records / channel_width)]
             data_set[[j]]@records[[i]]@data <- matrix(c(time, signal), ncol = 2)
             records_changed <- records_changed + 1 }}}}
 
     if (records_changed==0) {
-      if(verbose) cat("No record was shorter than", record_cut, "s\n")
+      if(verbose) cat("No record was shorter than", shorten_records, "s\n")
     } else{
-      if(verbose) cat("Measurement duration of", records_changed, "records reduced to", record_cut, "s\n")}
+      if(verbose) cat("Measurement duration of", records_changed, "records reduced to", shorten_records, "s\n")}
 
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
   }
@@ -373,7 +448,7 @@ RLum.OSL_correction <- function(
           N <- N + 1
           data_set[[j]]@records[[i]]@recordType <- paste0(record_type, "background")}}}
 
-    #if(verbose) cat("Göobal background curve created from", N, record_type,"records of sequence \n")
+    #if(verbose) cat("Global background curve created from", N, record_type,"records of sequence \n")
     if(verbose) cat("RLum.Data.Curve@RecordType is changed to",
                     paste0(record_type, "background"),"for those records\n")
 
@@ -407,6 +482,12 @@ RLum.OSL_correction <- function(
     if(verbose) cat("CORRECTION STEP", correction_step,"----- Check measurements for sufficient signal levels -----\n")
     time.start <- Sys.time()
 
+    # Algorithm:
+    # If >= 50 % of all records in an list item are just noise, rename them to "OSLnoise"
+    # When is something noise? When the Sign-Test says it is with p > .05 probability
+    #
+    # Alternatively: Use the function from Luminescence
+
     if(verbose) cat("THIS FUNCTION IS STILL MISSING")
 
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
@@ -436,6 +517,8 @@ RLum.OSL_correction <- function(
 
   ################################ REPORT  ################################
   if (FALSE) {
+
+    # Include before/after images into the report. Use plot_OSLcurve(detail = "raw") for that
 
     .render_report(
       nature = "correction",

@@ -344,6 +344,7 @@ RLum.OSL_decomposition <- function(
         object_name = object_name,
         image_format = image_format,
         report_dir = report_dir,
+        rmd_path = "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd",
         verbose = verbose)}
 
 

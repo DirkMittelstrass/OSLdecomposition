@@ -24,6 +24,9 @@
 #' @param verbose [logical] (*with default*): enables/disables terminal output.
 #' If set to `FALSE` no browser window will be opened.
 #'
+#' @param rmd_path [character] (**optional**): FOR DEVELOPMENT PURPOSES ONLY:
+#' Path of Rmarkdown script to be executed
+#'
 #' @return returns a report in the chosen format and opens a browser window
 #'
 #' @md
@@ -39,7 +42,8 @@
   report_dir,
   image_format = NULL,
   report_format = "html",
-  verbose = TRUE
+  verbose = TRUE,
+  rmd_path = NULL
 ){
 
 # Pre-check ---------------------------------------------------------------
@@ -104,8 +108,13 @@
   time.start <- Sys.time()
 
   try({
+
+    if (is.null(rmd_path)) {
+      rmd_path <- system.file("rmd", rmd_ht[nature[1]], package = "OSLdecomposition", mustWork = TRUE)
+    }
+
     output <- rmarkdown::render(
-      input =  system.file("rmd", rmd_ht[nature[1]], package = "OSLdecomposition", mustWork = TRUE),
+      input =  rmd_path,
       params = input_params,
       output_dir = output_dir,
       output_format = paste0(report_format, "_document"),
