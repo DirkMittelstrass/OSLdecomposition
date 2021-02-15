@@ -14,6 +14,7 @@ RLum.OSL_global_fitting(
   report = FALSE,
   report_dir = NULL,
   image_format = "pdf",
+  rmd_path = NULL,
   verbose = TRUE
 )
 }
@@ -53,6 +54,10 @@ Image format of the automatically saved graphs if \code{report = TRUE} and \code
 Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
 and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in the \code{report_dir} subfolder \verb{/report_figures}.
 Set \code{image_format = NULL} if no images shall be saved}
+
+\item{rmd_path}{\link{character} (\emph{with default}):
+\strong{For advanced users:} File path to the \link{rmarkdown} source code file of the report.
+This allows to execute a maniputed version of the report}
 
 \item{verbose}{\link{logical} (\emph{with default}):
 Enables console text output}
@@ -106,7 +111,7 @@ The \emph{Rmarkdown} source code of the report can be found with the following c
 \section{Last updates}{
 
 
-2020-11-06, DM: Added roxygen documentation
+2021-02-15, DM: Added new parameter \code{rmd_path}
 }
 
 \examples{

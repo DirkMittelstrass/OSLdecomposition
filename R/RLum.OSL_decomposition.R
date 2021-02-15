@@ -32,8 +32,6 @@
 #' `system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")`
 #'
 #'
-#'
-#'
 #' @param object [RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
 #' Data set of one or multiple CW-OSL measured aliquots. The data set must either
 #' contain a list element `"OSL_COMPONENTS"` or the parameter `decay_rates` must
@@ -66,13 +64,17 @@
 #' and more, see [ggplot2::ggsave]. The images are saved in the `report_dir` subfolder `/report_figures`.
 #' Set `image_format = NULL` if no images shall be saved
 #'
+#' @param rmd_path [character] (*with default*):
+#' **For advanced users:** File path to the [rmarkdown] source code file of the report.
+#' This allows to execute a maniputed version of the report
+#'
 #' @param verbose [logical] (*with default*):
 #' Enables console text output
 #'
 #'
 #' @section Last updates:
 #'
-#' 2020-11-07, DM: Added roxygen documentation; Auto-switch between "det" and "det+nls" depending on background correction
+#' 2021-02-15, DM: Added new parameter `rmd_path`
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -131,12 +133,14 @@ RLum.OSL_decomposition <- function(
   report = FALSE,
   report_dir = NULL,
   image_format = "pdf",
+  rmd_path = NULL,
   verbose = TRUE
 ){
   ### Changelog
   # * 2020-May,   DM: First reasonable version
   # * 2020-11-07, DM: Added roxygen documentation; Auto-switch between "det" and "det+nls" depending on background correction
   # * 2020-11-23, SK: Moved report call into utils.R
+  # * 2021-02-15, DM: Added new parameter `rmd_path`
   #
   ### ToDo's
   # * read 'lambda.error' if available and transfer it to decompose_OSLcurve for better error calculation
@@ -337,6 +341,7 @@ RLum.OSL_decomposition <- function(
 
     if(verbose) cat("STEP 2.3 ----- Create report -----\n")
 
+    # Rebuild needed to call .render_report (won't work from the global environment)
       .render_report(
         nature = "decomposition",
         dec_data = dec_data,
@@ -344,8 +349,9 @@ RLum.OSL_decomposition <- function(
         object_name = object_name,
         image_format = image_format,
         report_dir = report_dir,
-        rmd_path = "C:\\Users\\mitte\\Desktop\\R\\OSLdecomposition\\inst\\rmd\\report_Step2.Rmd",
+        rmd_path = rmd_path,
         verbose = verbose)}
+
 
 
 # Return output -----------------------------------------------------------

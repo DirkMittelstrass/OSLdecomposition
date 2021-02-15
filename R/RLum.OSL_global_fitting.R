@@ -65,13 +65,17 @@
 #' and more, see [ggplot2::ggsave]. The images are saved in the `report_dir` subfolder `/report_figures`.
 #' Set `image_format = NULL` if no images shall be saved
 #'
+#' @param rmd_path [character] (*with default*):
+#' **For advanced users:** File path to the [rmarkdown] source code file of the report.
+#' This allows to execute a maniputed version of the report
+#'
 #' @param verbose [logical] (*with default*):
 #' Enables console text output
 #'
 #'
 #' @section Last updates:
 #'
-#' 2020-11-06, DM: Added roxygen documentation
+#' 2021-02-15, DM: Added new parameter `rmd_path`
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -139,12 +143,14 @@ RLum.OSL_global_fitting <- function(object,
                                     report = FALSE,
                                     report_dir = NULL,
                                     image_format = "pdf",
+                                    rmd_path = NULL,
                                     verbose = TRUE){
 
   # Changelog:
   # * 2020-May  , DM: First reasonable version
   # * 2020-11-06, DM: Added roxygen documentation
   # * 2020-11-23, SK: Moved report call into utils.R
+  # * 2021-02-15, DM: Added new parameter `rmd_path`
   #
   # ToDo:
   # * Get stimulation.intensity from @info[["LPOWER"]]
@@ -234,6 +240,7 @@ RLum.OSL_global_fitting <- function(object,
       object_name = object_name,
       image_format = image_format,
       report_dir = report_dir,
+      rmd_path = rmd_path,
       verbose = verbose)}
 
 # Return ------------------------------------------------------------------

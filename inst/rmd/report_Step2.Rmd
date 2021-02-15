@@ -2,9 +2,9 @@
 title: "Step 2: Algebraic decomposition of all CW-OSL curves"
 output:
   html_document:
-    theme: journal
+    theme: yeti
     toc: true
-    toc_depth: 3
+    toc_depth: 2
     toc_float:
       collapsed: false
     df_print: paged
@@ -15,11 +15,31 @@ params:
   image_format: !r c(NULL)
   image_path: !r c(NULL)
 ---
+<style type="text/css">
 
+.toc-content {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.tocify-header .tocify-item {
+  font-size: 1.20em;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 1.10em;
+  padding-left: 25px;
+  text-indent: 0;
+}
+</style>
 
 ```{r step2_setup, include=FALSE}
+ 
+# Add the following lines to the YAML header to enable offline display of the equations:
+#   mathjax: local
+#   self_contained: false
 
-Last_changed <-"2021-02-09" 
+Last_changed <-"2021-02-15" 
 
 # ToDo's:
 # * Bug: The barplots sort the columns alphabetically
@@ -44,7 +64,7 @@ library(gridExtra)
 library(kableExtra)
 library(scales)
 
-knitr::opts_chunk$set(fig.width=7,
+knitr::opts_chunk$set(fig.width=8,
                       fig.asp=.6,
                       results = "asis",
                       warning=FALSE,
@@ -119,7 +139,7 @@ for (j in 1:length(record)) {
   
   # Where is the highest regenerated dose?
   max_Lx <- which.max(result$IRR_TIME[2:length(result$IRR_TIME)]) + 1
-  try({
+ # try({
     
     # get a index sequence: i = 3, 5, 7, 9
     i_Lx <- 1:((max_Lx - 1)/2) * 2 + 1
@@ -128,7 +148,7 @@ for (j in 1:length(record)) {
     i_Tx <- 1:(nrow(result)/2) * 2
     result$type[i_Tx] <- "Tx"
     
-  }, silent = TRUE)
+  #}, silent = TRUE)
 
   
   for (k in 1:K) {
@@ -173,7 +193,8 @@ for (j in 1:length(record)) {
   }
   # Build x-Axis
   x_labes <- NULL
-  for (i in 0:((N-1)/2)) x_labes <- c(x_labes, paste0("L", i), paste0("T", i))
+  for (i in 0:ceiling((N-1)/2)) x_labes <- c(x_labes, paste0("L", i), paste0("T", i))
+  x_labes <- x_labes[1:N]
   
   intensity_tables[[j]] <- aliquot_table
   barplots[[j]] <- plot_table
@@ -183,16 +204,17 @@ for (j in 1:length(record)) {
 }
 ```
 
+<br>
 
-`r record_type` component separation report for data set **`r object_name`** analysed by function `RLum.OSL_decomposition()` at `r Sys.time()`; *R* package [**OSLdecomposition**](http://luminescence.de/) version  `r packageVersion("OSLdecomposition")` by [Mittelstraß *et al.* (2019)](#disclaimer)
+This report was automatically created at `r Sys.time()` by the function `RLum.OSL_decomposition()` of the **R** package **OSLdecomposition** (`r packageVersion("OSLdecomposition")`). Visit [**luminescence.de**](https://luminescence.de/) to learn more.
 
 ***
 
 <font color="black">
 
-## Results
+# Results
 
-[Step 2](#basics) of a component-resolved dose calculation is the separation of the signal components in each individual measurement. Mathematically this process is called *decomposition*. The number of components $K$ and their signal decay rates were determined in Step 1:
+[**Step 2**](#basics) of a component-resolved dose calculation is the separation of the signal components in each individual measurement. Mathematically this process is called *decomposition*. The number of components $K$ and their signal decay rates were determined in Step 1:
 
 
 ```{r step2_decay_rate_list}
@@ -213,11 +235,11 @@ if (background_fitting) append_B <- "+B"
 cat("$$I(t) = ", paste(paste0("n_",1:K, "e^{-",round(input_table$lambda, digits = 4),"t}"), collapse = "+"), append_B, "$$")
 ```
 
-The signal component intensities $n_1$ to $n_K$ were calculated for each of the `r n.curves` CW-OSL measurements. First, `r K` signal bin intervals were defined. The value of each bin was set equal to the formula above, integrated over the bin interval. In consequence, each measurement was described by `r K` equations with `r K` unknown intensity values $n$. These equations systems were solved by an algebraic approach, section [Methods](#Overview) for details.
+The signal component intensities $n_1$ to $n_K$ were calculated for each of the `r n.curves` CW-OSL measurements. First, `r K` signal bin intervals were defined. The value of each bin was set equal to the formula above, integrated over the bin interval. In consequence, each measurement was described by `r K` equations with `r K` unknown intensity values $n$. These equations systems were solved by an algebraic approach, see section [Methods](#Overview) for details.
 
 
 
-### First two records {.tabset .tabset-pills}
+## First two records {.tabset .tabset-pills}
 
 The plots in figure 1 show the component separation results for the first two measurements of each aliquot.
 
@@ -226,7 +248,7 @@ The plots in figure 1 show the component separation results for the first two me
 dynamic_code <- c(
   
     # Tab header
-    "#### #{{j}}\n",
+    "### #{{j}}\n",
     
     # Start dynamic code section with an R chunk
     "```{r tab_{{j}}_OSL_plots, fig.asp=0.75}\n", 
@@ -285,7 +307,7 @@ tabs <- lapply(as.list(1:length(record)), function(j) knitr::knit_expand(text = 
 
 
 
-### Intensity over sequence {.tabset .tabset-pills}
+## Intensity over sequence {.tabset .tabset-pills}
 
 The behaviour of the signal component intensities in the course of measurement sequences contains information about irradiation and bleaching response and thermal- or photo-transfer effects of the associated defect states. Fig. 2 display the component intensity variations in the course of the measurement sequences. Just components which were bleached to at least 95 % during the analysed time window are displayed, to prevent scaling issues and data misinterpretation due to background correction issues.
 
@@ -294,7 +316,7 @@ The behaviour of the signal component intensities in the course of measurement s
 dynamic_code <- c(
   
   # Define tab
-  "#### #{{j}}\n", 
+  "### #{{j}}\n", 
                   
   # Start dynamic code section with an R chunk
   "```{r tab_{{j}}_result_barplot, fig.asp=0.5}\n",
@@ -329,16 +351,16 @@ tabs <- lapply(as.list(1:length(record)),
 `r knitr::knit(text = unlist(tabs))`
 
 
-### Result summary {.tabset .tabset-pills}
+## Intensity tables {.tabset .tabset-pills}
 
 The following tables summarize all in Step 2 calculated values for each `RLum.Analysis` object (= aliquot). The column *record index* refers to the index needed to plot a single measurement by calling: `plot_OSLcurve(data_set[[aliquot_index]]@records[[data_index]])`
 
 ```{r step2_create_result_tabs1} 
 # Define dynamic Rmarkdown code, structured in tabs
-dynamic_code <- c("#### #{{j}}\n",
+dynamic_code <- c("### #{{j}}\n",
                   
 # Print the full intensity table
-    "<i><b>Table 1.`r {{j}}`:</b> Result summary for aliquot #{{j}}. </i><br>",
+    "<i><b>Table 1.`r {{j}}`:</b> CW-OSL signal intensities of all records for aliquot #{{j}}. </i><br>",
     "```{r tab_{{j}}_result_table}\n",
    # "kable_table <- intensity_tables[[{{j}}]]\n",
     "kable(intensity_tables[[{{j}}]], escape = TRUE, row.names = FALSE, align = \"c\") %>%\n",
@@ -356,9 +378,9 @@ tabs <- lapply(as.list(1:length(record)),
 
 
 
-## Methods
+# Methods
 
-### Basics {#basics}
+## Basics {#basics}
 
 The data analysis approach assumes that all CW-OSL signal curves in a data set can be sufficently described by a sum of exponential decays with first order kinetics:
 
@@ -374,7 +396,7 @@ To achieve component-seperated dose information, the data analysis process is di
 
 </center>
 
-### Step 2 workflow {#Overview}
+## Step 2 workflow {#Overview}
 
 The decompositon process in Step 2 calculates the signal component intensities $n_1$ to $n_K$ and their statistical errors $\sigma$. An intensity value $n$ is equal to the areas under the signal component curve, including the ongoing virtual signal beyond the stimulation end. The algorithm can be outlined as following:
 
@@ -386,7 +408,7 @@ The decompositon process in Step 2 calculates the signal component intensities $
 Detailed explanations on step 2.1 and step 2.2 can be found in [Mittelstraß (2019)](#ref). Practical advice can be found in the *R* documentations `?optimise_OSLintervals` and `?decompose_OSLcurve`. 
 
 
-### Signal bin intervals {#bins}
+## Signal bin intervals {#bins}
 
 In step 2.1, optimum signal bin intervals for the decomposition process are defined. `optimise_OSLintervals()` determines iteratively those integration intervals which asure the maximum mathematical independence between the signal components. This minimizes the impact of eventual systematic errors from the Step 1 data analysis. The `optimise_OSLintervals()` output depends just on the decay rates and the channel settings, not on the specific CW-OSL measurements.
 
@@ -417,7 +439,7 @@ kable(interval_table, escape = TRUE, align = "c",) %>%
 
 Step 2.1 used the differential evolution approach of [Price et al. (2006)](#ref)), implemented by [Ardia et al. (2020)](#ref) in the function `DEoptim` from the package `DEoptim`.
 
-### Decomposition {#decomposition}
+## Decomposition {#decomposition}
 
 In Step 2.2, the decomposition process is performed by `decompose_OSLcurve()` for each record saperately and can be summarized as following:
 
@@ -429,7 +451,7 @@ In Step 2.2, the decomposition process is performed by `decompose_OSLcurve()` fo
 
 This approach (despite step 3) was first presented by [Mittelstraß *et al.* (2014)](#ref) and further developed by [Mittelstraß (2019)](#ref). An introduction in the mathematical concepts can be found for example in [Bevington and Robinson (1992)](#ref) or [Bronštejn *et al.* (1989)](#ref).
 
-### Error estimation
+## Error estimation
 
 The intensity error values $\sigma$  account just for statistical noise (e. g. [shot noise](https://en.wikipedia.org/wiki/Shot_noise) and [dark current noise](https://en.wikipedia.org/wiki/Dark_current_(physics))). Other sources of error are not sufficiently accounted for. But they might be detectable through not-statistical scattering in the residual plot (lower plot in figure 1). Is the residual plot dominated by statistical noise, the CW.OSL model can be expected as valid. If not, one of the following systematic errors is likely:
 
@@ -439,7 +461,7 @@ The intensity error values $\sigma$  account just for statistical noise (e. g. [
 * Unstable light stimulation
 * Inadequate or missing background correction
 
-## General remarks {#disclaimer}
+# General remarks {#disclaimer}
 
 This report was automatically generated by functions of the **R** package `OSLdecomposition` written and maintained by Dirk Mittelstraß (<dirk.mittelstrass@luminescence.de>). This package is preferably used together with the **R** package `Luminescence` ([link](https://cran.r-project.org/package=Luminescence)) by [Kreutzer *et al.* (2012)](#ref). For the dynamic creation of this HTML report, the **R** packages `knitr` and `rmarkdown` are used, see [Xie (2015)](#ref) and [Xie *et al.* (2018)](#ref). All diagrams are drawn with `ggplot2` [(Wickham 2016)](#ref).
 
@@ -456,7 +478,7 @@ We allow and encourage you to add the HTML file of this report to the electronic
 
 
 
-## References {#ref}
+# References {#ref}
 
 Ardia, D., Mullen, K.M., Peterson, B.G., Ulrich, J., 2020. DEoptim: Differential Evolution in R.<br>
 https://CRAN.R-project.org/package=DEoptim
@@ -492,7 +514,7 @@ Xie, Y., Allaire, J.J., Grolemund, G., 2018. R Markdown: the definitive guide. T
 https://bookdown.org/yihui/rmarkdown/
 
 
-## Script parameters
+# Script parameters
 
 ```{r step1_build_parameter_table}
 

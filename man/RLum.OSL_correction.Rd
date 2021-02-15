@@ -11,11 +11,10 @@ RLum.OSL_correction(
   subtract_offset = 0,
   check_consistency = TRUE,
   check_signal_level = FALSE,
-  tailor_records = FALSE,
-  record_cut = 20,
+  remove_light_off = TRUE,
+  limit_duration = 20,
   correct_PMTsaturation = NA,
-  verbose = TRUE,
-  report = FALSE
+  verbose = TRUE
 )
 }
 \arguments{
@@ -51,16 +50,16 @@ ratios to enable component resolved data analysis. List items where this is
 not the case, will be removed from the data set. Useful to remove no-signal grains from
 single grain measurements}
 
-\item{tailor_records}{\link{logical} (\emph{with default}): \strong{(Has no effect yet)}
+\item{remove_light_off}{\link{logical} (\emph{with default}):
 Checks if the records contain zero-signal intervals at beginning and/or end of the
 measurement and removes them. Useful to tailor single grain measurements}
 
-\item{record_cut}{\link{numeric} (\emph{with default}):
+\item{limit_duration}{\link{numeric} (\emph{with default}):
 Reduce measurement duration to input value (in s).
 Long measurement durations can lead to over-fitting at the component identification
 of Step 1 which may induce systematic errors, see Mittelstrass (2019). Thus, limiting
 the OSL record length ensures sufficient accuracy regarding the Fast and Medium component analysis.
-If however, slow decaying components are of interest, set \code{record_cut = NULL}}
+If however, slow decaying components are of interest, set \code{limit_duration = NULL}}
 
 \item{correct_PMTsaturation}{\link{numeric} (\emph{optional}): \strong{(Has no effect yet)}
 Bright CW-OSL signals may lead to detection non-linearity. This
@@ -68,11 +67,6 @@ tool corrects this in accordance to (\emph{add reference here})}
 
 \item{verbose}{\link{logical} (\emph{with default}):
 Enables console text output}
-
-\item{report}{\link{logical} (\emph{with default}): \strong{(Has no effect yet)}
-Creates a \code{html} report, saves it in the working directory and opens it in your
-standard browser. The report contains the results and further information
-on the data processing}
 }
 \value{
 The input \code{object}, a \link{list} of \linkS4class{RLum.Analysis} objects, is given back with eventual changes
@@ -94,8 +88,8 @@ Data sets must be formatted as \linkS4class{RLum.Analysis} objects. Output objec
 The data preparation tools are executed in the following order:
 \enumerate{
 \item{\code{check_consistency}}
-\item{\code{tailor_records} (\emph{inactive})}
-\item{\code{record_cut}}
+\item{\code{remove_light_off}}
+\item{\code{limit_duration}}
 \item{\code{correct_PMTsaturation} (\emph{inactive})}
 \item{\code{background_sequence}}
 \item{\code{check_signal_level} (\emph{inactive})}
@@ -103,11 +97,20 @@ The data preparation tools are executed in the following order:
 }
 
 \strong{Currently, not all functions are available. Also there is no} \code{html} \strong{report available yet.}
+
+\strong{Details to} \code{remove_light_off}:
+The algorithm does the following: (1) Create global reference curve with \link{sum_OSLcurves}
+(2) Search for the maximum in the first half of the reference curve and remove all data points
+before the maximum . Do this for all curves of the selected 'record_type'.
+(3) Search for an infliction point with
+negative curvature (minimum of second differential) in the second half of the reference curve.
+If the next data point has at least 50\% less signal, remove all data points after the infliction
+point. Do this for all curves of the selected 'record_type'.
 }
 \section{Last updates}{
 
 
-2020-11-05, DM: Added roxygen documentation
+2021-02-15, DM: Enabled \code{remove_light_off} and renamed \code{cut_records} into \code{limit_duration}. Removed \code{report} parameter
 }
 
 \examples{

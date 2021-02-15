@@ -12,7 +12,7 @@
 #' \enumerate{
 #'   \item{`check_consistency`}
 #'   \item{`remove_light_off`}
-#'   \item{`shorten_records`}
+#'   \item{`limit_duration`}
 #'   \item{`correct_PMTsaturation` (*inactive*)}
 #'   \item{`background_sequence`}
 #'   \item{`check_signal_level` (*inactive*)}
@@ -20,6 +20,15 @@
 #' }
 #'
 #' **Currently, not all functions are available. Also there is no** `html` **report available yet.**
+#'
+#' **Details to** `remove_light_off`:
+#' The algorithm does the following: (1) Create global reference curve with [sum_OSLcurves]
+#' (2) Search for the maximum in the first half of the reference curve and remove all data points
+#' before the maximum . Do this for all curves of the selected 'record_type'.
+#' (3) Search for an infliction point with
+#' negative curvature (minimum of second differential) in the second half of the reference curve.
+#' If the next data point has at least 50% less signal, remove all data points after the infliction
+#' point. Do this for all curves of the selected 'record_type'.
 #'
 #'
 #' @param object [RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
@@ -54,16 +63,16 @@
 #' not the case, will be removed from the data set. Useful to remove no-signal grains from
 #' single grain measurements
 #'
-#' @param remove_light_off [logical] (*with default*): **(Has no effect yet)**
+#' @param remove_light_off [logical] (*with default*):
 #' Checks if the records contain zero-signal intervals at beginning and/or end of the
 #' measurement and removes them. Useful to tailor single grain measurements
 #'
-#' @param shorten_records [numeric] (*with default*):
+#' @param limit_duration [numeric] (*with default*):
 #' Reduce measurement duration to input value (in s).
 #' Long measurement durations can lead to over-fitting at the component identification
 #' of Step 1 which may induce systematic errors, see Mittelstrass (2019). Thus, limiting
 #' the OSL record length ensures sufficient accuracy regarding the Fast and Medium component analysis.
-#' If however, slow decaying components are of interest, set `shorten_records = NULL`
+#' If however, slow decaying components are of interest, set `limit_duration = NULL`
 #'
 #' @param correct_PMTsaturation [numeric] (*optional*): **(Has no effect yet)**
 #' Bright CW-OSL signals may lead to detection non-linearity. This
@@ -72,15 +81,10 @@
 #' @param verbose [logical] (*with default*):
 #' Enables console text output
 #'
-#' @param report [logical] (*with default*): **(Has no effect yet)**
-#' Creates a `html` report, saves it in the working directory and opens it in your
-#' standard browser. The report contains the results and further information
-#' on the data processing
-#'
 #'
 #' @section Last updates:
 #'
-#' 2020-11-05, DM: Added roxygen documentation
+#' 2021-02-15, DM: Enabled `remove_light_off` and renamed `cut_records` into `limit_duration`. Removed `report` parameter
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -137,20 +141,20 @@ RLum.OSL_correction <- function(
   subtract_offset = 0,
   check_consistency = TRUE,
   check_signal_level = FALSE,
-  remove_light_off = FALSE,
-  shorten_records = 20,
+  remove_light_off = TRUE,
+  limit_duration = 20,
   correct_PMTsaturation = NA,
-  verbose = TRUE,
-  report = FALSE
+  verbose = TRUE
 ){
 
   # Changelog:
   # * 2020-05-24, DM: First reasonable version
   # * 2020-11-05, DM: Added roxygen documentation
+  # * 2021-02-15, DM: Enabled `remove_light_off` and renamed `cut_records` into `limit_duration`. Removed `report` parameter
   #
   # ToDo:
   # * Check for Zero as first value at the time axis
-  # * enhance 'record_sorting' to accept vectors of @info-arguments, include LPOWER and LIGHTSOURCE per default and print arguments
+  # * enhance 'check_consistency' to accept vectors of @info-arguments, include LPOWER and LIGHTSOURCE per default and print arguments
   # * enhance 'background' to accept whole RLum objects
   # * deploy Luminescence::verify_SingleGrainData() for 'check_single_grain_signal'
   # * handle previous CORRECTION steps
@@ -206,15 +210,6 @@ RLum.OSL_correction <- function(
   if (!(check_consistency) && !(is.null(background_sequence))) {
     stop("Background correction requires consistent data! Please set 'check_consistency=TRUE' and try again.")}
 
-  ##################################
-  #### Change lenght of records ####
-  ##################################
-
-  manipulate_records <- function(DataSet, RecordType, StartCh = 1, EndCh) {
-
-
-
-  }
 
   ########################
   #### Start workflow ####
@@ -317,15 +312,15 @@ RLum.OSL_correction <- function(
   }
 
   if (remove_light_off) {
-    correction_step <- correction_step + 1 ###########################  ##############################
-    if(verbose) cat("CORRECTION STEP", correction_step,"----- Cut not-stimulated measurement parts -----\n")
+    correction_step <- correction_step + 1 ########################################################
+    if(verbose) cat("CORRECTION STEP", correction_step,"----- Remove not stimulated measurement parts -----\n")
     time.start <- Sys.time()
 
     # Algorithm: (1) Create a global reference curve of all [record_type] curves
     # (2) Divide that curve into two halves
     # (3) Search for the maximum value in the first half, cut all values before
 
-    ref_curve <- sum_OSLcurves(data_set, record_type = record_type, output.plot = FALSE)
+    ref_curve <- sum_OSLcurves(data_set, record_type = record_type, output.plot = FALSE, verbose = FALSE)
     ref_length <- length(ref_curve$signal)
 
     # Where is the maximum in the first half?
@@ -336,12 +331,12 @@ RLum.OSL_correction <- function(
     # To get the light-off time, we calculate the second differential
     # Its minimum ist that negative curvature data point which is caused by the light-off event
     ref_diff2 <-  c(diff(c(0, diff(ref_curve$signal))), 0)
-    ref_diff2_min <- min(ref_diff2_min[floor(ref_length / 2):ref_length])
+    ref_diff2_min <- min(ref_diff2[floor(ref_length / 2):ref_length])
 
     light_off <- which(ref_diff2 == ref_diff2_min)
 
     # be sure, the light-off event is not just a noise artifact ...
-    if ((ref_diff2_min >= 0) &
+    if ((ref_diff2_min >= 0) |
         (ref_curve$signal[light_off] < 2 * ref_curve$signal[light_off + 1])) {
 
       # ... or set end of stimulation equal to end of the measurement
@@ -349,12 +344,11 @@ RLum.OSL_correction <- function(
 
     if ((light_on == 1) & (light_off == ref_length)) {
 
-      if(verbose) cat("No measurement parts with stimulation light turned off could be detected\n")
+      if(verbose) cat("No measurement parts with stimulation light turned off detected\n")
 
     } else {
 
       stimulated <- c(light_on:light_off)
-      before <- ref
       records_changed <- 0
 
       # go through all records
@@ -376,7 +370,17 @@ RLum.OSL_correction <- function(
             records_changed <- records_changed + 1 }}}
 
 
-      if(verbose) cat("Measurement duration of", records_changed, "records reduced to", shorten_records, "s\n")
+      # write console output
+      if(verbose) {
+
+        channel.width <- ref_curve$time[2] - ref_curve$time[1]
+        cat("Measurement parts with stimulation light turned off detected and removed:\n",
+            channel.width * (light_on - 1), "s at the beginning and",
+            channel.width * (length(ref_curve$time) - light_off), "s at the end.\n")
+
+        cat("-> Length of", records_changed, record_type , "records reduced from",
+            ref_curve$time[length(ref_curve$time)], "s to",
+            ref_curve$time[length(stimulated)], "s\n")}
     }
 
 
@@ -384,9 +388,9 @@ RLum.OSL_correction <- function(
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")}
 
 
-  if (is.numeric(shorten_records) && (shorten_records > 0)) {
+  if (is.numeric(limit_duration) && (limit_duration > 0)) {
     correction_step <- correction_step + 1 ########################## CUT ###############################
-    if(verbose) cat("CORRECTION STEP", correction_step,"----- Cut records at specific time -----\n")
+    if(verbose) cat("CORRECTION STEP", correction_step,"----- Limit measurement duration -----\n")
     time.start <- Sys.time()
     records_changed <- 0
 
@@ -397,20 +401,23 @@ RLum.OSL_correction <- function(
           time <- data_set[[j]]@records[[i]]@data[,1]
           signal <- data_set[[j]]@records[[i]]@data[,2]
           channel_width <- time[2] - time[1]
+          before <- after <- time[length(time)]
 
           ##### cut curve, if too long #####
-          if (max(time) > shorten_records) {
+          if (before > limit_duration) {
 
             # reduce channel number and write record back into the RLum object
-            time <- time[1:ceiling(shorten_records / channel_width)]
-            signal <- signal[1:ceiling(shorten_records / channel_width)]
+            time <- time[1:ceiling(limit_duration / channel_width)]
+            signal <- signal[1:ceiling(limit_duration / channel_width)]
             data_set[[j]]@records[[i]]@data <- matrix(c(time, signal), ncol = 2)
-            records_changed <- records_changed + 1 }}}}
+            records_changed <- records_changed + 1
+            after <- time[length(time)]}}}}
 
     if (records_changed==0) {
-      if(verbose) cat("No record was shorter than", shorten_records, "s\n")
+      if(verbose) cat("No record was shorter than", limit_duration, "s\n")
     } else{
-      if(verbose) cat("Measurement duration of", records_changed, "records reduced to", shorten_records, "s\n")}
+      if(verbose) cat("Reduced length of", records_changed, record_type, "records from",
+                      before, "s to", after, "s\n")}
 
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
   }
@@ -420,7 +427,10 @@ RLum.OSL_correction <- function(
     if(verbose) cat("CORRECTION STEP", correction_step,"----- Correct for PMT saturation effects -----\n")
     time.start <- Sys.time()
 
+    # In the Hamamatsu PMT handbook is a formula
+
     if(verbose) cat("THIS FUNCTION IS STILL MISSING")
+
 
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
   }
