@@ -348,35 +348,53 @@ decompose_OSLcurve <- function(
 
   if ((algorithm == "det")||(algorithm == "det+nls")) {
 
-    ### define matrices ###
-    # Build denominator matrix
-      D <- matrix(0, K, K)
-      for (i in X) {
-        for (j in X) {
+    ### Calculate the signal intensities with Cramer's rule ###
 
-          if (is.na(lambda[j])) {
+    ## Build the denominator matrix
 
-            D[i, j] <- t.end[i] - t.start[i]
+    # build an empty K x K matrix
+    D <- matrix(0, K, K)
 
-          } else {
-
-            D[i, j] <- exp(-t.start[i] * lambda[j]) - exp(- t.end[i] * lambda[j])}}}
-
-    # Build enumerator matrices
-    A <- list(NULL)
-    for (j in X) {
-
-      A.temp <- D
-      A.temp[,j] <- I
-      A[[j]] <- A.temp}
-
-    ### Calculate component amplitudes ###
+    # the component index k increases along the x-axis
+    # the signal bin index i increases along the y-axis
     for (i in X) {
+      for (k in X) {
 
-      n.temp <- det(A[[i]])/det(D)
+        # is a decay parameter given for component k?
+        if (!is.na(lambda[k])) {
+
+          # YES:
+          # calculated the decay probability during the interval of signal bin i
+          # and assign it to the matrix element i, k
+          D[i, k] <- exp(-t.start[i] * lambda[k]) - exp(- t.end[i] * lambda[k])
+
+        } else {
+
+          # NO:
+          # assume that component k represents the signal background level
+          D[i, k] <- t.end[i] - t.start[i]}}}
+
+    ## Build the enumerator matrices
+
+    # prepare a list object to store the matrices
+    A <- list(NULL)
+
+    for (k in X) {
+
+      # each enumarator matrix is equal to the denominator matrix but with
+      # the column k replaced by the vector I build of the signal bin values
+      A.temp <- D
+      A.temp[,k] <- I
+      A[[k]] <- A.temp}
+
+    for (k in X) {
+
+      # the signal intensities are calculated by the ratios of the determinants
+      n.temp <- det(A[[k]])/det(D)
       n <- c(n, n.temp)}
 
-    # write results into the component table
+    # write the vector n containing the results
+    # into the single record results data.frame 'components'
     components$n <- n
 
   }  # end DET

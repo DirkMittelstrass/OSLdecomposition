@@ -65,7 +65,7 @@
 #'
 #' @param remove_light_off [logical] (*with default*):
 #' Checks if the records contain zero-signal intervals at beginning and/or end of the
-#' measurement and removes them. Useful to tailor single grain measurements
+#' measurement and removes them. Useful to tailor single-grain measurements.
 #'
 #' @param limit_duration [numeric] (*with default*):
 #' Reduce measurement duration to input value (in s).
