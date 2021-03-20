@@ -1,10 +1,10 @@
 #' Multi-exponential CW-OSL decomposition
 #'
-#' Function for determing the signal component amplitudes of a multi-exponential decay curve if
+#' Function for determining the signal component amplitudes of a multi-exponential decay curve if
 #' the signal component decay parameters are already given. Thus, this function decomposes CW-OSL
-#' curve with known components of unknown intensity.
+#' curves with known components of unknown intensity.
 #'
-#' The function assumes multiple exponentially decaying signal components with first order kinetics:
+#' The function assumes multiple exponentially decaying signal components with first-order kinetics:
 #'
 #' \deqn{I(t) = n_1 \lambda_1 exp(-\lambda_1 t) + n_2 \lambda_2 exp(-\lambda_2 t) + ... + n_K \lambda_K exp(-\lambda_K t)}
 #'
@@ -22,13 +22,13 @@
 #'
 #' The function calculates the CW-OSL component intensities by building an equation system
 #' which is then solved by a determinant-based approach (Cramers rule). This purely analytical
-#' approach, gives the algorithm a solution in all possible cases, even if the measurement consists just of noise
+#' approach gives the algorithm a solution in all possible cases, even if the measurement consists just of noise
 #' or the wrong model is used. There are also no 'false minima' events.
 #' The statistical error is calculated by applying the *propagation of uncertainty* method on Cramers rule.
 #'
 #' The precision of this algorithm as well as the propagation of eventual systematic errors of the decay rate values,
 #' depend on the integration intervals, given by the columns `$t.start`, `$t.end`, `$ch.start` and `$ch.end`
-#' of the [data.frame] used as input for the argument `components =`.
+#' of the [data.frame] used as input for the argument `components`.
 #' In principle, these can be chosen freely. Reasonable integration intervals are defined by [optimise_OSLintervals].
 #' If not defined, the logarithmic mean values between life times (reciprocal decay rate) of subsequent components are
 #' used as interval borders.
@@ -36,18 +36,18 @@
 #' `algorithm = "nls"`
 #'
 #' As alternative algorithm, Levenberg-Marquardt nonlinear regression is available, see [minpack.lm::nlsLM] for details.
-#' The results are equal to that of the `"det"` algorithm in accuracy and precision. But there is the slight chance (< 1 %)
-#' of fitting failure when using the `"nls"` algorithm. Also, the statistical errors are between 20 % and 80 % underestimated
-#' in the most cases. As advantage, the `"nls"` algorithm is less sensitive against systematic errors
+#' The results are identical to that of the `"det"` algorithm in accuracy and precision. But there is the slight chance (< 1 %)
+#' of fitting failure when using the `"nls"` algorithm. Also, the statistical errors are underestimated by 20-80 %
+#' in most cases. As advantage, the `"nls"` algorithm is less sensitive against systematic errors
 #' caused by uncorrected signal background.
 #'
 #' `algorithm = "det+nls"`
 #'
 #' Both algorithms can be combined. Then, `"det"` provides the startings values and the error estimations for
-#' `"nls"` and returns replacement results, in case `"nls"` fails. `"nls"` compensates for eventual systematic
-#' errors in the fast and medium components intensity values due to uncorrected signal background. However,
-#' background signal will still affect slow components. The slowest component will be overestimated while
-#' the second slowest component will be underestimated. Are these components of particular interest,
+#' `"nls"` and returns replacement results, in case `"nls"` fails. `"nls"` compensates for potential systematic
+#' errors in the fast and medium components intensity values due to uncorrected signal background. However, the
+#' background signal will still affect slow component results. The slowest component will be overestimated while
+#' the second slowest component will be underestimated. If these components are of particular interest,
 #' it is recommended to set `background.fitting = TRUE`
 #'
 #' All three methods were tested at 5x10^6 simulated CW-OSL curves by Mittelstrass (2019) for their performance
@@ -66,37 +66,34 @@
 #' Setting `background.fitting = TRUE` is usually not recommended, only in case slow components shall
 #' be investigated in measurements with uncorrected background.
 #'
-#' *NOTE: All statements refer to the version prior 2020-08-27 where [stats::nls] was used instead of
-#' [minpack.lm::nlsLM]. The behavior of the * `"nls"` * algorithm should remain about the same, but
-#' has to be tested yet*
-#'
 #' **Error estimation**
 #'
 #' In case of `algorithm = "det"` or `"det+nls"` the Propagation of Uncertainty method is used to
 #' transform signal bin error values into component intensity error values. The signal bin error
 #' calculation depends on the argument `error.estimation`, see below.
-#' If `algorithm = "nls"` is used, the error values given back by [minpack.lm::nlsLM] are returned.
+#' If `algorithm = "nls"` is used, the error values provided by [minpack.lm::nlsLM] are returned.
 #'
 #' `error.estimation = "empiric"` (default)
 #'
 #' The standard deviation of each signal bin (signal bin = signal value of an integrated time interval) is
 #' calculated from the *corrected sample variance* between the CW-OSL model and the actual CW-OSL curve
-#' for that interval. Thus, statistical errors are monitored accurately without prior knowledge necessary.
-#' However, eventual systematic errors are monitored insufficiently. Also, at least two (better more) data points
-#' per signal bin are needed to estimate its standard deviation. If a signal bin consists just of on data point,
+#' for that interval. Thus, statistical errors are monitored accurately without any prior knowledge required.
+#' However, potential systematic errors are monitored insufficiently. Also, at least two (better more) data points
+#' per signal bin are needed to estimate its standard deviation. If a signal bin consists just of one data point,
 #' its square root value is taken as standard deviation, in accordance to the Poisson distribution.#'
 #'
 #' `error.estimation = "poisson"` or [numeric] value
 #'
-#' Alternatively the standard error can be calculated by approximating a **Poisson** distributed signal error, known as *Shot noise*.
-#' This is suitable if the lack of data points on the x-axis circumvent an empiric error estimation, like with spatial or spectral resolved CCD measurements.
-#' Also the parameter can be set to a [numeric] value, which  represents the detector noise in *cts / s* and is assumed to be normal distributed.
+#' Alternatively the standard error can be calculated by approximating a **Poisson** distributed signal error,
+#' known as *Shot noise*. This is suitable if the lack of data points on the x-axis circumvents an empiric error
+#' estimation, like with spatially or spectrally resolved CCD measurements. Also the parameter can be set to a [numeric]
+#' value, which  represents the detector noise in *cts / s* and is assumed to be normal distributed.
 #' The detector noise will be added on top of the Poisson distributed shot noise.
 #'
 #' *Systematic errors*
 #'
-#' The two error estimation approaches can be used to detect (but not quantify) eventual systematic errors.
-#' `"poisson"` error values are not affected by systematic errors, while `"empiric"` errors are.
+#' The ratio of the error values of both error estimation methods can be used to detect (but not quantify) systematic
+#' errors. `"poisson"` error values are not affected by systematic errors, while `"empiric"` errors are.
 #' If the detector noise is known and taken into account, the relation between both values for a given
 #' signal bin should be about \eqn{empiric / poisson = 1}. In case of systematic errors, this ratio increases.
 #'
@@ -104,12 +101,12 @@
 #'
 #' @param curve [data.frame] or [matrix] or [RLum.Data.Curve-class] (**required**):
 #' CW-OSL curve x-Axis: `$time` or first column as measurement time (must have constant time intervals);
-#' y-Axis: `$signal` or second column as luminescence signal. Further columns will be ignored
+#' y-Axis: `$signal` or second column as luminescence signal. Further columns will be ignored.
 #'
 #' @param components [data.frame] or [numeric] vector (**required**):
 #' Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by [fit_OSLcurve].
 #' In case of a vector: It is recommended to use less than 7 parameters. The parameters will be sorted in decreasing order.
-#' In case of a data.frame. One column must be named `$lambda`.
+#' In case of a data.frame, one column must be named `$lambda`.
 #' It is recommended to provide also integration interval parameters (columns `$t.start`, `$t.end`, `$ch.start`, `$ch.end`),
 #' which can be found by applying [optimise_OSLintervals] to the global mean curve, calculated by [sum_OSLcurves].
 #' If one or more column is missing, a simple interval definition algorithm is run automatically, see section **Details**.
