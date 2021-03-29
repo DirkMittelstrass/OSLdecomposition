@@ -15,7 +15,8 @@
 #'  `"loglog"` \tab Double-logarithic CW-OSL plot \cr
 #'  `"LM"` \tab PseudoLM-OSL plot \cr
 #'  `"res"` \tab Plot of residual curve: Measurement minus Fitting model \cr
-#'  `"tab"` \tab Table of component parameters as image
+#'  `"tab"` \tab Table of component parameters as image \cr
+#'  `"raw"` \tab Raw x-y plot without further data
 #' }
 #'
 #' PseudoLM-OSL curves are created using the transformation described by Bulur (2000).
@@ -73,8 +74,7 @@
 #'
 #' @section Last update:
 #'
-#' 2020-11-19, DM: RLum.Data.Curves can now be displayed without 'components'
-#' if RLum.OSL_decomposition was already performed at data set
+#' 2021-03-29, DM: Hidden output objects are now [ggplot2] objects if the plot is not a composite diagram
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -134,12 +134,14 @@ plot_OSLcurve <- function(curve = NULL,
 # * 2020-11-11, DM: Improved parameter table
 # * 2020-11-16, DM: Added parameter `show.crosssec` and `show.initial`
 # * 2020-11-19, DM: RLum.Data.Curves can now be displayed without 'components' if RLum.OSL_decomposition was already performed at data set
+# * 2021-03-29, DM: Hidden output objects are now [ggplot2] objects if the plot is not a composite diagram
 #
 # ToDo:
 # * When drawing components without curve, skip residual curve
 # * Display fitting formula
 # * Add argument ggsave.control() to give direct control about image saving
 # * Add lambda error in the component table
+# * Draw bin intervals directly into the diagram (optionally)
 
 
   # necessary libraries: gridExtra, ggplot2, ggpubr, scales
@@ -568,31 +570,31 @@ plot_OSLcurve <- function(curve = NULL,
 
   } else if (display == "lin") {
 
-    plot_object <- gridExtra::arrangeGrob(p.lin, nrow = 1)
+    plot_object <- p.lin
 
   } else if (display == "log") {
 
-    plot_object <- gridExtra::arrangeGrob(p.log, nrow = 1)
+    plot_object <- p.log
 
   } else if (display == "loglog") {
 
-    plot_object <- gridExtra::arrangeGrob(p.loglog, nrow = 1)
+    plot_object <- p.loglog
 
   } else if (display == "LM") {
 
-    plot_object <- gridExtra::arrangeGrob(p.LM, nrow = 1)
+    plot_object <- p.LM
 
   } else if (display == "res") {
 
-    plot_object <- gridExtra::arrangeGrob(p.res, nrow = 1)
+    plot_object <- p.res
 
   } else if (display == "tab") {
 
-    plot_object <- gridExtra::arrangeGrob(p.tab, nrow = 1)
+    plot_object <- p.tab
 
   } else if (display == "raw") {
 
-    plot_object <- gridExtra::arrangeGrob(p.raw, nrow = 1)
+    plot_object <- p.raw
 
   } else {
 
