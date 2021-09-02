@@ -32,7 +32,7 @@
 #' `system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")`
 #'
 #'
-#' @param object [RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
+#' @param object [RLum.Analysis-class] or [list] of [RLum.Analysis-class] (**required**):
 #' Data set of one or multiple CW-OSL measured aliquots. The data set must either
 #' contain a list element `"OSL_COMPONENTS"` or the parameter `decay_rates` must
 #' be defined

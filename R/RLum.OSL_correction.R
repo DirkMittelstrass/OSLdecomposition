@@ -1,11 +1,11 @@
 #' Check and correct CW-OSL curves in RLum.Analysis data sets
 #'
 #' CW-OSL measurements are often affected by background signals or might be measured under
-#' inconsistent detection settings or have other issues. This function provides tools
+#' inconsistent detection settings. This function provides tools
 #' to test and solve some common problems.
 #'
-#' This function processes just data sets created within the [Luminescence-package] (Kreutzer et al. 2012).
-#' Data sets must be formatted as [RLum.Analysis-class] objects. Output objects will also be
+#' This function processes data sets created within the [Luminescence-package] (Kreutzer et al. 2012).
+#' Those data sets must be formatted as [RLum.Analysis-class] objects. Output objects will also be
 #' [RLum.Analysis-class] objects and are meant for further analysis with [RLum.OSL_global_fitting].
 #'
 #' The data preparation tools are executed in the following order:
@@ -19,7 +19,7 @@
 #'   \item{`subtract_offset`}
 #' }
 #'
-#' **Currently, not all functions are available. Also there is no** `html` **report available yet.**
+#' **Currently, not all functions are available.**
 #'
 #' **Details to** `remove_light_off`:
 #' The algorithm does the following: (1) Create global reference curve with [sum_OSLcurves]
@@ -31,37 +31,37 @@
 #' point. Do this for all curves of the selected 'record_type'.
 #'
 #'
-#' @param object [RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
-#' Data set of one or multiple CW-OSL measured aliquots
+#' @param object [RLum.Analysis-class] or [list] of [RLum.Analysis-class] (**required**):
+#' Data set of one or multiple CW-OSL measured aliquots.
 #'
 #' @param record_type [character] (*with default*):
 #' Type of records selected from the input `object`, see
-#' `object[[]]@records[[]]@recordType`. Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`
+#' `object[[]]@records[[]]@recordType`. Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`.
 #'
 #' @param background_sequence [numeric] vector (*optional*):
 #' Indicies of list items with CW-OSL measurements of empty aliquots.
 #' The records in these list items are used to calculate one average CW-OSL background curve
 #' with [sum_OSLcurves]. This background curve is subtracted from each
 #' CW-OSL record of the data set. The attributes `@recordType` of the background
-#' measurements will be renamed to `"{record_type}background"`
+#' measurements will be renamed to `"{record_type}background"`.
 #'
 #' @param subtract_offset [numeric] (*optional*):
 #' Signal offset value in counts per second (cts/s). Value is handled as background
-#' level and will be subtracted from each CW-OSL record
+#' level and will be subtracted from each CW-OSL record.
 #'
 #' @param check_consistency [logical] (*with default*):
-#' CW-OSL component identification and separation needs uniform measurement parameters
+#' The CW-OSL component identification and separation procedure requires uniform detection parameters
 #' throughout the whole data set. If `TRUE`, all records are compared for their
 #' channel width and their number of channels. Those records with the most frequent
 #' set of channel parameters keep their `@recordType` attribute, while records
 #' with other sets of measurement parameter will be enumerated `record_type`
-#' `"{record_type}2"`, `"{record_type}3"` and so on
+#' `"{record_type}2"`, `"{record_type}3"` and so on.
 #'
 #' @param check_signal_level [numeric] (*optional*): **(Has no effect yet)**
-#' Checks if the CW-OSL curvea of each `object` list item has sufficient signal-to-noise
+#' Checks if the CW-OSL curves of each `object` list item have sufficient signal-to-noise
 #' ratios to enable component resolved data analysis. List items where this is
-#' not the case, will be removed from the data set. Useful to remove no-signal grains from
-#' single grain measurements
+#' not the case will be removed from the data set. This is useful to remove no-signal grains from
+#' single grain measurements.
 #'
 #' @param remove_light_off [logical] (*with default*):
 #' Checks if the records contain zero-signal intervals at beginning and/or end of the
@@ -72,14 +72,14 @@
 #' Long measurement durations can lead to over-fitting at the component identification
 #' of Step 1 which may induce systematic errors, see Mittelstrass (2019). Thus, limiting
 #' the OSL record length ensures sufficient accuracy regarding the Fast and Medium component analysis.
-#' If however, slow decaying components are of interest, set `limit_duration = NULL`
+#' If however, slow decaying components are of interest, `limit_duration = NULL` is recommended.
 #'
 #' @param correct_PMTsaturation [numeric] (*optional*): **(Has no effect yet)**
 #' Bright CW-OSL signals may lead to detection non-linearity. This
-#' tool corrects this in accordance to (*add reference here*)
+#' tool corrects this in accordance to (*add reference here*).
 #'
 #' @param verbose [logical] (*with default*):
-#' Enables console text output
+#' Enables console text output.
 #'
 #'
 #' @section Last updates:
@@ -107,15 +107,15 @@
 #' @return
 #'
 #' The input `object`, a [list] of [RLum.Analysis-class] objects, is given back with eventual changes
-#' in elements `object[[]]@records[[]]@recordType` and `object[[]]@records[[]]@data`.
+#' in the elements `object[[]]@records[[]]@recordType` and `object[[]]@records[[]]@data`.
 #'
 #' The returned data set contains a new list element `object[["CORRECTION"]]` which provides
-#' a [list] of the input parameters and additional data, depending on the applied tools.
+#' a [list] of the input parameters and additional data depending on the applied tools.
 #'
 #' @examples
 #'
-#' # 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
-#' # measured in a lexsyg research with green LED stimulation
+#' # 'FB_10Gy' is a dose recovery test with the Fontainebleau quartz
+#' # measured with a lexsyg research with green LED stimulation
 #' data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 #' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 #'

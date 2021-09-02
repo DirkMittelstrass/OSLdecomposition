@@ -1,9 +1,9 @@
 #' Multi-exponential CW-OSL curve fitting
 #'
-#' Fitting function for multi-exponential decaying CW-OSL measurements,
+#' Fitting function for multi-exponentially decaying CW-OSL measurements,
 #' based on the algorithm described by Bluszcz & Adamiec (2006).
 #'
-#' The function assumes multiple exponentially decaying signal components with first order kinetics:
+#' The function assumes multiple exponentially decaying signal components with first-order kinetics:
 #'
 #' \deqn{I(t) = n_1 \lambda_1 exp(-\lambda_1 t) + n_2 \lambda_2 exp(-\lambda_2 t) + ... + n_K \lambda_K exp(-\lambda_K t)}
 #'
@@ -12,7 +12,7 @@
 #' For actual fitting, the integrated version of this formula is used, see Mittelstrass et al. (2021) for details.
 #'
 #' The fitting algorithm is an implementation of the *hybrid evolutionary-linear algorithm* (HELA)
-#' by Bluszcz & Adamiec (2006). See there or Mittelstrass et al. (2021) for details.
+#' by Bluszcz & Adamiec (2006). See there or Mittelstrass et al. (in preperation) for details.
 #' The differential evolution part of HELA is performed by [DEoptim::DEoptim].
 #' The linear regression part of HELA is performed by [decompose_OSLcurve].
 #' The parameter refinement by Levenberg-Marquardt fitting is performed by [minpack.lm::nlsLM].
@@ -35,21 +35,21 @@
 #' **Photoionisation cross sections**
 #'
 #' While the function is suited for the analysis of a wide variety of multi-exponential decay problems,
-#' it is target to CW-OSL measurements of quartz under SAR protocol conditions (470 nm stimulation at 125 °C).
-#' To simplify the assignemt of the found components to OSL components found in published literature,
+#' it is targeted to CW-OSL measurements of quartz under SAR protocol conditions (470 nm stimulation at 125 °C).
+#' To compare the calculated OSL components with OSL components reported in published literature,
 #' photoionisation cross sections are calculated using the `stimulation.wavelength` \eqn{\lambda_{stim}}  and
 #' `stimulation.intensity` \eqn{\Phi_{stim}}:
 #'
 #' \deqn{\sigma_k=\lambda_k {hc / \Phi_{stim}\lambda_{stim}}}
 #'
-#' with \eqn{\sigma_k} the photoionisation cross section of component *k* in cm^2,
+#' Here \eqn{\sigma_k} is the photoionisation cross section of component *k* in cm^2,
 #' \eqn{\lambda_k} the CW-OSL decay constant in s^-1, *h* the Planck constant and *c* the speed of light.
 #'
-#' If a `stimulation.intensity` larger or equal than 460 nm and lower or equal than 485 nm is defined,
-#' the components are names automatically. They are named according to value ranges approximated from the
+#' If a `stimulation.intensity` between 460 nm and 485 nm is defined,
+#' the components are named automatically in accordance to the
 #' cross-sections published by Durcan and Duller (2011), Jain et al. (2003) and Singarayer and Bailey (2003).
 #' For the Ultrafast and the Slow4 component, no consistent literature values could be found, so their range
-#' is guessed freely:
+#' is tentatively assigned:
 #'
 #' \tabular{lll}{
 #'  **Component** \tab **Lower limit (cm^2)** \tab **Upper limit (cm^2)**\cr
@@ -68,7 +68,7 @@
 #' as signal values (y-axis). Further columns will be ignored
 #'
 #' @param K.max [numeric] (*with default*):
-#' Maximum number of components *K*. The computing time increases exponentially with the component number,
+#' Maximum number of components *K*. The computing time increases exponentially with the component number.
 #' *K* < 7 is recommended
 #'
 #' @param F.threshold [numeric] (*with default*):
@@ -80,20 +80,20 @@
 #' @param stimulation.wavelength [numeric] (*with default*):
 #' Wavelength of optical stimulation in *nm*. Used to calculate photoionisation cross sections.
 #' If a wavelength between 465 and 480 nm is chosen, the cross sections are set into
-#' relation with literature values to name the signal components
+#' relation with literature values to name the signal components automatically.
 #'
 #' @param verbose [logical] (*with default*):
-#' Enables console text output
+#' Enables console text output.
 #'
 #' @param output.complex [logical] (*with default*):
 #' If `TRUE`, the function returns a list of objects, see section **Value** for further information.
 #' If `FALSE`, the function returns a [data.frame] with the CW-OSL model parameters of the fitting chosen by the F-test.
-#' This ist NOT recommended when fitting a global average curve created by [sum_OSLcurves] as over-fitting is likely in such cases.
+#' Setting the parameter to `FALSE` is not recommended when fitting a global average curve created by [sum_OSLcurves] as over-fitting is likely in such cases.
 #'
 #' @param parallel.computing [logical] (*with default*):
 #' Enables the use of multiple CPU cores. This increases the execution speed significantly
 #' but may need administrator rights and/or a firewall exception.
-#' See [DEoptim::DEoptim.control] for further information
+#' See [DEoptim::DEoptim.control] for further information.
 #'
 #' @section Last updates:
 #'

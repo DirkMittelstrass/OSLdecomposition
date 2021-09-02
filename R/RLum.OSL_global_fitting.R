@@ -2,15 +2,15 @@
 #'
 #' First, all CW-OSL records are combined to one global average CW-OSL curve,
 #' then the multi-exponential fitting approach of Bluszcz and Adamiec (2006) is applied.
-#' The function processes just [RLum.Analysis-class] data sets created within
+#' This function processes [RLum.Analysis-class] data sets created within
 #' the [Luminescence-package] (Kreutzer et al. 2012).
 #'
-#' The workflow of this function is as following:
+#' The workflow of this function is as follows:
 #'
 #' \enumerate{
-#'   \item [sum_OSLcurves]: Combine all measurement of type `record_type` to one global average curve
-#'   \item [fit_OSLcurve]: Identify  component by a multi-exponential fitting
-#'   \item Create a `html` report to summarize the results (*optional*)
+#'   \item [sum_OSLcurves]: Combine all measurements of type `record_type` to one global average curve.
+#'   \item [fit_OSLcurve]: Identify OSL components by a multi-exponential fitting.
+#'   \item Create a `html` report to summarize the results (*optional*).
 #'}
 #'
 #' Data sets must be formatted as [RLum.Analysis-class] objects and
@@ -21,7 +21,7 @@
 #' If `report = TRUE`, a `html` report of the results is rendered by the [rmarkdown-package]
 #' and saved in the working directory, which is usually the directory of the data file.
 #' This report can be displayed, shared and published online without any requirements to
-#' the OS or installed software. But an internet connection is needed to display
+#' the operation system or installed software. However, an internet connection is needed to display
 #' the *MathJax* encoded equations and special characters.
 #' The *Rmarkdown* source code of the report can be found with the following command:
 #'
@@ -29,48 +29,47 @@
 #'
 #'
 #'
-#' @param object [RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
-#' Data set of one or multiple CW-OSL measured aliquots
+#' @param object [RLum.Analysis-class] or [list] of [RLum.Analysis-class] (**required**):
+#' Data set of one or multiple CW-OSL measured aliquots.
 #'
 #' @param record_type [character] (*with default*):
 #' Type of records, selected by the [RLum.Analysis-class] attribute `@recordType`.
-#' Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`
+#' Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`.
 #'
 #' @param K_maximum [numeric] (*with default*):
-#' Maximum number of components *K*, see [fit_OSLcurve]
+#' Maximum number of components *K*, see [fit_OSLcurve].
 #'
 #' @param F_threshold [numeric] (*with default*):
-#' Fitting stop criterion, see [fit_OSLcurve]
+#' Fitting stop criterion, see [fit_OSLcurve].
 #'
 #' @param stimulation_intensity [numeric] (*with default*):
-#' Intensity of optical stimulation in *mW / cm²*. Used to calculate photo-ionisation cross-sections, see [fit_OSLcurve]
+#' Intensity of optical stimulation in *mW / cm²*. Used to calculate photo-ionisation cross-sections, see [fit_OSLcurve].
 #'
 #' @param stimulation_wavelength [numeric] (*with default*):
-#' Wavelength of optical stimulation in *nm*. Used to calculate photo-ionisation cross-sections, see [fit_OSLcurve]
+#' Wavelength of optical stimulation in *nm*. Used to calculate photo-ionisation cross-sections, see [fit_OSLcurve].
 #'
 #' @param report [logical] (*with default*):
-#' Creates a `html` report, saves it in the `report_dir` directory and opens it in your
-#' standard browser. The report contains the results and further information
-#' on the data processing
+#' Creates a `html` report, saves it in the `report_dir` directory and opens it in the default web browser.
+#' The report contains the results and detailed information on the data processing.
 #'
 #' @param report_dir [character] (*optional*):
 #' Path of output directory if `report = TRUE`. If `report_dir = NULL` (default),
-#' a temporary folder is used, which is deleted the moment the R session is closed.
-#' File paths are also allowed as parameter, then a new directory named after the file
-#' will be created
+#' a temporary folder is used which is deleted when the R session is closed.
+#' File paths are also allowed as parameter, then a new directory named after the OSL data file
+#' will be created.
 #'
 #' @param image_format [character] (*with default*):
 #' Image format of the automatically saved graphs if `report = TRUE` and `report_dir` is set.
 #' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
 #' and more, see [ggplot2::ggsave]. The images are saved in the `report_dir` subfolder `/report_figures`.
-#' Set `image_format = NULL` if no images shall be saved
+#' Set `image_format = NULL` if no images shall be saved.
 #'
 #' @param rmd_path [character] (*with default*):
 #' **For advanced users:** File path to the [rmarkdown] source code file of the report.
-#' This allows to execute a maniputed version of the report
+#' This allows to execute maniputed versions of the report.
 #'
 #' @param verbose [logical] (*with default*):
-#' Enables console text output
+#' Enables console text output.
 #'
 #'
 #' @section Last updates:
@@ -100,22 +99,22 @@
 #' The input `object`, a [list] of [RLum.Analysis-class] objects is returned but with
 #' a new list element `object[["OSL_COMPONENTS"]]`, containing:
 #' \itemize{
-#'   \item `$decay.rates` [numeric] vector: Decay rates of F-test recommended or last sucessfull fitting
-#'   \item `$K.selected` [numeric]: Number of components of F-test recommended or last sucessfull fitting
-#'   \item `$F.test` [data.frame]: F-test table
-#'   \item `$F.test.print` [data.frame]: F-test table but formatted for console output and display with [kableExtra::kable]
-#'   \item `$info.text` [list]: Small process log
-#'   \item `$component.tables` [list] of [data.frame]s: Signal component tables for all curve models
-#'   \item `$curve` [list]: Global average curve
-#'   \item `$components` [data.frame]: Signal component table of F-test recommended or last sucessfull fitting
-#'   \item `$fit.results` [list]: Returned fitting objects of [DEoptim::DEoptim] and [minpack.lm::nlsLM] for all curve models
-#'   \item `$plot.data` [data.frame]: Model overview table for photo-ionisation cross-section plotting with [plot_PhotoCrosssections]
-#'   \item `$parameters` [list]: Input and algorithm parameters
+#'   \item `$decay.rates` [numeric] vector: Decay rates of F-test recommendation or last successful fitting.
+#'   \item `$K.selected` [numeric]: Number of components of F-test recommendation or last successful fitting.
+#'   \item `$F.test` [data.frame]: F-test table.
+#'   \item `$F.test.print` [data.frame]: F-test table but formatted for console output and display with [kableExtra::kable].
+#'   \item `$info.text` [list]: Short process log.
+#'   \item `$component.tables` [list] of [data.frame]s: Signal component tables for all curve models.
+#'   \item `$curve` [list]: Global average curve created from all  `record_type` curves in the data set.
+#'   \item `$components` [data.frame]: Signal component table of F-test recommendation or last successful fitting.
+#'   \item `$fit.results` [list]: Returned fitting objects of [DEoptim::DEoptim] and [minpack.lm::nlsLM] for all curve models.
+#'   \item `$plot.data` [data.frame]: Model overview table for photo-ionisation cross-section plotting with [plot_PhotoCrosssections].
+#'   \item `$parameters` [list]: Input and algorithm parameters.
 #' }
 #'
 #' @examples
 #'
-#' # 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+#' # 'FB_10Gy' is a dose recovery test with the Fontainebleau quartz
 #' # measured in a lexsyg research with green LED stimulation
 #' data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 #' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)

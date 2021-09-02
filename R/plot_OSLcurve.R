@@ -528,7 +528,7 @@ plot_OSLcurve <- function(curve = NULL,
     # Create plot without components
     p.raw <- ggplot2::ggplot(curve, ggplot2::aes(x=time, y=signal)) +
       ggplot2::geom_line(na.rm = TRUE, color = "black") +
-      ggplot2::scale_y_continuous(limits = c(0, max(curve$signal))) +
+      ggplot2::scale_y_continuous(limits = c(0, 1.1 * max(curve$signal))) +
       ggplot2::scale_x_continuous(limits = X_limits) +
       ggplot2::ylab("Signal (cts)") + ggplot2::xlab("Time (s)") +
       text_format}
