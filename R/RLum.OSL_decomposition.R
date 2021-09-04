@@ -1,20 +1,20 @@
 #' Separate CW-OSL components in RLum.Analysis data sets
 #'
-#' Calculate the CW-OSL signal component intensites for each CW-OSL measurement
+#' Calculates the CW-OSL signal component intensites for each CW-OSL measurement
 #' under the requirement that the decay rates are already given. The signal decompositon
-#' process uses an analytical approach described in details in Mittelstrass (2019) and
-#' Mittelstrass et al. (2021). This function processes just [RLum.Analysis-class] data sets created within
+#' process uses an analytical approach described in detail in Mittelstrass (2019) and
+#' Mittelstrass et al. (in preperation). This function processes [RLum.Analysis-class] data sets created within
 #' the [Luminescence-package] (Kreutzer et al. 2012).
 #'
-#' The workflow of this function is as following:
+#' The workflow of this function is as follows:
 #'
 #' \enumerate{
-#'   \item {[optimise_OSLintervals]: Approximate the best suiting integration intervals. Use the global
-#'   average curve as time axis template. If none is given, create one using [sum_OSLcurves]}
-#'   \item [decompose_OSLcurve]: {Calculate component intensities for **all** `record_type` measurements.
-#'   Use the `"det"` algorithm if a background correction was performed with [RLum.OSL_correction] or the
-#'   `"det+nls"` algorithm if no background correction was performed. Use the `"empiric"` error estimation approach.}
-#'   \item Create a `html` report to summarize the results (*optional*)
+#'   \item [optimise_OSLintervals]: {Approximates the optimal integration intervals. Uses the global
+#'   average curve as time axis template. If none global average curve is given, one is automatically created using [sum_OSLcurves].}
+#'   \item [decompose_OSLcurve]: {Calculates component intensities for **all** `record_type` measurements.
+#'   Uses the `"det"` algorithm if a background correction was performed with [RLum.OSL_correction] or the
+#'   `"det+nls"` algorithm if no background correction was performed. For error estimation, the `"empiric"` approach is used.}
+#'   \item Creates a `html` report to summarize the results (*optional*).
 #'}
 #'
 #' Data sets must be formatted as [RLum.Analysis-class] objects and
@@ -24,8 +24,8 @@
 #'
 #' If `report = TRUE`, a `html` report of the results is rendered by the [rmarkdown-package]
 #' and saved in the working directory, which is usually the directory of the data file.
-#' This report can be displayed, shared and published online without any requirements to
-#' the OS or installed software. But an internet connection is needed to display
+#' This report can be displayed, shared and published online without any requirements regarding
+#' the operation system or installed software. However, an internet connection is needed to display
 #' the *MathJax* encoded equations and special characters.
 #' The *Rmarkdown* source code of the report can be found with the following command:
 #'
@@ -34,42 +34,42 @@
 #'
 #' @param object [RLum.Analysis-class] or [list] of [RLum.Analysis-class] (**required**):
 #' Data set of one or multiple CW-OSL measured aliquots. The data set must either
-#' contain a list element `"OSL_COMPONENTS"` or the parameter `decay_rates` must
-#' be defined
+#' contain a list element `$OSL_COMPONENTS` or the parameter `decay_rates` must
+#' be defined.
 #'
 #' @param record_type [character] (*with default*):
 #' Type of records, selected by the [RLum.Analysis-class] attribute `@recordType`.
-#' Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`
+#' Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`.
 #'
 #' @param K [numeric] (*with default*):
-#' Number of components. Should be chosen after OSL component evaluation with
+#' Number of components. Selects the according result table in the `$OSL_COMPONENTS` list item of the data set `object`.
 #'
 #' @param decay_rates [numeric] vector or [data.frame] (*optional*):
-#' User-defined component decay rates. If the
+#' User-defined component decay rates. If this parameter is defined, the parameter `K` will ignored.
+#' If the input object is a [data.frame], then the decay rates must be stored in the column `$lambda`.
 #'
 #' @param report [logical] (*with default*):
-#' Creates a `html` report, saves it in the `report_dir` directory and opens it in your
-#' standard browser. The report contains the results and further information
-#' on the data processing
+#' Creates a `html` report, saves it in the `report_dir` directory and opens it in the default web browser.
+#' The report contains the results and detailed information on the data processing.
 #'
 #' @param report_dir [character] (*optional*):
 #' Path of output directory if `report = TRUE`. If `report_dir = NULL` (default),
-#' a temporary folder is used, which is deleted the moment the R session is closed.
-#' File paths are also allowed as parameter, then a new directory named after the file
-#' will be created
+#' a temporary folder is used which is deleted when the R session is closed.
+#' File paths are also allowed as parameter, then a new directory named after the OSL data file
+#' will be created.
 #'
 #' @param image_format [character] (*with default*):
 #' Image format of the automatically saved graphs if `report = TRUE` and `report_dir` is set.
 #' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
 #' and more, see [ggplot2::ggsave]. The images are saved in the `report_dir` subfolder `/report_figures`.
-#' Set `image_format = NULL` if no images shall be saved
+#' Set `image_format = NULL` if no images shall be saved.
 #'
 #' @param rmd_path [character] (*with default*):
 #' **For advanced users:** File path to the [rmarkdown] source code file of the report.
-#' This allows to execute a maniputed version of the report
+#' This allows to execute a maniputed version of the report.
 #'
 #' @param verbose [logical] (*with default*):
-#' Enables console text output
+#' Enables console text output.
 #'
 #'
 #' @section Last updates:
@@ -113,7 +113,7 @@
 #'
 #' @examples
 #'
-#' #'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+#' #'FB_10Gy' is a dose recovery test with the Fontainebleau quartz
 #' # measured in a lexsyg research with green LED stimulation
 #' data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 #' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
@@ -233,6 +233,7 @@ RLum.OSL_decomposition <- function(
   } else {
     stop("Neither is argument 'decay_rates' of class [data.frame] containing a column $lambda, nor is it a numeric vector with max. 7 elements")
   }
+
 
   # Check if the components are named
   if (!("name" %in% colnames(component_table))) {
