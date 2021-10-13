@@ -1,27 +1,27 @@
 #' Advanced plot function for component resolved CW-OSL curves
 #'
-#' Function for plotting CW-OSL curves and its signal components. It can handle data returned
-#' by [fit_OSLcurve] or [decompose_OSLcurve]. Besides CW-OSL curves, pseudoLM-OSL and
-#' residual are plotted.
+#' This function is used for plotting CW-OSL curves and its signal components. It can handle data returned
+#' by [fit_OSLcurve] or [decompose_OSLcurve]. Besides CW-OSL curves, pseudoLM-OSL curves and
+#' residual plots can also be plotted.
 #'
 #' **Change graph types with parameter:** `display`
 #'
 #' \tabular{ll}{
-#'  `"detailed"` \tab (default) Output plot consists of: Linear CW-OSL g, pseudoLM-OSL plot, Residual curve and component table \cr
+#'  `"detailed"` \tab (default) Output plot consists of: Linear CW-OSL plot, pseudoLM-OSL plot, residual curve and component table \cr
 #'  `"lin"` \tab Linear CW-OSL plot only \cr
 #'  `"compare_lin"` \tab Linear CW-OSL plot with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
 #'  `"log"` \tab CW-OSL plot with logarithmic y-Axis and linear x-Axis \cr
 #'  `"compare_log"` \tab CW-OSL plot with logarithmic y-Axis with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
 #'  `"loglog"` \tab Double-logarithic CW-OSL plot \cr
 #'  `"LM"` \tab PseudoLM-OSL plot \cr
-#'  `"res"` \tab Plot of residual curve: Measurement minus Fitting model \cr
+#'  `"res"` \tab Plot of residual curve: Measurement minus fitting model \cr
 #'  `"tab"` \tab Table of component parameters as image \cr
 #'  `"raw"` \tab Raw x-y plot without further data
 #' }
 #'
 #' PseudoLM-OSL curves are created using the transformation described by Bulur (2000).
-#' The stimulation ramp duration is chosen double the CW-OSL duration.
-#' See also Bos and Wallinga (2012) for a detailed explanation and discussion
+#' The stimulation ramp duration is twice the CW-OSL duration.
+#' See Bos and Wallinga (2012) for a detailed explanation and discussion.
 #'
 #'
 #' @param curve [data.frame] or [matrix] or [RLum.Data.Curve-class] (*optional*):
@@ -31,45 +31,47 @@
 #' If no input is given, a CW-OSL curve will be simulated with the parameters of `components`
 #'
 #' @param components [data.frame] (*optional*):
-#' Table with OSL component parameters. Overrides component information eventually provided by
-#' `curve` input object. Need to have at least the columns: `$names`, `$lambda` and `$n`
+#' Table with OSL component parameters. The parameters are used to approximate seperate signal decay curves
+#' for each component. Need to have at least the columns: `$names`, `$lambda` and `$n`.
+#' If an insufficient or no input object is provided, the `curve`` object will be searched for
+#' component-related signal values.
 #'
 #' @param display [character] (*with default*):
-#' Arrangement of graphs, see section **Details**
+#' Sets the arrangement of graphs, see section **Details**.
 #'
 #' @param show.legend [logical] (*with default*):
-#' Draws a legend in the top right corner of the first graph
+#' Draws a legend in the top right corner of the first graph.
 #'
 #' @param show.intervals [logical] (*with default*):
-#' Draws vertical lines into the residual plot showing the signal bin intervals for Step 2 CW-OSL
-#' decomposition (if available)
+#' Draws vertical lines into the residual plot showing the signal bin intervals (if available) for the CW-OSL
+#' decomposition with [decompose_OSLcurve].
 #'
 #' @param show.crosssec [logical] (*with default*):
-#' Displays photoionisation cross section values in the component table (if available)
+#' Displays photoionisation cross section values in the component table (if available).
 #'
 #' @param show.initial [logical] (*with default*):
-#' Displays signal share at the first channel in the component table (if available)
+#' Displays signal share at the first channel in the component table (if available).
 #'
 #' @param theme.set [ggplot2] object (*with default*):
-#' Graphical theme of the output plot. Input is forwarded to [ggplot2::theme_set].
+#' Graphical theme of the output plot. This argument is forwarded to [ggplot2::theme_set].
 #' Recommended themes are `ggplot2::theme_minimal()`, `ggplot2::theme_classic()` and `ggplot2::theme_bw()`,
 #' see [ggplot2::theme_bw] or [here](https://ggplot2.tidyverse.org/reference/ggtheme.html) for
-#' a full list
+#' a full list.
 #'
 #' @param title [character] (*with default*):
-#' Plot title. Overrides automatic titles but affects just first (upper left)
+#' Plot title. Overwrites automatic titles but affects just the first (upper left)
 #' graph in case of multi-graph display setting.
-#' Set `title = NULL` for auto-title and `title = ""` for no title
+#' Set `title = NULL` for auto-title and `title = ""` for no title.
 #'
 #' @param hide.plot [logical] (*with default*):
-#' If true, plot is not drawn but can still be saved as files or catched by `A <- plot_OSLcurve()`.
-#' If catched, the plot can be drawn manually for example by using [gridExtra::grid.arrange]
+#' If true, plot is not drawn but can still be saved as file or caught by `A <- plot_OSLcurve(...)`.
+#' If caught, the plot can be drawn manually for example by using [gridExtra::grid.arrange].
 #'
 #' @param filename [character] (*optional*):
-#' File name or path to save the plot as image. If just a name is given, the image is
-#' saved in the working directory. The image type is chosen by the file ending.
-#' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
-#' and more, see [ggplot2::ggsave]
+#' File name or path to save the plot as image. If just a file name is given, the image is
+#' saved in the working directory. The image type is chosen by the file ending. Both, vector images
+#' as well as pixel images are possible. Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
+#' and more, see [ggplot2::ggsave].
 #'
 #'
 #' @section Last update:
@@ -87,10 +89,10 @@
 #' @seealso [fit_OSLcurve], [RLum.OSL_decomposition, [RLum.OSL_global_fitting], [simulate_OSLcomponents]
 #'
 #' @references
-#' Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components,
+#' Bos, A. J. J. and Wallinga, J., 2012. How to visualize quartz OSL signal components,
 #' Radiation Measurements, 47(9)
 #'
-#' Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves,
+#' Bulur, E., 2000. A simple transformation for converting CW-OSL curves to LM-OSL curves,
 #' Radiation Measurements, 32(2)
 #'
 #'

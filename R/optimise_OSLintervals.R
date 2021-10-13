@@ -1,13 +1,13 @@
 #' Find adequate integration intervals for CW-OSL decomposition
 #'
-#' Function defines integration intervals for CW-OSL component separation with [decompose_OSLcurve].
-#' The iterative optimisation process aims for minimum cross-correlation between the signal components.
+#' This function defines integration intervals for CW-OSL component separation with [decompose_OSLcurve].
+#' The underlying iterative optimisation process aims for minimum cross-correlation between the signal components.
 #'
 #' The precision of the component seperation with [decompose_OSLcurve] and the impact of
-#' eventual systematic decay rate errors on the component seperation depend on the integration interval definition.
+#' systematic decay rate errors on the component seperation depends on the integration interval definition.
 #' This function minimises the influence of an under/over-estimated decay rate to the
 #' signal intensity calculation of other component. This is done by maximizing the denominator
-#' determinant in Cramers rule, see Mittelstrass (2019) for details. For maximization, the iterative
+#' determinant in Cramers rule, see Mittelstrass (2019) for details. For maximisation, the iterative
 #' evolutionary algorithm of Storn and Price (1997) is used, available in *R* through [DEoptim::DEoptim].
 #'
 #' The inclusion of a background component is supported, see [decompose_OSLcurve] for details.
@@ -16,41 +16,41 @@
 #' @param components [data.frame] or [numeric] vector (**required**):
 #' Table or vector containing the decay constants of the signal components.
 #' A [data.frame] must contain a column `$lambda`. Usually the [data.frame] is provided
-#' by [fit_OSLcurve]
+#' by [fit_OSLcurve].
 #'
 #' @param curve [data.frame] or [matrix] or [RLum.Data.Curve-class] (*optional*):
 #' OSL signal curve which serves as time axis template.
-#' Input curve will just be used to define `channel.width` and `channel.number`
+#' The input curve will be used to define `channel.width` and `channel.number`
 #'
 #' @param channel.width [numeric] (*optional*):
-#' Channel width in seconds. Necessary if `curve` is not given
+#' Channel width in seconds. Necessary if `curve` is not given.
 #'
 #' @param channel.number [numeric] (*optional*):
-#' Number of channels resp. data points. Necessary if `curve` is not given
+#' Number of channels resp. data points. Necessary if `curve` is not given.
 #'
 #' @param t.start [numeric] (*with default*):
-#' Starting time of the first interval, per default the start of the measurement
+#' Starting time of the first interval, per default the start of the measurement.
 #'
 #' @param t.end [numeric] (*optional*):
-#' End time of the last interval, per default the end of the measurement
+#' End time of the last interval, per default the end of the measurement.
 #'
 #' @param background.component [logical] (*with default*):
-#' If `TRUE`, an additional interval for a component with a decay rate of zero will be taken
+#' If `TRUE`, an additional interval for a component with a decay rate of zero will be
 #' determined. This enables the calculation of the signal background level during the signal
-#' decompositionwit [decompose_OSLcurve]
+#' decomposition with [decompose_OSLcurve].
 #'
 #' @param verbose [logical] (*with default*):
-#' Enables console text output
+#' Enables console text output.
 #'
 #' @param parallel.computing [logical] (*with default*):
 #' Enables the use of multiple CPU cores. This increases the execution speed significantly
 #' but may need administrator rights and/or a firewall exception.
-#' See [DEoptim::DEoptim.control] for further information
+#' See [DEoptim::DEoptim.control] for further information.
 #'
 #' @return
 #' The input table `components` [data.frame] will be returned with four additional columns:
 #' `$t.start`, `$t.end` defining the time intervals and `$ch.start`, `$ch.end` assigning those intervals to channel indicies.
-#' If a [numeric] vector is given as input, a new [data.frame] will be returned
+#' If a [numeric] vector is given as input, a new [data.frame] will be returned.
 #'
 #' @section Last updates:
 #'

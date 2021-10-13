@@ -1,9 +1,9 @@
 #' Plot comparison of CW-OSL component photoionisation cross sections of different models
 #'
-#' Function takes the `output.complex = TRUE` output of [fit_OSLcurve] and draws the
+#' This function takes the `output.complex = TRUE` output of [fit_OSLcurve] and draws the
 #' photoionisation cross sections of different models in relation to each other.
 #' If a stimulation wavelength between 465 and 480 nm was chosen,
-#' the photoionisation cross sections are set into relation with literature values
+#' the photoionisation cross sections are also set in relation to literature values
 #' from Singarayer and Bailey (2003), Jain et al. (2003) and Durcan and Duller (2011).
 #'
 #' The photoionisation cross section ranges of the reference components are defined as following:
@@ -21,10 +21,10 @@
 #'
 #'
 #' @param fit.list [list] (**required**):
-#' Output object of [fit_OSLcurve] with `output.complex = TRUE`
+#' Output object of [fit_OSLcurve]. The object must be created with the setting `output.complex = TRUE`.
 #'
 #' @param stimulation.intensity [numeric] (*optional*):
-#' Intensity of optical stimulation in mW / cm². Used to calculate the photoionisation cross sections.
+#' Intensity of optical stimulation in *mW / cm²*. Used to calculate the photoionisation cross sections.
 #' If not given, the input value for [fit_OSLcurve] is used
 #'
 #' @param stimulation.wavelength [numeric] (*optional*):
@@ -32,20 +32,20 @@
 #' If not given, the input value for [fit_OSLcurve] is used
 #'
 #' @param K.selected [numeric] (*optional*):
-#' Draws a red rectangle around the `K = K.selected` row, thus highlighting the model of choice
+#' Draws a red rectangle around the `K = K.selected` row, thus highlighting the model of choice.
 #'
 #' @param title [character] (*with default*):
-#' Plot title. Set `title = NULL` for no title
+#' Plot title. Set `title = NULL` for no title.
 #'
 #' @param hide.plot [logical] (*with default*):
-#' If true, plot is not drawn but can still be saved as files or catched by `A <- plot_OSLcurve()`.
-#' If catched, the plot can be drawn manually for example by using [gridExtra::grid.arrange]
+#' If true, plot is not drawn but can still be saved as file or caught by `A <- plot_PhotoCrosssections(...)`.
+#' If caught, the plot can be drawn manually for example by using [gridExtra::grid.arrange].
 #'
 #' @param filename [character] (*optional*):
-#' File name or path to save the plot as image. If just a name is given, the image is
-#' saved in the working directory. The image type is chosen by the file ending.
-#' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
-#' and more, see [ggplot2::ggsave]
+#' File name or path to save the plot as image. If just a file name is given, the image is
+#' saved in the working directory. The image type is chosen by the file ending. Both, vector images
+#' as well as pixel images are possible. Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
+#' and more, see [ggplot2::ggsave].
 #'
 #'
 #' @section Last updates:
