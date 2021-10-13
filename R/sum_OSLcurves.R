@@ -1,32 +1,28 @@
 #' Combine RLum OSL records to one global average curve
 #'
-#' The function adds up CW-OSL records saved in [RLum.Analysis-class] objects and
+#' This function adds up all CW-OSL records of the same type saved in [RLum.Analysis-class] objects and
 #' calculates the arithmetic mean signal from all records for each channel.
-#' This is useful to create on global average curve with sufficient signal-to-noise ratio
-#' for OSL components identification with [fit_OSLcurve] or to create one signal background
+#' This is useful to create global average curve with sufficient signal-to-noise ratio
+#' for OSL components identification with [fit_OSLcurve] or to create a signal background
 #' reference curve.
-#'
-#' Function supports currently just input objects of type `RLum.Analysis` from
-#' the [Luminescence] package. Major overhaul necessary, see ToDo list
-#' in the source code
 #'
 #'
 #' @param object [RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
-#' data set of one or multiple aliquots containing CW-OSL records
+#' Data set of one or multiple aliquots containing CW-OSL records.
 #'
 #' @param record_type [character] (*with default*):
-#' type of records which are selected from the input `object`,
-#' for example: `"OSL"`,`"SGOSL"` or `"IRSL"`
+#' Type of records which are selected from the input `object`,
+#' for example: `"OSL"`,`"SGOSL"` or `"IRSL"`.
 #'
 #' @param aliquot_selection [numeric] vector (*optional*):
-#' vector specifying the indicies of elements (aliquots) of a list of [RLum.Analysis-class] objects
-#' which shall be included
+#' Vector specifying the indicies of elements (aliquots) of a list of [RLum.Analysis-class] objects
+#' which shall be included.
 #'
 #' @param offset_value [numeric] (*with default*):
-#' signal offset (background) which will be substracted from each record
+#' Signal offset (background) which will be substracted from each record.
 #'
 #' @param verbose [logical] (*with default*):
-#' enables console text output
+#' Enables console text output.
 #'
 #' @param output.plot [logical] (*with default*):
 #' returns a plot with all data points of all records and the average curve
@@ -36,21 +32,21 @@
 #' See [ggplot2::theme_bw] for available themes
 #'
 #' @param plot.first [logical] (*with default*):
-#' plot includes additional drawing of first `record_type` record of first `object` list element
+#' Plot includes additional drawing of first `record_type` record of first `object` list element.
 #'
 #' @param title [character] (*with default*):
-#' plot title. Set `title = "default"` for an automatically generated title.
-#' Set `title = NULL` for no title
+#' Plot title. Set `title = "default"` for an automatically generated title.
+#' Set `title = NULL` for no title.
 #'
 #' @param filename [character] (*optional*):
-#' file name or path to save the plot as image. If just a name is given, the image is
-#' saved in the working directory. The image type is chosen by the file ending.
-#' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics) and `.jpg`, `.png`, `.bmp` (pixel graphics)
-#' and more, see [ggplot2::ggsave] for details
+#' File name or path to save the plot as image. If just a file name is given, the image is
+#' saved in the working directory. The image type is chosen by the file ending. Both, vector images
+#' as well as pixel images are possible. Allowed are `.pdf`, `.eps`, `.svg` (vector graphics),
+#' `.jpg`, `.png`, `.bmp` (pixel graphics) and more, see [ggplot2::ggsave].
 #'
 #'
 #' @return
-#' A [data.frame] of the average CW-OSL curve is returned, containing two columns: `$time` and `$signal`
+#' A [data.frame] of the average CW-OSL curve is returned, containing two columns: `$time` and `$signal`.
 #'
 #'
 #' @section Last updates:
@@ -70,7 +66,7 @@
 #'
 #' @examples
 #'
-#' # 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+#' # 'FB_10Gy' is a dose recovery test with the Fontainebleau quartz
 #' # measured in a lexsyg research with green LED stimulation
 #' data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 #' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)

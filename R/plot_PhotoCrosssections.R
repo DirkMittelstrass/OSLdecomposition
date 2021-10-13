@@ -44,8 +44,8 @@
 #' @param filename [character] (*optional*):
 #' File name or path to save the plot as image. If just a file name is given, the image is
 #' saved in the working directory. The image type is chosen by the file ending. Both, vector images
-#' as well as pixel images are possible. Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
-#' and more, see [ggplot2::ggsave].
+#' as well as pixel images are possible. Allowed are `.pdf`, `.eps`, `.svg` (vector graphics),
+#' `.jpg`, `.png`, `.bmp` (pixel graphics) and more, see [ggplot2::ggsave].
 #'
 #'
 #' @section Last updates:

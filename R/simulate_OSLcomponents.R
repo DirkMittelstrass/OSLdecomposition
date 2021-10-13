@@ -1,43 +1,45 @@
 #' Simulates signal component decay curves and whole CW-OSL curves
 #'
-#' The function builds CW-OSL component decay curves or a whole CW-OSL curve from OSL component parameters.
+#' This function builds a bulk CW-OSL curve and CW-OSL component decay curves from OSL component parameters.
 #' Therewith it supports [fit_OSLcurve], [decompose_OSLcurve] and [plot_OSLcurve] by providing model and residual curves.
 #'
 #'
 #' @param components [data.frame] (**required**):
-#' Table with component parameters. Need to have columns `$names`, `$lambda` and `$n`, see section **Examples**
+#' Table with component parameters. The table requires columns `$names`, `$lambda` and `$n`, see section **Examples**.
 #'
 #' @param curve [data.frame] (*optional*):
-#' CW-OSL curve serving as template for the time axis. Need to have a column `$time`.
+#' CW-OSL curve serving as template for the time axis. The input table requires a column `$time`.
 #' If no input object is given or the object contains no column `$signal`,
-#' `simulate.curve` will be set `TRUE`
+#' `simulate.curve` will be set `TRUE`.
 #'
-#' @param channel.width [numeric] (*with default*):
-#' channel width in seconds if no template `curve` is given
+#' @param channel.width [numeric] (*optional*):
+#' Channel width in seconds. Necessary for curve simulation if `curve` is not given.
 #'
-#' @param channel.number [numeric] (*with default*):
-#' number of channels resp. data points if no template `curve` is given
+#' @param channel.number [numeric] (*optional*):
+#' Number of channels resp. data points. Necessary for curve simulation if `curve` is not given.
 #'
 #' @param simulate.curve [logical] (*with default*):
-#' if `FALSE`, the output curve will take over the column `$signal` from the input `curve`.
-#' If `TRUE`, a new column `$signal` will be created which is the sum of all component curves
+#' Decides if the bulk CW-OSL signal shall be calculated from the component parameter.
+#' If `FALSE`, the output curve will take over the column `$signal` from the input `curve`.
+#' If `TRUE`, a new column `$signal` will be created which is the sum of all component curves.
 #'
 #' @param add.poisson.noise [logical] (*with default*):
-#' adds poisson distributed shot noise to `$signal` if `simulate.curve = TRUE`
+#' Adds poisson distributed shot noise to `$signal` if `simulate.curve = TRUE`.
 #'
 #' @param add.gaussian.noise [numeric] (*with default*):
-#' standard deviation of the detector noise in **cts/s**, added to `$signal` if `simulate.curve = TRUE`
+#' Standard deviation of the detector noise in *cts/s*, added to `$signal` if `simulate.curve = TRUE`.
 #'
 #' @param add.background [numeric] (*with default*):
-#' signal background level in **cts/s**, added to `$signal` if `simulate.curve = TRUE`
+#' signal background level in *cts/s*, added to `$signal` if `simulate.curve = TRUE`
 #'
 #' @param round.values [logical] (*with default*):
-#' rounds `$signal` values to integers if `simulate.curve = TRUE`
+#' Rounds `$signal` values to integers if `simulate.curve = TRUE`.
 #'
 #' @return
 #'
-#' A [data.frame]  of a CW-OSL curve with the columns: `$time`, `$signal`, `$residual`, `$sum`
-#' and a signal decay curve for each single component named after the input object `components$names`
+#' A [data.frame] of a CW-OSL curve with the columns: `$time`, `$signal`, `$residual`, `$sum`
+#' and a signal decay curve for each single component named after the entries in the column `components$names`
+#' of the input object.
 #'
 #' @section Last updates:
 #'
