@@ -13,7 +13,7 @@
 #'   \item{`check_consistency`}
 #'   \item{`remove_light_off`}
 #'   \item{`limit_duration`}
-#'   \item{`correct_PMTsaturation` (*inactive*)}
+#'   \item{`PMT_pulse_pair_resolution`}
 #'   \item{`background_sequence`}
 #'   \item{`check_signal_level` (*inactive*)}
 #'   \item{`subtract_offset`}
@@ -29,6 +29,17 @@
 #' negative curvature (minimum of second differential) in the second half of the reference curve.
 #' If the next data point has at least 50% less signal, remove all data points after the infliction
 #' point. Do this for all curves of the selected 'record_type'.
+#'
+#' **Details to** `PMT_pulse_pair_resolution`:
+#'
+#' The algorithmus corrects non-linearity of signal values due to insuffiecent pulse-pair resolution
+#' of the photo-multiplier tube (PMT). This non-linearity can lead to significant losses of counts
+#' However, the algorithm does not account for PMT saturation and PMT aging.
+#' The corrected signal values are calculated by:
+#'
+#'             counts <- signal[i] / channel_width
+#'  counts <- counts / (1 - counts * resolution)
+#'
 #'
 #'
 #' @param object [RLum.Analysis-class] or [list] of [RLum.Analysis-class] (**required**):
@@ -46,7 +57,7 @@
 #' measurements will be renamed to `"{record_type}background"`.
 #'
 #' @param subtract_offset [numeric] (*optional*):
-#' Signal offset value in counts per second (cts/s). Value is handled as background
+#' Signal offset value in counts per second (*cts/s*). Value is handled as background
 #' level and will be subtracted from each CW-OSL record.
 #'
 #' @param check_consistency [logical] (*with default*):
@@ -68,15 +79,16 @@
 #' measurement and removes them. Useful to tailor single-grain measurements.
 #'
 #' @param limit_duration [numeric] (*with default*):
-#' Reduce measurement duration to input value (in s).
+#' Reduce measurement duration to input value in seconds (*s*).
 #' Long measurement durations can lead to over-fitting at the component identification
 #' of Step 1 which may induce systematic errors, see Mittelstrass (2019). Thus, limiting
 #' the OSL record length ensures sufficient accuracy regarding the Fast and Medium component analysis.
 #' If however, slow decaying components are of interest, `limit_duration = NULL` is recommended.
 #'
-#' @param correct_PMTsaturation [numeric] (*optional*): **(Has no effect yet)**
-#' Bright CW-OSL signals may lead to detection non-linearity. This
-#' tool corrects this in accordance to (*add reference here*).
+#' @param PMT_pulse_pair_resolution [numeric] (*with default*):
+#' Timespan of the pulse-pair resolution of the PMT in nanoseconds (*ns*).
+#' If a value is given, the signal values will be corrected for time-resolution related
+#' non-linearity at hight counting rates, see *Details*.#'
 #'
 #' @param verbose [logical] (*with default*):
 #' Enables console text output.
@@ -84,6 +96,7 @@
 #'
 #' @section Last updates:
 #'
+#' 2021-11-23, DM: Enabled `PMT_pulse_pair_resolution`.
 #' 2021-02-15, DM: Enabled `remove_light_off` and renamed `cut_records` into `limit_duration`. Removed `report` parameter
 #'
 #' @author
@@ -143,7 +156,7 @@ RLum.OSL_correction <- function(
   check_signal_level = FALSE,
   remove_light_off = TRUE,
   limit_duration = 20,
-  correct_PMTsaturation = NA,
+  PMT_pulse_pair_resolution = 18,
   verbose = TRUE
 ){
 
@@ -151,6 +164,7 @@ RLum.OSL_correction <- function(
   # * 2020-05-24, DM: First reasonable version
   # * 2020-11-05, DM: Added roxygen documentation
   # * 2021-02-15, DM: Enabled `remove_light_off` and renamed `cut_records` into `limit_duration`. Removed `report` parameter
+  # * 2021-11-23, DM: Added pulse-pair-resolution correction
   #
   # ToDo:
   # * Check for Zero as first value at the time axis
@@ -422,14 +436,78 @@ RLum.OSL_correction <- function(
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
   }
 
-  if (check_signal_level) {
+  if (!is.na(PMT_pulse_pair_resolution) && (PMT_pulse_pair_resolution > 0)) {
     correction_step <- correction_step + 1 ######################### PMT SATURATION ################################
-    if(verbose) cat("CORRECTION STEP", correction_step,"----- Correct for PMT saturation effects -----\n")
+    if(verbose) cat("CORRECTION STEP", correction_step,"----- Correct for PMT pulse-pair resolution -----\n")
     time.start <- Sys.time()
+    # See Hamamatsu PMT handbook chapter 6.3 section 2c for details
 
-    # In the Hamamatsu PMT handbook is a formula
+    # from nsec to sec:
+    resolution <- PMT_pulse_pair_resolution * 10^-9
 
-    if(verbose) cat("THIS FUNCTION IS STILL MISSING")
+    # To save computing time (especially in case of single-grain measurements)
+    # channels are only manipulated, if the signal is above the significance level
+    significance_threshold <- 0.5
+    significance_level <- -0.5 * significance_threshold + 0.5*(significance_threshold^2 + 2 / resolution)^0.5
+    if(verbose) cat("Every channel with a signal higher than ", round(significance_level) ," counts/sec will be increased. \n")
+    records_tested <- 0
+    records_corrected <- 0
+    first_ch_median <- c(NULL)
+    first_ch_max <- 0
+
+    for (j in 1:length(data_set)) {
+      for (i in c(1:length(data_set[[j]]@records))) {
+        if (data_set[[j]]@records[[i]]@recordType == record_type) {
+
+          time <- data_set[[j]]@records[[i]]@data[,1]
+          signal <- data_set[[j]]@records[[i]]@data[,2]
+          channel_width <- time[2] - time[1]
+          correction_was_necessary <- FALSE
+
+
+          for (x in 1:length(signal)) {
+            old_counts <- signal[x] / channel_width
+
+            if(counts > significance_level)
+            {
+              new_counts <- old_counts / (1 - old_counts * resolution)
+
+              # Add to the first channel statistic
+              if (x == 1) {
+                relative_increase <- 100 * (new_counts / old_counts - 1)
+                relative_increase <- round(relative_increase, digits = 2)
+                first_ch_median <- c(first_ch_median, relative_increase)
+                if (relative_increase > first_ch_max) first_ch_max <- relative_increase
+              }
+
+              # the functions used in this package could handle float number.
+              # Thefore, rounding would no be necessary. But to ensure full compatibility with
+              # other possibliy used packages, we transform the results back to integers
+              signal[x] <- round(new_counts)
+              correction_was_necessary <- TRUE
+            }
+          }
+          records_tested <- records_tested + 1
+          if (correction_was_necessary) {
+            data_set[[j]]@records[[i]]@data <- matrix(c(time, signal), ncol = 2)
+            records_corrected <- records_corrected + 1
+          }
+        }}}
+
+    if (records_corrected > 0) {
+      if(verbose) {
+        cat(records_corrected, " of ", records_tested, " ", record_type,
+            " records contained signal values which needed to be corrected.\n")
+        cat("Signal statistics or corrected first channels:\n")
+        cat("Median increase = ", median(first_ch_median), " % / Maximum increase = ", first_ch_max, " %\n")
+      }
+    }
+    else
+    {
+      if(verbose) cat("No records exceeding the signal limits found.\n")
+    }
+
+    if(verbose) cat("Offset of", subtract_offset, "counts per second subtracted from every", record_type, "record\n")
 
 
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
@@ -496,7 +574,7 @@ RLum.OSL_correction <- function(
     # If >= 50 % of all records in an list item are just noise, rename them to "OSLnoise"
     # When is something noise? When the Sign-Test says it is with p > .05 probability
     #
-    # Alternatively: Use the function from Luminescence
+    # Alternatively: Use the function from the Luminescence package: verify_SingleGrainData()
 
     if(verbose) cat("THIS FUNCTION IS STILL MISSING")
 
