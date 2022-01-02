@@ -20,52 +20,52 @@ optimise_OSLintervals(
 \item{components}{\link{data.frame} or \link{numeric} vector (\strong{required}):
 Table or vector containing the decay constants of the signal components.
 A \link{data.frame} must contain a column \verb{$lambda}. Usually the \link{data.frame} is provided
-by \link{fit_OSLcurve}}
+by \link{fit_OSLcurve}.}
 
 \item{curve}{\link{data.frame} or \link{matrix} or \linkS4class{RLum.Data.Curve} (\emph{optional}):
 OSL signal curve which serves as time axis template.
-Input curve will just be used to define \code{channel.width} and \code{channel.number}}
+The input curve will be used to define \code{channel.width} and \code{channel.number}}
 
 \item{channel.width}{\link{numeric} (\emph{optional}):
-Channel width in seconds. Necessary if \code{curve} is not given}
+Channel width in seconds. Necessary if \code{curve} is not given.}
 
 \item{channel.number}{\link{numeric} (\emph{optional}):
-Number of channels resp. data points. Necessary if \code{curve} is not given}
+Number of channels resp. data points. Necessary if \code{curve} is not given.}
 
 \item{t.start}{\link{numeric} (\emph{with default}):
-Starting time of the first interval, per default the start of the measurement}
+Starting time of the first interval, per default the start of the measurement.}
 
 \item{t.end}{\link{numeric} (\emph{optional}):
-End time of the last interval, per default the end of the measurement}
+End time of the last interval, per default the end of the measurement.}
 
 \item{background.component}{\link{logical} (\emph{with default}):
-If \code{TRUE}, an additional interval for a component with a decay rate of zero will be taken
+If \code{TRUE}, an additional interval for a component with a decay rate of zero will be
 determined. This enables the calculation of the signal background level during the signal
-decompositionwit \link{decompose_OSLcurve}}
+decomposition with \link{decompose_OSLcurve}.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
-Enables console text output}
+Enables console text output.}
 
 \item{parallel.computing}{\link{logical} (\emph{with default}):
 Enables the use of multiple CPU cores. This increases the execution speed significantly
 but may need administrator rights and/or a firewall exception.
-See \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further information}
+See \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further information.}
 }
 \value{
 The input table \code{components} \link{data.frame} will be returned with four additional columns:
 \verb{$t.start}, \verb{$t.end} defining the time intervals and \verb{$ch.start}, \verb{$ch.end} assigning those intervals to channel indicies.
-If a \link{numeric} vector is given as input, a new \link{data.frame} will be returned
+If a \link{numeric} vector is given as input, a new \link{data.frame} will be returned.
 }
 \description{
-Function defines integration intervals for CW-OSL component separation with \link{decompose_OSLcurve}.
-The iterative optimisation process aims for minimum cross-correlation between the signal components.
+This function defines integration intervals for CW-OSL component separation with \link{decompose_OSLcurve}.
+The underlying iterative optimisation process aims for minimum cross-correlation between the signal components.
 }
 \details{
 The precision of the component seperation with \link{decompose_OSLcurve} and the impact of
-eventual systematic decay rate errors on the component seperation depend on the integration interval definition.
+systematic decay rate errors on the component seperation depends on the integration interval definition.
 This function minimises the influence of an under/over-estimated decay rate to the
 signal intensity calculation of other component. This is done by maximizing the denominator
-determinant in Cramers rule, see Mittelstrass (2019) for details. For maximization, the iterative
+determinant in Cramers rule, see Mittelstrass (2019) for details. For maximisation, the iterative
 evolutionary algorithm of Storn and Price (1997) is used, available in \emph{R} through \link[DEoptim:DEoptim]{DEoptim::DEoptim}.
 
 The inclusion of a background component is supported, see \link{decompose_OSLcurve} for details.

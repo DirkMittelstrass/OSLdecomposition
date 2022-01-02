@@ -19,79 +19,78 @@ RLum.OSL_global_fitting(
 )
 }
 \arguments{
-\item{object}{\linkS4class{RLum.Analysis} or \href{RLum.Analysis}{list} (\strong{required}):
-Data set of one or multiple CW-OSL measured aliquots}
+\item{object}{\linkS4class{RLum.Analysis} or \link{list} of \linkS4class{RLum.Analysis} (\strong{required}):
+Data set of one or multiple CW-OSL measured aliquots.}
 
 \item{record_type}{\link{character} (\emph{with default}):
 Type of records, selected by the \linkS4class{RLum.Analysis} attribute \verb{@recordType}.
-Common are: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}}
+Common are: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}.}
 
 \item{K_maximum}{\link{numeric} (\emph{with default}):
-Maximum number of components \emph{K}, see \link{fit_OSLcurve}}
+Maximum number of components \emph{K}, see \link{fit_OSLcurve}.}
 
 \item{F_threshold}{\link{numeric} (\emph{with default}):
-Fitting stop criterion, see \link{fit_OSLcurve}}
+Fitting stop criterion, see \link{fit_OSLcurve}.}
 
 \item{stimulation_intensity}{\link{numeric} (\emph{with default}):
-Intensity of optical stimulation in \emph{mW / cm²}. Used to calculate photo-ionisation cross-sections, see \link{fit_OSLcurve}}
+Intensity of optical stimulation in \emph{mW / cm²}. Used to calculate photo-ionisation cross-sections, see \link{fit_OSLcurve}.}
 
 \item{stimulation_wavelength}{\link{numeric} (\emph{with default}):
-Wavelength of optical stimulation in \emph{nm}. Used to calculate photo-ionisation cross-sections, see \link{fit_OSLcurve}}
+Wavelength of optical stimulation in \emph{nm}. Used to calculate photo-ionisation cross-sections, see \link{fit_OSLcurve}.}
 
 \item{report}{\link{logical} (\emph{with default}):
-Creates a \code{html} report, saves it in the \code{report_dir} directory and opens it in your
-standard browser. The report contains the results and further information
-on the data processing}
+Creates a \code{html} report, saves it in the \code{report_dir} directory and opens it in the default web browser.
+The report contains the results and detailed information on the data processing.}
 
 \item{report_dir}{\link{character} (\emph{optional}):
 Path of output directory if \code{report = TRUE}. If \code{report_dir = NULL} (default),
-a temporary folder is used, which is deleted the moment the R session is closed.
-File paths are also allowed as parameter, then a new directory named after the file
-will be created}
+a temporary folder is used which is deleted when the R session is closed.
+File paths are also allowed as parameter, then a new directory named after the OSL data file
+will be created.}
 
 \item{image_format}{\link{character} (\emph{with default}):
 Image format of the automatically saved graphs if \code{report = TRUE} and \code{report_dir} is set.
 Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
 and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in the \code{report_dir} subfolder \verb{/report_figures}.
-Set \code{image_format = NULL} if no images shall be saved}
+Set \code{image_format = NULL} if no images shall be saved.}
 
 \item{rmd_path}{\link{character} (\emph{with default}):
 \strong{For advanced users:} File path to the \link{rmarkdown} source code file of the report.
-This allows to execute a maniputed version of the report}
+This allows to execute maniputed versions of the report.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
-Enables console text output}
+Enables console text output.}
 }
 \value{
 The input \code{object}, a \link{list} of \linkS4class{RLum.Analysis} objects is returned but with
 a new list element \code{object[["OSL_COMPONENTS"]]}, containing:
 \itemize{
-\item \verb{$decay.rates} \link{numeric} vector: Decay rates of F-test recommended or last sucessfull fitting
-\item \verb{$K.selected} \link{numeric}: Number of components of F-test recommended or last sucessfull fitting
-\item \verb{$F.test} \link{data.frame}: F-test table
-\item \verb{$F.test.print} \link{data.frame}: F-test table but formatted for console output and display with \link[kableExtra:reexports]{kableExtra::kable}
-\item \verb{$info.text} \link{list}: Small process log
-\item \verb{$component.tables} \link{list} of \link{data.frame}s: Signal component tables for all curve models
-\item \verb{$curve} \link{list}: Global average curve
-\item \verb{$components} \link{data.frame}: Signal component table of F-test recommended or last sucessfull fitting
-\item \verb{$fit.results} \link{list}: Returned fitting objects of \link[DEoptim:DEoptim]{DEoptim::DEoptim} and \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} for all curve models
-\item \verb{$plot.data} \link{data.frame}: Model overview table for photo-ionisation cross-section plotting with \link{plot_PhotoCrosssections}
-\item \verb{$parameters} \link{list}: Input and algorithm parameters
+\item \verb{$decay.rates} \link{numeric} vector: Decay rates of F-test recommendation or last successful fitting.
+\item \verb{$K.selected} \link{numeric}: Number of components of F-test recommendation or last successful fitting.
+\item \verb{$F.test} \link{data.frame}: F-test table.
+\item \verb{$F.test.print} \link{data.frame}: F-test table but formatted for console output and display with \link[kableExtra:reexports]{kableExtra::kable}.
+\item \verb{$info.text} \link{list}: Short process log.
+\item \verb{$component.tables} \link{list} of \link{data.frame}s: Signal component tables for all curve models.
+\item \verb{$curve} \link{list}: Global average curve created from all  \code{record_type} curves in the data set.
+\item \verb{$components} \link{data.frame}: Signal component table of F-test recommendation or last successful fitting.
+\item \verb{$fit.results} \link{list}: Returned fitting objects of \link[DEoptim:DEoptim]{DEoptim::DEoptim} and \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} for all curve models.
+\item \verb{$plot.data} \link{data.frame}: Model overview table for photo-ionisation cross-section plotting with \link{plot_PhotoCrosssections}.
+\item \verb{$parameters} \link{list}: Input and algorithm parameters.
 }
 }
 \description{
 First, all CW-OSL records are combined to one global average CW-OSL curve,
 then the multi-exponential fitting approach of Bluszcz and Adamiec (2006) is applied.
-The function processes just \linkS4class{RLum.Analysis} data sets created within
+This function processes \linkS4class{RLum.Analysis} data sets created within
 the \link{Luminescence-package} (Kreutzer et al. 2012).
 }
 \details{
-The workflow of this function is as following:
+The workflow of this function is as follows:
 
 \enumerate{
-\item \link{sum_OSLcurves}: Combine all measurement of type \code{record_type} to one global average curve
-\item \link{fit_OSLcurve}: Identify  component by a multi-exponential fitting
-\item Create a \code{html} report to summarize the results (\emph{optional})
+\item \link{sum_OSLcurves}: Combine all measurements of type \code{record_type} to one global average curve.
+\item \link{fit_OSLcurve}: Identify OSL components by a multi-exponential fitting.
+\item Create a \code{html} report to summarize the results (\emph{optional}).
 }
 
 Data sets must be formatted as \linkS4class{RLum.Analysis} objects and
@@ -102,7 +101,7 @@ meant for further analysis with \link{RLum.OSL_decomposition}.
 If \code{report = TRUE}, a \code{html} report of the results is rendered by the \link{rmarkdown-package}
 and saved in the working directory, which is usually the directory of the data file.
 This report can be displayed, shared and published online without any requirements to
-the OS or installed software. But an internet connection is needed to display
+the operation system or installed software. However, an internet connection is needed to display
 the \emph{MathJax} encoded equations and special characters.
 The \emph{Rmarkdown} source code of the report can be found with the following command:
 
@@ -116,7 +115,7 @@ The \emph{Rmarkdown} source code of the report can be found with the following c
 
 \examples{
 
-# 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+# 'FB_10Gy' is a dose recovery test with the Fontainebleau quartz
 # measured in a lexsyg research with green LED stimulation
 data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)

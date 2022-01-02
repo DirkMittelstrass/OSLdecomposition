@@ -16,10 +16,10 @@ plot_PhotoCrosssections(
 }
 \arguments{
 \item{fit.list}{\link{list} (\strong{required}):
-Output object of \link{fit_OSLcurve} with \code{output.complex = TRUE}}
+Output object of \link{fit_OSLcurve}. The object must be created with the setting \code{output.complex = TRUE}.}
 
 \item{stimulation.intensity}{\link{numeric} (\emph{optional}):
-Intensity of optical stimulation in mW / cm². Used to calculate the photoionisation cross sections.
+Intensity of optical stimulation in \emph{mW / cm²}. Used to calculate the photoionisation cross sections.
 If not given, the input value for \link{fit_OSLcurve} is used}
 
 \item{stimulation.wavelength}{\link{numeric} (\emph{optional}):
@@ -27,26 +27,26 @@ Wavelength of optical stimulation in nm. Used to calculate the photoionisation c
 If not given, the input value for \link{fit_OSLcurve} is used}
 
 \item{K.selected}{\link{numeric} (\emph{optional}):
-Draws a red rectangle around the \code{K = K.selected} row, thus highlighting the model of choice}
+Draws a red rectangle around the \code{K = K.selected} row, thus highlighting the model of choice.}
 
 \item{title}{\link{character} (\emph{with default}):
-Plot title. Set \code{title = NULL} for no title}
+Plot title. Set \code{title = NULL} for no title.}
 
 \item{hide.plot}{\link{logical} (\emph{with default}):
-If true, plot is not drawn but can still be saved as files or catched by \code{A <- plot_OSLcurve()}.
-If catched, the plot can be drawn manually for example by using \link[gridExtra:arrangeGrob]{gridExtra::grid.arrange}}
+If true, plot is not drawn but can still be saved as file or caught by \code{A <- plot_PhotoCrosssections(...)}.
+If caught, the plot can be drawn manually for example by using \link[gridExtra:arrangeGrob]{gridExtra::grid.arrange}.}
 
 \item{filename}{\link{character} (\emph{optional}):
-File name or path to save the plot as image. If just a name is given, the image is
-saved in the working directory. The image type is chosen by the file ending.
-Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
-and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}}
+File name or path to save the plot as image. If just a file name is given, the image is
+saved in the working directory. The image type is chosen by the file ending. Both, vector images
+as well as pixel images are possible. Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics),
+\code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics) and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}.}
 }
 \description{
-Function takes the \code{output.complex = TRUE} output of \link{fit_OSLcurve} and draws the
+This function takes the \code{output.complex = TRUE} output of \link{fit_OSLcurve} and draws the
 photoionisation cross sections of different models in relation to each other.
 If a stimulation wavelength between 465 and 480 nm was chosen,
-the photoionisation cross sections are set into relation with literature values
+the photoionisation cross sections are also set in relation to literature values
 from Singarayer and Bailey (2003), Jain et al. (2003) and Durcan and Duller (2011).
 }
 \details{

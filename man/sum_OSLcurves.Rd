@@ -19,21 +19,21 @@ sum_OSLcurves(
 }
 \arguments{
 \item{object}{\linkS4class{RLum.Analysis} or \href{RLum.Analysis}{list} (\strong{required}):
-data set of one or multiple aliquots containing CW-OSL records}
+Data set of one or multiple aliquots containing CW-OSL records.}
 
 \item{record_type}{\link{character} (\emph{with default}):
-type of records which are selected from the input \code{object},
-for example: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}}
+Type of records which are selected from the input \code{object},
+for example: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}.}
 
 \item{aliquot_selection}{\link{numeric} vector (\emph{optional}):
-vector specifying the indicies of elements (aliquots) of a list of \linkS4class{RLum.Analysis} objects
-which shall be included}
+Vector specifying the indicies of elements (aliquots) of a list of \linkS4class{RLum.Analysis} objects
+which shall be included.}
 
 \item{offset_value}{\link{numeric} (\emph{with default}):
-signal offset (background) which will be substracted from each record}
+Signal offset (background) which will be substracted from each record.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
-enables console text output}
+Enables console text output.}
 
 \item{output.plot}{\link{logical} (\emph{with default}):
 returns a plot with all data points of all records and the average curve}
@@ -43,32 +43,27 @@ sets the graphical theme of the output plot.
 See \link[ggplot2:ggtheme]{ggplot2::theme_bw} for available themes}
 
 \item{plot.first}{\link{logical} (\emph{with default}):
-plot includes additional drawing of first \code{record_type} record of first \code{object} list element}
+Plot includes additional drawing of first \code{record_type} record of first \code{object} list element.}
 
 \item{title}{\link{character} (\emph{with default}):
-plot title. Set \code{title = "default"} for an automatically generated title.
-Set \code{title = NULL} for no title}
+Plot title. Set \code{title = "default"} for an automatically generated title.
+Set \code{title = NULL} for no title.}
 
 \item{filename}{\link{character} (\emph{optional}):
-file name or path to save the plot as image. If just a name is given, the image is
-saved in the working directory. The image type is chosen by the file ending.
-Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics) and \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
-and more, see \link[ggplot2:ggsave]{ggplot2::ggsave} for details}
+File name or path to save the plot as image. If just a file name is given, the image is
+saved in the working directory. The image type is chosen by the file ending. Both, vector images
+as well as pixel images are possible. Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics),
+\code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics) and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}.}
 }
 \value{
-A \link{data.frame} of the average CW-OSL curve is returned, containing two columns: \verb{$time} and \verb{$signal}
+A \link{data.frame} of the average CW-OSL curve is returned, containing two columns: \verb{$time} and \verb{$signal}.
 }
 \description{
-The function adds up CW-OSL records saved in \linkS4class{RLum.Analysis} objects and
+This function adds up all CW-OSL records of the same type saved in \linkS4class{RLum.Analysis} objects and
 calculates the arithmetic mean signal from all records for each channel.
-This is useful to create on global average curve with sufficient signal-to-noise ratio
-for OSL components identification with \link{fit_OSLcurve} or to create one signal background
+This is useful to create global average curve with sufficient signal-to-noise ratio
+for OSL components identification with \link{fit_OSLcurve} or to create a signal background
 reference curve.
-}
-\details{
-Function supports currently just input objects of type \code{RLum.Analysis} from
-the \link{Luminescence} package. Major overhaul necessary, see ToDo list
-in the source code
 }
 \section{Last updates}{
 
@@ -78,7 +73,7 @@ in the source code
 
 \examples{
 
-# 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
+# 'FB_10Gy' is a dose recovery test with the Fontainebleau quartz
 # measured in a lexsyg research with green LED stimulation
 data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)

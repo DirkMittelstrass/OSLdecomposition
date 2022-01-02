@@ -15,7 +15,6 @@
 #'   \item{`limit_duration`}
 #'   \item{`PMT_pulse_pair_resolution`}
 #'   \item{`background_sequence`}
-#'   \item{`check_signal_level` (*inactive*)}
 #'   \item{`subtract_offset`}
 #' }
 #'
@@ -32,14 +31,29 @@
 #'
 #' **Details to** `PMT_pulse_pair_resolution`:
 #'
-#' The algorithmus corrects non-linearity of signal values due to insuffiecent pulse-pair resolution
-#' of the photo-multiplier tube (PMT). This non-linearity can lead to significant losses of counts
-#' However, the algorithm does not account for PMT saturation and PMT aging.
-#' The corrected signal values are calculated by:
+#' The algorithm corrects non-linearity of signal values due to insufficient pulse-pair resolution
+#' of the photo-multiplier tube (PMT). Equation (6-2) of the *Hamamatsu Photomultiplier Handbook* is used:
 #'
-#'             counts <- signal[i] / channel_width
-#'  counts <- counts / (1 - counts * resolution)
+#' \deqn{I_corrected = I_measured / (1 - I_measured * resolution)}
 #'
+#' The algorithm does not account for PMT saturation and PMT aging effects.
+#' As default pulse-pair resolution 18 *ns* is pre-defined, the *Hamamatsu* H7360 series pulse-pair resolution according to the data sheet.
+#' The H7360-02 is the default PMT in *Freiberg Instruments lexsyg* OSL/TL readers.
+#' *DTU Physics Risoe* TL/OSL reader deploy *ET Enterprise* 9235B series PMTs as default.
+#' For these PMTs, the pulse-pair resolutions is not given in the data sheets and relies on the operation voltage.
+#' However, due to the pulse properties given in the data sheets, it is unlikely
+#' that those PMTs have a better pulse-pair resolution than 18 *ns*.
+#'
+#' **Impact of a pulse-pair resolution correction of 18 ns**
+#'
+#' | Measured signal | Corrected signal | Signal underestimation
+#' |---|---|---|
+#' | 1000 cts/s | 1000 cts/s | 0.00 %
+#' | 10000 cts/s | 10002 cts/s | 0.02 %
+#' | 50000 cts/s | 50045 cts/s | 0.09 %
+#' | 100000 cts/s | 100180 cts/s | 0.18 %
+#' | 500000 cts/s | 504541 cts/s | 0.91 %
+#' | 1000000 cts/s | 1018330 cts/s | 1.83 %
 #'
 #'
 #' @param object [RLum.Analysis-class] or [list] of [RLum.Analysis-class] (**required**):
@@ -50,7 +64,7 @@
 #' `object[[]]@records[[]]@recordType`. Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`.
 #'
 #' @param background_sequence [numeric] vector (*optional*):
-#' Indicies of list items with CW-OSL measurements of empty aliquots.
+#' Indices of list items with CW-OSL measurements of empty aliquots.
 #' The records in these list items are used to calculate one average CW-OSL background curve
 #' with [sum_OSLcurves]. This background curve is subtracted from each
 #' CW-OSL record of the data set. The attributes `@recordType` of the background
@@ -68,27 +82,22 @@
 #' with other sets of measurement parameter will be enumerated `record_type`
 #' `"{record_type}2"`, `"{record_type}3"` and so on.
 #'
-#' @param check_signal_level [numeric] (*optional*): **(Has no effect yet)**
-#' Checks if the CW-OSL curves of each `object` list item have sufficient signal-to-noise
-#' ratios to enable component resolved data analysis. List items where this is
-#' not the case will be removed from the data set. This is useful to remove no-signal grains from
-#' single grain measurements.
-#'
 #' @param remove_light_off [logical] (*with default*):
 #' Checks if the records contain zero-signal intervals at beginning and/or end of the
 #' measurement and removes them. Useful to tailor single-grain measurements.
 #'
 #' @param limit_duration [numeric] (*with default*):
 #' Reduce measurement duration to input value in seconds (*s*).
-#' Long measurement durations can lead to over-fitting at the component identification
+#' Long measurement duration can lead to over-fitting at the component identification
 #' of Step 1 which may induce systematic errors, see Mittelstrass (2019). Thus, limiting
 #' the OSL record length ensures sufficient accuracy regarding the Fast and Medium component analysis.
-#' If however, slow decaying components are of interest, `limit_duration = NULL` is recommended.
+#' If however, slow decaying components are of interest, `limit_duration = NA` is recommended.
 #'
 #' @param PMT_pulse_pair_resolution [numeric] (*with default*):
-#' Timespan of the pulse-pair resolution of the PMT in nanoseconds (*ns*).
+#' Time span of the pulse-pair resolution of the PMT in nanoseconds (*ns*).
 #' If a value is given, the signal values will be corrected for time-resolution related
-#' non-linearity at hight counting rates, see *Details*.#'
+#' non-linearity at height counting rates, see *Details*.
+#' Set `PMT_pulse_pair_resolution = NA` if algorithm shall be omitted.
 #'
 #' @param verbose [logical] (*with default*):
 #' Enables console text output.
@@ -110,6 +119,9 @@
 #' @seealso [RLum.OSL_global_fitting], [RLum.OSL_decomposition], [sum_OSLcurves]
 #'
 #' @references
+#'
+#' Hamamatsu, 2007. Photomultiplier Tubes: Basics and Applications, Third Edition (Edition 3A).
+#' Hamamatsu Photonics K. K., Hamamatsu City.
 #'
 #' Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fischer, M., Fuchs, M., 2012.
 #' Introducing an R package for luminescence dating analysis. Ancient TL, 30 (1), 1-8.
@@ -153,7 +165,6 @@ RLum.OSL_correction <- function(
   background_sequence = NULL,
   subtract_offset = 0,
   check_consistency = TRUE,
-  check_signal_level = FALSE,
   remove_light_off = TRUE,
   limit_duration = 20,
   PMT_pulse_pair_resolution = 18,
@@ -191,7 +202,6 @@ RLum.OSL_correction <- function(
                                      check_consistency = check_consistency,
                                      remove_light_off = remove_light_off,
                                      background_sequence = background_sequence,
-                                     check_signal_level = check_signal_level,
                                      subtract_offset = subtract_offset))
 
   # Test if object is a list. If not, create a list
@@ -436,8 +446,8 @@ RLum.OSL_correction <- function(
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
   }
 
-  if (!is.na(PMT_pulse_pair_resolution) && (PMT_pulse_pair_resolution > 0)) {
-    correction_step <- correction_step + 1 ######################### PMT SATURATION ################################
+  if (is.numeric(PMT_pulse_pair_resolution) && (PMT_pulse_pair_resolution > 0)) {
+    correction_step <- correction_step + 1 ######################### PMT PULSE-PAIR RESOLUTION ################################
     if(verbose) cat("CORRECTION STEP", correction_step,"----- Correct for PMT pulse-pair resolution -----\n")
     time.start <- Sys.time()
     # See Hamamatsu PMT handbook chapter 6.3 section 2c for details
@@ -468,7 +478,7 @@ RLum.OSL_correction <- function(
           for (x in 1:length(signal)) {
             old_counts <- signal[x] / channel_width
 
-            if(counts > significance_level)
+            if(old_counts > significance_level)
             {
               new_counts <- old_counts / (1 - old_counts * resolution)
 
@@ -481,9 +491,9 @@ RLum.OSL_correction <- function(
               }
 
               # the functions used in this package could handle float number.
-              # Thefore, rounding would no be necessary. But to ensure full compatibility with
-              # other possibliy used packages, we transform the results back to integers
-              signal[x] <- round(new_counts)
+              # Therefore, rounding would no be necessary. But to ensure full compatibility with
+              # other possibly used packages, we transform the results back to integers
+              signal[x] <- round(new_counts * channel_width)
               correction_was_necessary <- TRUE
             }
           }
@@ -499,7 +509,7 @@ RLum.OSL_correction <- function(
         cat(records_corrected, " of ", records_tested, " ", record_type,
             " records contained signal values which needed to be corrected.\n")
         cat("Signal statistics or corrected first channels:\n")
-        cat("Median increase = ", median(first_ch_median), " % / Maximum increase = ", first_ch_max, " %\n")
+        cat("Median increase = ", stats::median(first_ch_median), " % / Maximum increase = ", first_ch_max, " %\n")
       }
     }
     else
@@ -565,18 +575,23 @@ RLum.OSL_correction <- function(
       warning("Invalid 'background' argument")}}
 
 
-  if (check_signal_level) {
-    correction_step <- correction_step + 1 ######################### NOISE CHECK ################################
+  if (FALSE) {
+    correction_step <- correction_step + 1 ######################### NOISE LEVEL CHECK ################################
     if(verbose) cat("CORRECTION STEP", correction_step,"----- Check measurements for sufficient signal levels -----\n")
     time.start <- Sys.time()
 
-    # Algorithm:
+    # Roxygen2 Text:
+    # @param check_signal_level [numeric] (*optional*):
+    # Checks if the CW-OSL curves of each `object` list item have sufficient signal-to-noise
+    # ratios to enable component resolved data analysis. List items where this is
+    # not the case will be removed from the data set. This is useful to remove no-signal grains from
+    # single grain measurements.
+
+    # Algorithm idea:
     # If >= 50 % of all records in an list item are just noise, rename them to "OSLnoise"
     # When is something noise? When the Sign-Test says it is with p > .05 probability
     #
     # Alternatively: Use the function from the Luminescence package: verify_SingleGrainData()
-
-    if(verbose) cat("THIS FUNCTION IS STILL MISSING")
 
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
   }

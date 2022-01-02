@@ -26,75 +26,77 @@ Other columns will be plotted as component curves, in case no input object \code
 If no input is given, a CW-OSL curve will be simulated with the parameters of \code{components}}
 
 \item{components}{\link{data.frame} (\emph{optional}):
-Table with OSL component parameters. Overrides component information eventually provided by
-\code{curve} input object. Need to have at least the columns: \verb{$names}, \verb{$lambda} and \verb{$n}}
+Table with OSL component parameters. The parameters are used to approximate seperate signal decay curves
+for each component. Need to have at least the columns: \verb{$names}, \verb{$lambda} and \verb{$n}.
+If an insufficient or no input object is provided, the `curve`` object will be searched for
+component-related signal values.}
 
 \item{display}{\link{character} (\emph{with default}):
-Arrangement of graphs, see section \strong{Details}}
+Sets the arrangement of graphs, see section \strong{Details}.}
 
 \item{show.legend}{\link{logical} (\emph{with default}):
-Draws a legend in the top right corner of the first graph}
+Draws a legend in the top right corner of the first graph.}
 
 \item{show.intervals}{\link{logical} (\emph{with default}):
-Draws vertical lines into the residual plot showing the signal bin intervals for Step 2 CW-OSL
-decomposition (if available)}
+Draws vertical lines into the residual plot showing the signal bin intervals (if available) for the CW-OSL
+decomposition with \link{decompose_OSLcurve}.}
 
 \item{show.crosssec}{\link{logical} (\emph{with default}):
-Displays photoionisation cross section values in the component table (if available)}
+Displays photoionisation cross section values in the component table (if available).}
 
 \item{show.initial}{\link{logical} (\emph{with default}):
-Displays signal share at the first channel in the component table (if available)}
+Displays signal share at the first channel in the component table (if available).}
 
 \item{theme.set}{\link{ggplot2} object (\emph{with default}):
-Graphical theme of the output plot. Input is forwarded to \link[ggplot2:theme_get]{ggplot2::theme_set}.
+Graphical theme of the output plot. This argument is forwarded to \link[ggplot2:theme_get]{ggplot2::theme_set}.
 Recommended themes are \code{ggplot2::theme_minimal()}, \code{ggplot2::theme_classic()} and \code{ggplot2::theme_bw()},
 see \link[ggplot2:ggtheme]{ggplot2::theme_bw} or \href{https://ggplot2.tidyverse.org/reference/ggtheme.html}{here} for
-a full list}
+a full list.}
 
 \item{title}{\link{character} (\emph{with default}):
-Plot title. Overrides automatic titles but affects just first (upper left)
+Plot title. Overwrites automatic titles but affects just the first (upper left)
 graph in case of multi-graph display setting.
-Set \code{title = NULL} for auto-title and \code{title = ""} for no title}
+Set \code{title = NULL} for auto-title and \code{title = ""} for no title.}
 
 \item{hide.plot}{\link{logical} (\emph{with default}):
-If true, plot is not drawn but can still be saved as files or catched by \code{A <- plot_OSLcurve()}.
-If catched, the plot can be drawn manually for example by using \link[gridExtra:arrangeGrob]{gridExtra::grid.arrange}}
+If true, plot is not drawn but can still be saved as file or caught by \code{A <- plot_OSLcurve(...)}.
+If caught, the plot can be drawn manually for example by using \link[gridExtra:arrangeGrob]{gridExtra::grid.arrange}.}
 
 \item{filename}{\link{character} (\emph{optional}):
-File name or path to save the plot as image. If just a name is given, the image is
-saved in the working directory. The image type is chosen by the file ending.
-Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
-and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}}
+File name or path to save the plot as image. If just a file name is given, the image is
+saved in the working directory. The image type is chosen by the file ending. Both, vector images
+as well as pixel images are possible. Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
+and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}.}
 }
 \description{
-Function for plotting CW-OSL curves and its signal components. It can handle data returned
-by \link{fit_OSLcurve} or \link{decompose_OSLcurve}. Besides CW-OSL curves, pseudoLM-OSL and
-residual are plotted.
+This function is used for plotting CW-OSL curves and its signal components. It can handle data returned
+by \link{fit_OSLcurve} or \link{decompose_OSLcurve}. Besides CW-OSL curves, pseudoLM-OSL curves and
+residual plots can also be plotted.
 }
 \details{
 \strong{Change graph types with parameter:} \code{display}
 
 \tabular{ll}{
-\code{"detailed"} \tab (default) Output plot consists of: Linear CW-OSL g, pseudoLM-OSL plot, Residual curve and component table \cr
+\code{"detailed"} \tab (default) Output plot consists of: Linear CW-OSL plot, pseudoLM-OSL plot, residual curve and component table \cr
 \code{"lin"} \tab Linear CW-OSL plot only \cr
 \code{"compare_lin"} \tab Linear CW-OSL plot with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
 \code{"log"} \tab CW-OSL plot with logarithmic y-Axis and linear x-Axis \cr
 \code{"compare_log"} \tab CW-OSL plot with logarithmic y-Axis with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
 \code{"loglog"} \tab Double-logarithic CW-OSL plot \cr
 \code{"LM"} \tab PseudoLM-OSL plot \cr
-\code{"res"} \tab Plot of residual curve: Measurement minus Fitting model \cr
-\code{"tab"} \tab Table of component parameters as image
+\code{"res"} \tab Plot of residual curve: Measurement minus fitting model \cr
+\code{"tab"} \tab Table of component parameters as image \cr
+\code{"raw"} \tab Raw x-y plot without further data
 }
 
 PseudoLM-OSL curves are created using the transformation described by Bulur (2000).
-The stimulation ramp duration is chosen double the CW-OSL duration.
-See also Bos and Wallinga (2012) for a detailed explanation and discussion
+The stimulation ramp duration is twice the CW-OSL duration.
+See Bos and Wallinga (2012) for a detailed explanation and discussion.
 }
 \section{Last update}{
 
 
-2020-11-19, DM: RLum.Data.Curves can now be displayed without 'components'
-if RLum.OSL_decomposition was already performed at data set
+2021-03-29, DM: Hidden output objects are now \link{ggplot2} objects if the plot is not a composite diagram
 }
 
 \examples{
@@ -112,10 +114,10 @@ plot_OSLcurve(curve, components)
 
 }
 \references{
-Bos, A. J. J. and Wallinga, J.: How to visualize quartz OSL signal components,
+Bos, A. J. J. and Wallinga, J., 2012. How to visualize quartz OSL signal components,
 Radiation Measurements, 47(9)
 
-Bulur, E.: A simple transformation for converting CW-OSL curves to LM-OSL curves,
+Bulur, E., 2000. A simple transformation for converting CW-OSL curves to LM-OSL curves,
 Radiation Measurements, 32(2)
 }
 \seealso{

@@ -18,41 +18,43 @@ simulate_OSLcomponents(
 }
 \arguments{
 \item{components}{\link{data.frame} (\strong{required}):
-Table with component parameters. Need to have columns \verb{$names}, \verb{$lambda} and \verb{$n}, see section \strong{Examples}}
+Table with component parameters. The table requires columns \verb{$names}, \verb{$lambda} and \verb{$n}, see section \strong{Examples}.}
 
 \item{curve}{\link{data.frame} (\emph{optional}):
-CW-OSL curve serving as template for the time axis. Need to have a column \verb{$time}.
+CW-OSL curve serving as template for the time axis. The input table requires a column \verb{$time}.
 If no input object is given or the object contains no column \verb{$signal},
-\code{simulate.curve} will be set \code{TRUE}}
+\code{simulate.curve} will be set \code{TRUE}.}
 
-\item{channel.width}{\link{numeric} (\emph{with default}):
-channel width in seconds if no template \code{curve} is given}
+\item{channel.width}{\link{numeric} (\emph{optional}):
+Channel width in seconds. Necessary for curve simulation if \code{curve} is not given.}
 
-\item{channel.number}{\link{numeric} (\emph{with default}):
-number of channels resp. data points if no template \code{curve} is given}
+\item{channel.number}{\link{numeric} (\emph{optional}):
+Number of channels resp. data points. Necessary for curve simulation if \code{curve} is not given.}
 
 \item{simulate.curve}{\link{logical} (\emph{with default}):
-if \code{FALSE}, the output curve will take over the column \verb{$signal} from the input \code{curve}.
-If \code{TRUE}, a new column \verb{$signal} will be created which is the sum of all component curves}
+Decides if the bulk CW-OSL signal shall be calculated from the component parameter.
+If \code{FALSE}, the output curve will take over the column \verb{$signal} from the input \code{curve}.
+If \code{TRUE}, a new column \verb{$signal} will be created which is the sum of all component curves.}
 
 \item{add.poisson.noise}{\link{logical} (\emph{with default}):
-adds poisson distributed shot noise to \verb{$signal} if \code{simulate.curve = TRUE}}
+Adds poisson distributed shot noise to \verb{$signal} if \code{simulate.curve = TRUE}.}
 
 \item{add.gaussian.noise}{\link{numeric} (\emph{with default}):
-standard deviation of the detector noise in \strong{cts/s}, added to \verb{$signal} if \code{simulate.curve = TRUE}}
+Standard deviation of the detector noise in \emph{cts/s}, added to \verb{$signal} if \code{simulate.curve = TRUE}.}
 
 \item{add.background}{\link{numeric} (\emph{with default}):
-signal background level in \strong{cts/s}, added to \verb{$signal} if \code{simulate.curve = TRUE}}
+signal background level in \emph{cts/s}, added to \verb{$signal} if \code{simulate.curve = TRUE}}
 
 \item{round.values}{\link{logical} (\emph{with default}):
-rounds \verb{$signal} values to integers if \code{simulate.curve = TRUE}}
+Rounds \verb{$signal} values to integers if \code{simulate.curve = TRUE}.}
 }
 \value{
-A \link{data.frame}  of a CW-OSL curve with the columns: \verb{$time}, \verb{$signal}, \verb{$residual}, \verb{$sum}
-and a signal decay curve for each single component named after the input object \code{components$names}
+A \link{data.frame} of a CW-OSL curve with the columns: \verb{$time}, \verb{$signal}, \verb{$residual}, \verb{$sum}
+and a signal decay curve for each single component named after the entries in the column \code{components$names}
+of the input object.
 }
 \description{
-The function builds CW-OSL component decay curves or a whole CW-OSL curve from OSL component parameters.
+This function builds a bulk CW-OSL curve and CW-OSL component decay curves from OSL component parameters.
 Therewith it supports \link{fit_OSLcurve}, \link{decompose_OSLcurve} and \link{plot_OSLcurve} by providing model and residual curves.
 }
 \section{Last updates}{

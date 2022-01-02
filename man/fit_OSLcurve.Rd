@@ -22,7 +22,7 @@ as measurement time (x-axis). Time intervals must be constant. If no column \ver
 as signal values (y-axis). Further columns will be ignored}
 
 \item{K.max}{\link{numeric} (\emph{with default}):
-Maximum number of components \emph{K}. The computing time increases exponentially with the component number,
+Maximum number of components \emph{K}. The computing time increases exponentially with the component number.
 \emph{K} < 7 is recommended}
 
 \item{F.threshold}{\link{numeric} (\emph{with default}):
@@ -34,20 +34,20 @@ Intensity of optical stimulation in \emph{mW / cm²}. Used to calculate photoion
 \item{stimulation.wavelength}{\link{numeric} (\emph{with default}):
 Wavelength of optical stimulation in \emph{nm}. Used to calculate photoionisation cross sections.
 If a wavelength between 465 and 480 nm is chosen, the cross sections are set into
-relation with literature values to name the signal components}
+relation with literature values to name the signal components automatically.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
-Enables console text output}
+Enables console text output.}
 
 \item{output.complex}{\link{logical} (\emph{with default}):
 If \code{TRUE}, the function returns a list of objects, see section \strong{Value} for further information.
 If \code{FALSE}, the function returns a \link{data.frame} with the CW-OSL model parameters of the fitting chosen by the F-test.
-This ist NOT recommended when fitting a global average curve created by \link{sum_OSLcurves} as over-fitting is likely in such cases.}
+Setting the parameter to \code{FALSE} is not recommended when fitting a global average curve created by \link{sum_OSLcurves} as over-fitting is likely in such cases.}
 
 \item{parallel.computing}{\link{logical} (\emph{with default}):
 Enables the use of multiple CPU cores. This increases the execution speed significantly
 but may need administrator rights and/or a firewall exception.
-See \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further information}
+See \link[DEoptim:DEoptim.control]{DEoptim::DEoptim.control} for further information.}
 }
 \value{
 If \code{output.complex = FALSE}, a \link{data.frame} is returned. It contains the signal decay rates
@@ -72,11 +72,11 @@ If \code{output.complex = TRUE}, a \link{list} of objects is returned:
 }
 }
 \description{
-Fitting function for multi-exponential decaying CW-OSL measurements,
+Fitting function for multi-exponentially decaying CW-OSL measurements,
 based on the algorithm described by Bluszcz & Adamiec (2006).
 }
 \details{
-The function assumes multiple exponentially decaying signal components with first order kinetics:
+The function assumes multiple exponentially decaying signal components with first-order kinetics:
 
 \deqn{I(t) = n_1 \lambda_1 exp(-\lambda_1 t) + n_2 \lambda_2 exp(-\lambda_2 t) + ... + n_K \lambda_K exp(-\lambda_K t)}
 
@@ -85,7 +85,7 @@ with \eqn{I(t)} the CW-OSL signal, \eqn{n} the signal component intensity,
 For actual fitting, the integrated version of this formula is used, see Mittelstrass et al. (2021) for details.
 
 The fitting algorithm is an implementation of the \emph{hybrid evolutionary-linear algorithm} (HELA)
-by Bluszcz & Adamiec (2006). See there or Mittelstrass et al. (2021) for details.
+by Bluszcz & Adamiec (2006). See there or Mittelstrass et al. (in preperation) for details.
 The differential evolution part of HELA is performed by \link[DEoptim:DEoptim]{DEoptim::DEoptim}.
 The linear regression part of HELA is performed by \link{decompose_OSLcurve}.
 The parameter refinement by Levenberg-Marquardt fitting is performed by \link[minpack.lm:nlsLM]{minpack.lm::nlsLM}.
@@ -107,21 +107,21 @@ Thus, the \emph{K} - 1 model will be recommended as fitting solution.
 \strong{Photoionisation cross sections}
 
 While the function is suited for the analysis of a wide variety of multi-exponential decay problems,
-it is target to CW-OSL measurements of quartz under SAR protocol conditions (470 nm stimulation at 125 °C).
-To simplify the assignemt of the found components to OSL components found in published literature,
+it is targeted to CW-OSL measurements of quartz under SAR protocol conditions (470 nm stimulation at 125 °C).
+To compare the calculated OSL components with OSL components reported in published literature,
 photoionisation cross sections are calculated using the \code{stimulation.wavelength} \eqn{\lambda_{stim}}  and
 \code{stimulation.intensity} \eqn{\Phi_{stim}}:
 
 \deqn{\sigma_k=\lambda_k {hc / \Phi_{stim}\lambda_{stim}}}
 
-with \eqn{\sigma_k} the photoionisation cross section of component \emph{k} in cm^2,
+Here \eqn{\sigma_k} is the photoionisation cross section of component \emph{k} in cm^2,
 \eqn{\lambda_k} the CW-OSL decay constant in s^-1, \emph{h} the Planck constant and \emph{c} the speed of light.
 
-If a \code{stimulation.intensity} larger or equal than 460 nm and lower or equal than 485 nm is defined,
-the components are names automatically. They are named according to value ranges approximated from the
+If a \code{stimulation.intensity} between 460 nm and 485 nm is defined,
+the components are named automatically in accordance to the
 cross-sections published by Durcan and Duller (2011), Jain et al. (2003) and Singarayer and Bailey (2003).
 For the Ultrafast and the Slow4 component, no consistent literature values could be found, so their range
-is guessed freely:
+is tentatively assigned:
 
 \tabular{lll}{
 \strong{Component} \tab \strong{Lower limit (cm^2)} \tab \strong{Upper limit (cm^2)}\cr

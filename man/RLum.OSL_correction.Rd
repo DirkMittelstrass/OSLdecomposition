@@ -10,79 +10,74 @@ RLum.OSL_correction(
   background_sequence = NULL,
   subtract_offset = 0,
   check_consistency = TRUE,
-  check_signal_level = FALSE,
   remove_light_off = TRUE,
   limit_duration = 20,
-  correct_PMTsaturation = NA,
+  PMT_pulse_pair_resolution = 18,
   verbose = TRUE
 )
 }
 \arguments{
-\item{object}{\linkS4class{RLum.Analysis} or \href{RLum.Analysis}{list} (\strong{required}):
-Data set of one or multiple CW-OSL measured aliquots}
+\item{object}{\linkS4class{RLum.Analysis} or \link{list} of \linkS4class{RLum.Analysis} (\strong{required}):
+Data set of one or multiple CW-OSL measured aliquots.}
 
 \item{record_type}{\link{character} (\emph{with default}):
 Type of records selected from the input \code{object}, see
-\code{object[[]]@records[[]]@recordType}. Common are: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}}
+\code{object[[]]@records[[]]@recordType}. Common are: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}.}
 
 \item{background_sequence}{\link{numeric} vector (\emph{optional}):
-Indicies of list items with CW-OSL measurements of empty aliquots.
+Indices of list items with CW-OSL measurements of empty aliquots.
 The records in these list items are used to calculate one average CW-OSL background curve
 with \link{sum_OSLcurves}. This background curve is subtracted from each
 CW-OSL record of the data set. The attributes \verb{@recordType} of the background
-measurements will be renamed to \code{"{record_type}background"}}
+measurements will be renamed to \code{"{record_type}background"}.}
 
 \item{subtract_offset}{\link{numeric} (\emph{optional}):
-Signal offset value in counts per second (cts/s). Value is handled as background
-level and will be subtracted from each CW-OSL record}
+Signal offset value in counts per second (\emph{cts/s}). Value is handled as background
+level and will be subtracted from each CW-OSL record.}
 
 \item{check_consistency}{\link{logical} (\emph{with default}):
-CW-OSL component identification and separation needs uniform measurement parameters
+The CW-OSL component identification and separation procedure requires uniform detection parameters
 throughout the whole data set. If \code{TRUE}, all records are compared for their
 channel width and their number of channels. Those records with the most frequent
 set of channel parameters keep their \verb{@recordType} attribute, while records
 with other sets of measurement parameter will be enumerated \code{record_type}
-\code{"{record_type}2"}, \code{"{record_type}3"} and so on}
-
-\item{check_signal_level}{\link{numeric} (\emph{optional}): \strong{(Has no effect yet)}
-Checks if the CW-OSL curvea of each \code{object} list item has sufficient signal-to-noise
-ratios to enable component resolved data analysis. List items where this is
-not the case, will be removed from the data set. Useful to remove no-signal grains from
-single grain measurements}
+\code{"{record_type}2"}, \code{"{record_type}3"} and so on.}
 
 \item{remove_light_off}{\link{logical} (\emph{with default}):
 Checks if the records contain zero-signal intervals at beginning and/or end of the
-measurement and removes them. Useful to tailor single grain measurements}
+measurement and removes them. Useful to tailor single-grain measurements.}
 
 \item{limit_duration}{\link{numeric} (\emph{with default}):
-Reduce measurement duration to input value (in s).
-Long measurement durations can lead to over-fitting at the component identification
+Reduce measurement duration to input value in seconds (\emph{s}).
+Long measurement duration can lead to over-fitting at the component identification
 of Step 1 which may induce systematic errors, see Mittelstrass (2019). Thus, limiting
 the OSL record length ensures sufficient accuracy regarding the Fast and Medium component analysis.
-If however, slow decaying components are of interest, set \code{limit_duration = NULL}}
+If however, slow decaying components are of interest, \code{limit_duration = NA} is recommended.}
 
-\item{correct_PMTsaturation}{\link{numeric} (\emph{optional}): \strong{(Has no effect yet)}
-Bright CW-OSL signals may lead to detection non-linearity. This
-tool corrects this in accordance to (\emph{add reference here})}
+\item{PMT_pulse_pair_resolution}{\link{numeric} (\emph{with default}):
+Time span of the pulse-pair resolution of the PMT in nanoseconds (\emph{ns}).
+If a value is given, the signal values will be corrected for time-resolution related
+non-linearity at height counting rates, see \emph{Details}.
+Set \code{PMT_pulse_pair_resolution = NA} if algorithm shall be omitted.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
-Enables console text output}
+Enables console text output.}
 }
 \value{
 The input \code{object}, a \link{list} of \linkS4class{RLum.Analysis} objects, is given back with eventual changes
-in elements \code{object[[]]@records[[]]@recordType} and \code{object[[]]@records[[]]@data}.
+in the elements \code{object[[]]@records[[]]@recordType} and \code{object[[]]@records[[]]@data}.
 
 The returned data set contains a new list element \code{object[["CORRECTION"]]} which provides
-a \link{list} of the input parameters and additional data, depending on the applied tools.
+a \link{list} of the input parameters and additional data depending on the applied tools.
 }
 \description{
 CW-OSL measurements are often affected by background signals or might be measured under
-inconsistent detection settings or have other issues. This function provides tools
+inconsistent detection settings. This function provides tools
 to test and solve some common problems.
 }
 \details{
-This function processes just data sets created within the \link{Luminescence-package} (Kreutzer et al. 2012).
-Data sets must be formatted as \linkS4class{RLum.Analysis} objects. Output objects will also be
+This function processes data sets created within the \link{Luminescence-package} (Kreutzer et al. 2012).
+Those data sets must be formatted as \linkS4class{RLum.Analysis} objects. Output objects will also be
 \linkS4class{RLum.Analysis} objects and are meant for further analysis with \link{RLum.OSL_global_fitting}.
 
 The data preparation tools are executed in the following order:
@@ -90,13 +85,12 @@ The data preparation tools are executed in the following order:
 \item{\code{check_consistency}}
 \item{\code{remove_light_off}}
 \item{\code{limit_duration}}
-\item{\code{correct_PMTsaturation} (\emph{inactive})}
+\item{\code{PMT_pulse_pair_resolution}}
 \item{\code{background_sequence}}
-\item{\code{check_signal_level} (\emph{inactive})}
 \item{\code{subtract_offset}}
 }
 
-\strong{Currently, not all functions are available. Also there is no} \code{html} \strong{report available yet.}
+\strong{Currently, not all functions are available.}
 
 \strong{Details to} \code{remove_light_off}:
 The algorithm does the following: (1) Create global reference curve with \link{sum_OSLcurves}
@@ -106,17 +100,43 @@ before the maximum . Do this for all curves of the selected 'record_type'.
 negative curvature (minimum of second differential) in the second half of the reference curve.
 If the next data point has at least 50\% less signal, remove all data points after the infliction
 point. Do this for all curves of the selected 'record_type'.
+
+\strong{Details to} \code{PMT_pulse_pair_resolution}:
+
+The algorithm corrects non-linearity of signal values due to insufficient pulse-pair resolution
+of the photo-multiplier tube (PMT). Equation (6-2) of the \emph{Hamamatsu Photomultiplier Handbook} is used:
+
+\deqn{I_corrected = I_measured / (1 - I_measured * resolution)}
+
+The algorithm does not account for PMT saturation and PMT aging effects.
+As default pulse-pair resolution 18 \emph{ns} is pre-defined, the \emph{Hamamatsu} H7360 series pulse-pair resolution according to the data sheet.
+The H7360-02 is the default PMT in \emph{Freiberg Instruments lexsyg} OSL/TL readers.
+\emph{DTU Physics Risoe} TL/OSL reader deploy \emph{ET Enterprise} 9235B series PMTs as default.
+For these PMTs, the pulse-pair resolutions is not given in the data sheets and relies on the operation voltage.
+However, due to the pulse properties given in the data sheets, it is unlikely
+that those PMTs have a better pulse-pair resolution than 18 \emph{ns}.
+
+\strong{Impact of a pulse-pair resolution correction of 18 ns}\tabular{lll}{
+   Measured signal \tab Corrected signal \tab Signal underestimation \cr
+   1000 cts/s \tab 1000 cts/s \tab 0.00 \% \cr
+   10000 cts/s \tab 10002 cts/s \tab 0.02 \% \cr
+   50000 cts/s \tab 50045 cts/s \tab 0.09 \% \cr
+   100000 cts/s \tab 100180 cts/s \tab 0.18 \% \cr
+   500000 cts/s \tab 504541 cts/s \tab 0.91 \% \cr
+   1000000 cts/s \tab 1018330 cts/s \tab 1.83 \% \cr
+}
 }
 \section{Last updates}{
 
 
+2021-11-23, DM: Enabled \code{PMT_pulse_pair_resolution}.
 2021-02-15, DM: Enabled \code{remove_light_off} and renamed \code{cut_records} into \code{limit_duration}. Removed \code{report} parameter
 }
 
 \examples{
 
-# 'FB_10Gy' is a dose recovery test with the La Fontainebleau quartz
-# measured in a lexsyg research with green LED stimulation
+# 'FB_10Gy' is a dose recovery test with the Fontainebleau quartz
+# measured with a lexsyg research with green LED stimulation
 data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 
@@ -134,6 +154,9 @@ sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSLbackgrou
 
 }
 \references{
+Hamamatsu, 2007. Photomultiplier Tubes: Basics and Applications, Third Edition (Edition 3A).
+Hamamatsu Photonics K. K., Hamamatsu City.
+
 Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fischer, M., Fuchs, M., 2012.
 Introducing an R package for luminescence dating analysis. Ancient TL, 30 (1), 1-8.
 

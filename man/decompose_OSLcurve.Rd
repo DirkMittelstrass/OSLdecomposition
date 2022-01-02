@@ -16,12 +16,12 @@ decompose_OSLcurve(
 \arguments{
 \item{curve}{\link{data.frame} or \link{matrix} or \linkS4class{RLum.Data.Curve} (\strong{required}):
 CW-OSL curve x-Axis: \verb{$time} or first column as measurement time (must have constant time intervals);
-y-Axis: \verb{$signal} or second column as luminescence signal. Further columns will be ignored}
+y-Axis: \verb{$signal} or second column as luminescence signal. Further columns will be ignored.}
 
 \item{components}{\link{data.frame} or \link{numeric} vector (\strong{required}):
 Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by \link{fit_OSLcurve}.
 In case of a vector: It is recommended to use less than 7 parameters. The parameters will be sorted in decreasing order.
-In case of a data.frame. One column must be named \verb{$lambda}.
+In case of a data.frame, one column must be named \verb{$lambda}.
 It is recommended to provide also integration interval parameters (columns \verb{$t.start}, \verb{$t.end}, \verb{$ch.start}, \verb{$ch.end}),
 which can be found by applying \link{optimise_OSLintervals} to the global mean curve, calculated by \link{sum_OSLcurves}.
 If one or more column is missing, a simple interval definition algorithm is run automatically, see section \strong{Details}.}
@@ -47,12 +47,12 @@ The input table \strong{components} \link{data.frame} will be returned with adde
 columns: \emph{$n, $n.error, $n.residual, $I, $I.error}
 }
 \description{
-Function for determing the signal component amplitudes of a multi-exponential decay curve if
+Function for determining the signal component amplitudes of a multi-exponential decay curve if
 the signal component decay parameters are already given. Thus, this function decomposes CW-OSL
-curve with known components of unknown intensity.
+curves with known components of unknown intensity.
 }
 \details{
-The function assumes multiple exponentially decaying signal components with first order kinetics:
+The function assumes multiple exponentially decaying signal components with first-order kinetics:
 
 \deqn{I(t) = n_1 \lambda_1 exp(-\lambda_1 t) + n_2 \lambda_2 exp(-\lambda_2 t) + ... + n_K \lambda_K exp(-\lambda_K t)}
 
@@ -70,13 +70,13 @@ and \code{"nls"} for \strong{n}onlinear \strong{l}east \strong{s}quares estimate
 
 The function calculates the CW-OSL component intensities by building an equation system
 which is then solved by a determinant-based approach (Cramers rule). This purely analytical
-approach, gives the algorithm a solution in all possible cases, even if the measurement consists just of noise
+approach gives the algorithm a solution in all possible cases, even if the measurement consists just of noise
 or the wrong model is used. There are also no 'false minima' events.
 The statistical error is calculated by applying the \emph{propagation of uncertainty} method on Cramers rule.
 
 The precision of this algorithm as well as the propagation of eventual systematic errors of the decay rate values,
 depend on the integration intervals, given by the columns \verb{$t.start}, \verb{$t.end}, \verb{$ch.start} and \verb{$ch.end}
-of the \link{data.frame} used as input for the argument \verb{components =}.
+of the \link{data.frame} used as input for the argument \code{components}.
 In principle, these can be chosen freely. Reasonable integration intervals are defined by \link{optimise_OSLintervals}.
 If not defined, the logarithmic mean values between life times (reciprocal decay rate) of subsequent components are
 used as interval borders.
@@ -84,18 +84,18 @@ used as interval borders.
 \code{algorithm = "nls"}
 
 As alternative algorithm, Levenberg-Marquardt nonlinear regression is available, see \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} for details.
-The results are equal to that of the \code{"det"} algorithm in accuracy and precision. But there is the slight chance (< 1 \%)
-of fitting failure when using the \code{"nls"} algorithm. Also, the statistical errors are between 20 \% and 80 \% underestimated
-in the most cases. As advantage, the \code{"nls"} algorithm is less sensitive against systematic errors
+The results are identical to that of the \code{"det"} algorithm in accuracy and precision. But there is the slight chance (< 1 \%)
+of fitting failure when using the \code{"nls"} algorithm. Also, the statistical errors are underestimated by 20-80 \%
+in most cases. As advantage, the \code{"nls"} algorithm is less sensitive against systematic errors
 caused by uncorrected signal background.
 
 \code{algorithm = "det+nls"}
 
 Both algorithms can be combined. Then, \code{"det"} provides the startings values and the error estimations for
-\code{"nls"} and returns replacement results, in case \code{"nls"} fails. \code{"nls"} compensates for eventual systematic
-errors in the fast and medium components intensity values due to uncorrected signal background. However,
-background signal will still affect slow components. The slowest component will be overestimated while
-the second slowest component will be underestimated. Are these components of particular interest,
+\code{"nls"} and returns replacement results, in case \code{"nls"} fails. \code{"nls"} compensates for potential systematic
+errors in the fast and medium components intensity values due to uncorrected signal background. However, the
+background signal will still affect slow component results. The slowest component will be overestimated while
+the second slowest component will be underestimated. If these components are of particular interest,
 it is recommended to set \code{background.fitting = TRUE}
 
 All three methods were tested at 5x10^6 simulated CW-OSL curves by Mittelstrass (2019) for their performance
@@ -114,37 +114,34 @@ significant (> 2 \% of initial signal) but was not corrected, \code{algorithm = 
 Setting \code{background.fitting = TRUE} is usually not recommended, only in case slow components shall
 be investigated in measurements with uncorrected background.
 
-\emph{NOTE: All statements refer to the version prior 2020-08-27 where \link[stats:nls]{stats::nls} was used instead of
-\link[minpack.lm:nlsLM]{minpack.lm::nlsLM}. The behavior of the * \code{"nls"} * algorithm should remain about the same, but
-has to be tested yet}
-
 \strong{Error estimation}
 
 In case of \code{algorithm = "det"} or \code{"det+nls"} the Propagation of Uncertainty method is used to
 transform signal bin error values into component intensity error values. The signal bin error
 calculation depends on the argument \code{error.estimation}, see below.
-If \code{algorithm = "nls"} is used, the error values given back by \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} are returned.
+If \code{algorithm = "nls"} is used, the error values provided by \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} are returned.
 
 \code{error.estimation = "empiric"} (default)
 
 The standard deviation of each signal bin (signal bin = signal value of an integrated time interval) is
 calculated from the \emph{corrected sample variance} between the CW-OSL model and the actual CW-OSL curve
-for that interval. Thus, statistical errors are monitored accurately without prior knowledge necessary.
-However, eventual systematic errors are monitored insufficiently. Also, at least two (better more) data points
-per signal bin are needed to estimate its standard deviation. If a signal bin consists just of on data point,
+for that interval. Thus, statistical errors are monitored accurately without any prior knowledge required.
+However, potential systematic errors are monitored insufficiently. Also, at least two (better more) data points
+per signal bin are needed to estimate its standard deviation. If a signal bin consists just of one data point,
 its square root value is taken as standard deviation, in accordance to the Poisson distribution.#'
 
 \code{error.estimation = "poisson"} or \link{numeric} value
 
-Alternatively the standard error can be calculated by approximating a \strong{Poisson} distributed signal error, known as \emph{Shot noise}.
-This is suitable if the lack of data points on the x-axis circumvent an empiric error estimation, like with spatial or spectral resolved CCD measurements.
-Also the parameter can be set to a \link{numeric} value, which  represents the detector noise in \emph{cts / s} and is assumed to be normal distributed.
+Alternatively the standard error can be calculated by approximating a \strong{Poisson} distributed signal error,
+known as \emph{Shot noise}. This is suitable if the lack of data points on the x-axis circumvents an empiric error
+estimation, like with spatially or spectrally resolved CCD measurements. Also the parameter can be set to a \link{numeric}
+value, which  represents the detector noise in \emph{cts / s} and is assumed to be normal distributed.
 The detector noise will be added on top of the Poisson distributed shot noise.
 
 \emph{Systematic errors}
 
-The two error estimation approaches can be used to detect (but not quantify) eventual systematic errors.
-\code{"poisson"} error values are not affected by systematic errors, while \code{"empiric"} errors are.
+The ratio of the error values of both error estimation methods can be used to detect (but not quantify) systematic
+errors. \code{"poisson"} error values are not affected by systematic errors, while \code{"empiric"} errors are.
 If the detector noise is known and taken into account, the relation between both values for a given
 signal bin should be about \eqn{empiric / poisson = 1}. In case of systematic errors, this ratio increases.
 }
