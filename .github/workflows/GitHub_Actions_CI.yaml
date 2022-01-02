@@ -22,15 +22,10 @@ jobs:
           - {os: windows-latest,   r: 'oldrel'}
           - {os: macOS-latest,   r: 'release'}
           - {os: macOS-latest,   r: 'oldrel'}
-          - {os: ubuntu-16.04,  r: 'release'}
-          - {os: ubuntu-16.04,  r: 'oldrel'}
          # DM 2021/10/17 I made a somewhat helpless change here to solve the 
          # "failed because there were no enabled runners online ..." error which occures with Ubuntu.
-         # According to a google search, there is no particular solution other than to 
-         # disable the problematic runner.
-         # - {os: ubuntu-16.04,   r: 'devel', rspm: "https://packagemanager.rstudio.com/cran/__linux__/xenial/latest", http-user-agent: "R/4.0.0 (ubuntu-16.04) R (4.0.0 x86_64-pc-linux-gnu x86_64 linux-gnu) on GitHub Actions" }
-         # - {os: ubuntu-16.04,   r: 'release', rspm: "https://packagemanager.rstudio.com/cran/__linux__/xenial/latest"}
-         # - {os: ubuntu-16.04,   r: 'oldrel',  rspm: "https://packagemanager.rstudio.com/cran/__linux__/xenial/latest"}
+         # DM 2022/01/02 The Ubuntu problem is probably due to some missing dependancies for the packages Luminescence and kableExtra
+         # Solution: Ubuntu is removed from the GitHub actions. I tested this package manually in Ubuntu 20.04 and it works fine
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
