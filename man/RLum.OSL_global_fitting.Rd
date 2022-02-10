@@ -68,7 +68,7 @@ a new list element \code{object[["OSL_COMPONENTS"]]}, containing:
 \item \verb{$decay.rates} \link{numeric} vector: Decay rates of F-test recommendation or last successful fitting.
 \item \verb{$K.selected} \link{numeric}: Number of components of F-test recommendation or last successful fitting.
 \item \verb{$F.test} \link{data.frame}: F-test table.
-\item \verb{$F.test.print} \link{data.frame}: F-test table but formatted for console output and display with \link[kableExtra:reexports]{kableExtra::kable}.
+\item \verb{$F.test.print} \link{data.frame}: F-test table but formatted for console output and display with \link[knitr:kable]{knitr::kable}.
 \item \verb{$info.text} \link{list}: Short process log.
 \item \verb{$component.tables} \link{list} of \link{data.frame}s: Signal component tables for all curve models.
 \item \verb{$curve} \link{list}: Global average curve created from all  \code{record_type} curves in the data set.

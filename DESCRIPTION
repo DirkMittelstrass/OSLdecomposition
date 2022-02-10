@@ -1,7 +1,7 @@
 Package: OSLdecomposition
 Type: Package
 Title: Identify and Separate Continuous-Wave Optically Stimulated Luminescence Signal Components
-Version: 22-01-02
+Version: 22-01-06
 Authors@R: c(
     person("Dirk", "Mittelstrass", email = "dirk.mittelstrass@luminescence.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9567-8791")),
     person("Christoph", "Schmidt", role = c("aut"), comment = c(ORCID = "0000-0002-2309-3209")),
@@ -32,5 +32,7 @@ Imports:
     ggplot2,
     scales,
     ggpubr,
-    rmarkdown,
+    knitr,
+    rmarkdown
+Suggests:
     kableExtra

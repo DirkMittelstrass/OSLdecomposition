@@ -46,10 +46,15 @@
   rmd_path = NULL
 ){
 
-# Pre-check ---------------------------------------------------------------
-  image_path <- NULL
+# Pre-checks ---------------------------------------------------------------
+
+  # Are the necessary packages installed?
+
+ # if(!require("rmarkdown")) cat("Please install package rmarkdown to enable automatic reports")
+ # if(!require("gridExtra")) cat("Please install package rmarkdown to enable automatic reports")
 
   # set file path for the report
+  image_path <- NULL
   if(is.null(report_dir)){
 
     output_dir <- tempdir()
@@ -112,6 +117,7 @@
     if (is.null(rmd_path)) {
       rmd_path <- system.file("rmd", rmd_ht[nature[1]], package = "OSLdecomposition", mustWork = TRUE)
     }
+
 
     output <- rmarkdown::render(
       input =  rmd_path,

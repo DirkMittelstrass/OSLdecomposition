@@ -102,7 +102,7 @@
 #'   \item `$decay.rates` [numeric] vector: Decay rates of F-test recommendation or last successful fitting.
 #'   \item `$K.selected` [numeric]: Number of components of F-test recommendation or last successful fitting.
 #'   \item `$F.test` [data.frame]: F-test table.
-#'   \item `$F.test.print` [data.frame]: F-test table but formatted for console output and display with [kableExtra::kable].
+#'   \item `$F.test.print` [data.frame]: F-test table but formatted for console output and display with [knitr::kable].
 #'   \item `$info.text` [list]: Short process log.
 #'   \item `$component.tables` [list] of [data.frame]s: Signal component tables for all curve models.
 #'   \item `$curve` [list]: Global average curve created from all  `record_type` curves in the data set.
