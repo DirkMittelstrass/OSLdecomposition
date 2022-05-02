@@ -32,5 +32,7 @@ Imports:
     ggplot2,
     scales,
     ggpubr,
-    rmarkdown,
+    knitr,
+    rmarkdown
+Suggests:
     kableExtra

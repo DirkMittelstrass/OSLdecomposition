@@ -38,9 +38,8 @@ params:
 #   mathjax: local
 #   self_contained: false
 
-Last_changed <- "2021-02-15"
-
-library(kableExtra)
+Last_changed <- "2022-01-10"
+kable_extra <- require(kableExtra)
 library(knitr)
 library(ggplot2)
 library(gridExtra)
@@ -172,16 +171,20 @@ if (fit_data$K.selected < 4) {
   K.default <- fit_data$K.selected
   K.default.text <- ""}
 
-colnames(F_table) <- c("  $K$  ", paste0("$\\lambda_", row_index,"$ $(s^{-1})$"), "$RSS$","$F_K$")
-
 # Table caption:
 cat(paste0("<br><i><b>Table 2:</b> Decay rates and fitting quality parameters as function of component number $K$. <br>$RSS$: Residual square sum. $F_K$:  Measure of fitting improvement.</i><br>", K.default.text, " <u>Blue stripe</u>: F-test selected model.<br>"))
 
-# print F-test table (may add the bootstrap_options "striped")
-kable(F_table, escape = TRUE, align = "c") %>% 
+# print F-test table
+colnames(F_table) <- c("  $K$  ", paste0("$\\lambda_", row_index,"$ $(s^{-1})$"), "$RSS$","$F_K$")
+if (kable_extra) {
+  kable(F_table, escape = TRUE, align = "c") %>% 
   kable_styling(bootstrap_options = c("condensed")) %>%  
   row_spec(K.default, background = "lightgreen") %>%
   row_spec(fit_data$K.selected, background = "lightblue")
+}else{
+  kable(F_table, escape = TRUE, align = "c") 
+}
+
 ```
 
 ```{r eval=FALSE, include=FALSE}
@@ -189,7 +192,7 @@ kable(F_table, escape = TRUE, align = "c") %>%
 ### Signal bin overdispersion idea
 
 # List of model selection helps:
-# 1. Comparision of the photoionisation cross section with literature values
+# 1. Comparison of the photoionisation cross section with literature values
 # 2. Evaluation of the fitting quality by an F-test and the *reduced Chi²*
 # 3. (ToDo:) Evaluation of the decomposition quality by signal bin overdispersion
 
@@ -348,15 +351,20 @@ para_table <- rbind(para_table,
                     data.frame(n = "No. of input aliquots", t = format(length(data_set))),
                     data.frame(n = "Channel time ", t = paste0("$\\delta$*t* = ", prettyNum(ch.W), " s")),
                     data.frame(n = "Channels ", t = paste0("*N* = ", ch.N)),
-                    data.frame(n = "Global curve length ", t = paste0("*t* = *N*$\\delta$*t* = ", prettyNum(ch.W*ch.N), " s")))
+                    data.frame(n = "Global curve length ", t = paste0("*t* = ", prettyNum(ch.W*ch.N), " s")))
 
 
 colnames(para_table) <- c("","")
-kable(para_table, escape = TRUE, align = "l",) %>%
+if (kable_extra) {
+  kable(para_table, escape = TRUE, align = "l",) %>%
   kable_styling(bootstrap_options = c("condensed"), full_width = FALSE, position = "left") %>%
   pack_rows("Settings", 1, 4) %>%
   pack_rows("Photoionisation cross section parameter", 5, 6) %>%
   pack_rows("Global curve properties", 7, 11)
+}else{
+  kable(para_table, escape = TRUE, align = "l",)
+}
+
 
 ```
 <br><br>
