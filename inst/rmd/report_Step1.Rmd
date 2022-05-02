@@ -135,19 +135,12 @@ Under the assumption that the provided optical stimulation parameters ($\lambda_
 
 ```{r step1_draw_crosssections_diagram, fig.width=10, fig.asp=0.32}
 
-#cross.plot.height <- 0
-#if ((stimulation_wavelength >= 465) && (stimulation_wavelength <= 480)) cross.plot.height <- 3
-#cross.plot.height <- (cross.plot.height + 2 + K.selected) * 0.01
-#knitr::opts_current$set(fig.asp = cross.plot.height)
-
 if (!is.null(image_format)) image_file <- paste0(image_path, "step1_fig2_cross-sections.", image_format)
 
 plot_PhotoCrosssections(fit_data,
                         stimulation.intensity = fit_data$parameters$stimulation.intensity,
                         stimulation.wavelength = fit_data$parameters$stimulation.wavelength,
                         filename = image_file)
-
-# <font color=\"black\"> </font>
 
   cat("<br><i><b>Figure 2:</b> Photoionisation cross section comparison assuming a stimulation light intensity of", fit_data$parameters$stimulation.intensity, "mW/cm² and a stimulation light wavelength of", fit_data$parameters$stimulation.wavelength,"nm.</i><br><br>")
 ```
@@ -281,7 +274,6 @@ The data analysis method covered with this report was developed for CW-OSL SAR p
 -------------------
 
 Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz, Master thesis, TU Dresden, Dresden. <br> https://iktp.tu-dresden.de/IKTP/pub/19/Dirk_Mittelstrass_Master.pdf  <br>
-*(reference will be replaced as soon as peer-reviewed publication is accepted)*
 
 -------------------
 
@@ -376,47 +368,3 @@ Last major change in the script code: `r Last_changed`  by D. Mittelstraß
 ```{r session_info}
 print(sessionInfo(), locale = FALSE)
 ```
-
-
-
-
-
-
-
-
-
-
-
-```{r step1_show_component_table, eval=FALSE, include=FALSE}
-
-cat(paste0("<br><i><b>Table 1:</b> Signal components of the K = ", fit_data$K.selected," multi-exponential decay model chosen as best suiting fitting by an F-test. Each signal component is defined by its intensity $n$ and its decay contant $\\lambda$, which can be converted in the photoionisation cross section $\\sigma$.<br><u>First channel share</u>: Average contribution to the signal at beginning of the measurement.<br><u>Bleaching grade</u>: Average approximated defect state depletion during the stimulation.</i><br>"))
-
-component_table <- fit_data$components
-
-component_table$lambda <- round(component_table$lambda, digits = 4)
-component_table$initial.signal <- paste0(round(component_table$initial.signal * 100, digits = 1), "%")
-component_table$bleaching.grade <- paste0(round(component_table$bleaching.grade * 100, digits = 1), "%")
-colnames(component_table) <- c(" ", "$\\lambda$ $(s^{-1})$", "$n$ (counts)", "$\\sigma$ (cm²)", "first channel share", "bleaching grade")
-
-#kable(component_table, escape = TRUE, align = "c",) %>%
-#  kable_styling(bootstrap_options = c("striped", "condensed"))
-kable(component_table, escape = TRUE, align = "c",) %>%
-  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
-  column_spec(1, bold = TRUE)
-
-```
-
-```{r step1_draw_best_suiting_fit, eval=FALSE, include=FALSE}
-cat(paste0(image_path, "figure_1_1_best_fit.", image_format),"\n")
-
-plot_OSLcurve(fit_data$curve, 
-              fit_data$components, 
-              title = NULL,
-              filename = paste0(image_path, "figure_1_1_best_fit.", image_format))
-
-cat(paste0("<br><i><b>Figure 1:</b> Fit model with K =", fit_data$K.selected," (black), global average curve (grey) and signal components (colored)<br>", "<u>Upper left</u>: Linear diagram. <u>Upper right</u>: pseudoLM-OSL diagram<br>",
-    "<u>Lower left</u>: Residual curve between fit and global average curve<br>",
-    "<u>Lower right</u>: Fitting result table with estimated type of component names</i><br><br>"))
-```
-
-

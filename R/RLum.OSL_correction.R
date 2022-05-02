@@ -517,9 +517,6 @@ RLum.OSL_correction <- function(
       if(verbose) cat("No records exceeding the signal limits found.\n")
     }
 
-    if(verbose) cat("Offset of", subtract_offset, "counts per second subtracted from every", record_type, "record\n")
-
-
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
   }
 

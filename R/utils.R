@@ -22,7 +22,9 @@
 #' @param report_format [character] (*with default*): report format
 #'
 #' @param verbose [logical] (*with default*): enables/disables terminal output.
-#' If set to `FALSE` no browser window will be opened.
+#'
+#' @param open_report [logical] (*with default*):
+#' If set to `TRUE` a browser window displaying the report will be opened.
 #'
 #' @param rmd_path [character] (**optional**): FOR DEVELOPMENT PURPOSES ONLY:
 #' Path of Rmarkdown script to be executed
@@ -43,6 +45,7 @@
   image_format = NULL,
   report_format = "html",
   verbose = TRUE,
+  open_report = TRUE,
   rmd_path = NULL
 ){
 
@@ -69,21 +72,18 @@
 
     # We may need also a path for the images
     if (!is.null(image_format)) {
-
-      image_path <- paste0(output_dir,"report_figures\\")
+      image_path <- normalizePath(paste0(output_dir,"/report_figures/"))
       dir.create(image_path, showWarnings = FALSE)}
-
   }
 
 # Set parameters ----------------------------------------------------------
  if(verbose) cat("This process can take a few minutes...\n")
 
   # the RMD script has to be located in the "/inst" folder of the project
-  # then, it will be installed with the package
+  # then it will be installed with the package
 
   ##select RMD-file
   rmd_ht <- c(
-    correction = "report_Step1.Rmd",
     global_fitting = "report_Step1.Rmd",
     decomposition = "report_Step2.Rmd")
 
@@ -122,23 +122,25 @@
       clean = TRUE
     )
 
-
     if(verbose) {
 
       if(!is.null(report_dir)) {
-        cat("Saved", toupper(report_format), "report to:", output_dir, "\n")
-        if(!is.null(image_format)) cat("Saved figures as", toupper(image_format),
-                                       "files to:", normalizePath(paste0(output_dir,"/report_figures/")), "\n")}
+        in_between_text <- "report to:"
+        if(!is.null(image_format)){
+          in_between_text <- paste0("report and ", toupper(image_format), " images of the figures to:")}
+        cat("Saved", toupper(report_format), in_between_text, output_dir, "\n")
+      }
+
+      cat(paste0("URL to open report: <",output,">"), "\n")
 
       cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")}
 
   })
 
   try({
-    if(verbose) {
+    if(open_report) {
       utils::browseURL(output)
       cat("Open", toupper(report_format), "report in the systems standard browser\n")
     }
   })
-
 }

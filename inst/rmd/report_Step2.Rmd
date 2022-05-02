@@ -44,7 +44,6 @@ Last_changed <-"2021-02-15"
 # ToDo's:
 # * Bug: The barplots sort the columns alphabetically
 
-
 ### Planned further features:
 #
 # * Figure 2: Use different plotting symbols for Lx and for Tx; Overwork or explain ploted lines
@@ -139,29 +138,23 @@ for (j in 1:length(record)) {
   
   # Where is the highest regenerated dose?
   max_Lx <- which.max(result$IRR_TIME[2:length(result$IRR_TIME)]) + 1
- # try({
-    
-    # get a index sequence: i = 3, 5, 7, 9
-    i_Lx <- 1:((max_Lx - 1)/2) * 2 + 1
-    result$type[i_Lx] <- "Lx"
-    
-    i_Tx <- 1:(nrow(result)/2) * 2
-    result$type[i_Tx] <- "Tx"
-    
-  #}, silent = TRUE)
 
+  # get a index sequence: i = 3, 5, 7, 9
+  i_Lx <- 1:((max_Lx - 1)/2) * 2 + 1
+  result$type[i_Lx] <- "Lx"
   
+  i_Tx <- 1:(nrow(result)/2) * 2
+  result$type[i_Tx] <- "Tx"
+
   for (k in 1:K) {
     
     intensities <- result[,colnames(result) == paste0("n.", k)]
     N <- length(intensities)
-    #intensities_reduced <- intensities - result[,colnames(result) == paste0("n.residual.", k)]
     sigmas <- result[,colnames(result) == paste0("n.error.", k)]
     
     # Append current component to Table 1 table
     new_col <- data.frame(row = paste0(round(intensities), " ± ", round(sigmas)))
     colnames(new_col) <- input_table$name[k]
-   # colnames(new_col) <- paste0("$n_", k, " ± \\sigma_", k, "$ (", input_table$name[k] ,")")
     aliquot_table <- cbind(aliquot_table, new_col)
     
 
@@ -170,7 +163,8 @@ for (j in 1:length(record)) {
     bleaching_grade <- 1 - sum(result[,colnames(result) == paste0("n.residual.", k)], na.rm = TRUE) / 
                            sum(intensities, na.rm = TRUE)
     if (bleaching_grade >= 0.95) {
-         # Append current component to Figure 2 plot data
+      
+      # Append current component to Figure 2 plot data
       plot_table <- rbind(plot_table, 
                           data.frame(x_axis = 1:N,
                                      y_axis = intensities,
@@ -200,7 +194,6 @@ for (j in 1:length(record)) {
   barplots[[j]] <- plot_table
   barplot_labels[[j]] <- data.frame(breaks = 1:N,
                                     labels = paste0(x_labes, "\n", result$IRR_TIME))
-  # add record@info[["IRR_UNIT"]]
 }
 ```
 
@@ -470,7 +463,6 @@ The data analysis method covered with this report was developed for CW-OSL SAR p
 -------------------
 
 Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz, Master thesis, TU Dresden, Dresden. <br> https://iktp.tu-dresden.de/IKTP/pub/19/Dirk_Mittelstrass_Master.pdf  <br>
-*(reference will be replaced as soon as peer-reviewed publication is accepted)*
 
 -------------------
 
@@ -552,13 +544,10 @@ print(sessionInfo(), locale = FALSE)
 
 ```{r curve_viewer, eval=FALSE, include=FALSE}
 
-#### CURVE VIEWER ####
+#### CURVE VIEWER beta ####
+# Creates shiny plot to surf through curves
 # does not work with static Rmarkdown documents
 
-# Determine zoom minimum (10 data points)
-#zoom_min <- ceiling(10*100 / length(global_curve$time)) / 100
-
-# Create shiny plot to surf through curves
 numericInput("aliquot_i", "Aliquot no.: ", value = 1, min = 1, max = length(data_set))
 numericInput("record_i", "Record no.: ", value = 1, min = 1, max = length(record_index))
 sliderInput("zoom", "X axis zoom", min = 0.1, max = 1, value = 1)

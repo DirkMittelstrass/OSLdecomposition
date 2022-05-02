@@ -49,7 +49,7 @@
 #' Wavelength of optical stimulation in *nm*. Used to calculate photo-ionisation cross-sections, see [fit_OSLcurve].
 #'
 #' @param report [logical] (*with default*):
-#' Creates a `html` report, saves it in the `report_dir` directory and opens it in the default web browser.
+#' Creates a `html` report, saves it in the `report_dir` directory.
 #' The report contains the results and detailed information on the data processing.
 #'
 #' @param report_dir [character] (*optional*):
@@ -63,6 +63,9 @@
 #' Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
 #' and more, see [ggplot2::ggsave]. The images are saved in the `report_dir` subfolder `/report_figures`.
 #' Set `image_format = NULL` if no images shall be saved.
+#'
+#' @param open_report [logical] (*with default*):
+#' If set to `TRUE` a browser window displaying the report will be opened automatically.
 #'
 #' @param rmd_path [character] (*with default*):
 #' **For advanced users:** File path to the [rmarkdown] source code file of the report.
@@ -142,6 +145,7 @@ RLum.OSL_global_fitting <- function(object,
                                     report = FALSE,
                                     report_dir = NULL,
                                     image_format = "pdf",
+                                    open_report = TRUE,
                                     rmd_path = NULL,
                                     verbose = TRUE){
 
@@ -239,6 +243,7 @@ RLum.OSL_global_fitting <- function(object,
       object_name = object_name,
       image_format = image_format,
       report_dir = report_dir,
+      open_report = open_report,
       rmd_path = rmd_path,
       verbose = verbose)}
 
