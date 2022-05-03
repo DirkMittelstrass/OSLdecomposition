@@ -35,7 +35,7 @@ params:
 
 ```{r step2_setup, include=FALSE}
  
-# Add the following lines to the YAML header to enable offline display of the equations:
+# NOTE: Add the following lines to the YAML header to enable offline display of the equations:
 #   mathjax: local
 #   self_contained: false
 
@@ -532,15 +532,6 @@ kable(para_table, escape = TRUE, align = "l",) %>%
 
 ```
 <br><br>
-Last major change in the script code: `r Last_changed`  by D. Mittelstraß
-<br></font>
-
-**Session info:**
-
-```{r session_info}
-print(sessionInfo(), locale = FALSE)
-```
-
 
 ```{r curve_viewer, eval=FALSE, include=FALSE}
 

@@ -14,6 +14,7 @@ RLum.OSL_global_fitting(
   report = FALSE,
   report_dir = NULL,
   image_format = "pdf",
+  open_report = TRUE,
   rmd_path = NULL,
   verbose = TRUE
 )
@@ -39,7 +40,7 @@ Intensity of optical stimulation in \emph{mW / cm²}. Used to calculate photo-io
 Wavelength of optical stimulation in \emph{nm}. Used to calculate photo-ionisation cross-sections, see \link{fit_OSLcurve}.}
 
 \item{report}{\link{logical} (\emph{with default}):
-Creates a \code{html} report, saves it in the \code{report_dir} directory and opens it in the default web browser.
+Creates a \code{html} report, saves it in the \code{report_dir} directory.
 The report contains the results and detailed information on the data processing.}
 
 \item{report_dir}{\link{character} (\emph{optional}):
@@ -54,9 +55,12 @@ Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}
 and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in the \code{report_dir} subfolder \verb{/report_figures}.
 Set \code{image_format = NULL} if no images shall be saved.}
 
+\item{open_report}{\link{logical} (\emph{with default}):
+If set to \code{TRUE} a browser window displaying the report will be opened automatically.}
+
 \item{rmd_path}{\link{character} (\emph{with default}):
 \strong{For advanced users:} File path to the \link{rmarkdown} source code file of the report.
-This allows to execute maniputed versions of the report.}
+This allows to execute manipulated versions of the report.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
 Enables console text output.}
@@ -110,7 +114,7 @@ The \emph{Rmarkdown} source code of the report can be found with the following c
 \section{Last updates}{
 
 
-2021-02-15, DM: Added new parameter \code{rmd_path}
+2022-05-02, DM: Added new parameter \code{open_report} to give control over automatic browser opening
 }
 
 \examples{

@@ -82,7 +82,7 @@ residual plots can also be plotted.
 \code{"compare_lin"} \tab Linear CW-OSL plot with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
 \code{"log"} \tab CW-OSL plot with logarithmic y-Axis and linear x-Axis \cr
 \code{"compare_log"} \tab CW-OSL plot with logarithmic y-Axis with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
-\code{"loglog"} \tab Double-logarithic CW-OSL plot \cr
+\code{"loglog"} \tab Double-logarithmic CW-OSL plot \cr
 \code{"LM"} \tab PseudoLM-OSL plot \cr
 \code{"res"} \tab Plot of residual curve: Measurement minus fitting model \cr
 \code{"tab"} \tab Table of component parameters as image \cr
@@ -101,7 +101,7 @@ See Bos and Wallinga (2012) for a detailed explanation and discussion.
 
 \examples{
 
-# Set some arbitary decay parameter for a dim CW-OSL measurement of quartz
+# Set some arbitrary decay parameter for a dim CW-OSL measurement of quartz
 components <- data.frame(name = c("fast", "medium", "slow"),
                          lambda = c(2, 0.5, 0.02),
                          n = c(1000, 1000, 10000))
@@ -124,7 +124,7 @@ Radiation Measurements, 32(2)
 \link{fit_OSLcurve}, [RLum.OSL_decomposition, \link{RLum.OSL_global_fitting}, \link{simulate_OSLcomponents}
 }
 \author{
-Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 
 Please cite the package the following way:
 

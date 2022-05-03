@@ -9,7 +9,8 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.path = "man/figures/README-"
 )
-library(RLumCarlo)
+
+library(OSLdecomposition)
 ```
 
 # OSLdecomposition  <img width=120px src="man/figures/OSLdecomposition_logo.png" align="right" />

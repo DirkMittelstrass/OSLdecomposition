@@ -156,7 +156,7 @@ with the more robust \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} (\strong{update 
 
 \examples{
 
-# Set some arbitary decay parameter for a dim CW-OSL measurement of quartz
+# Set some arbitrary decay parameter for a dim CW-OSL measurement of quartz
 components <- data.frame(name = c("fast", "medium", "slow"),
                          lambda = c(2, 0.5, 0.02),
                          n = c(1000, 1000, 10000))
@@ -189,7 +189,7 @@ its application in retrospective dosimetry at quartz (Master thesis). TU Dresden
 \link{fit_OSLcurve}, \link{optimise_OSLintervals}, \link{RLum.OSL_decomposition}, \link[minpack.lm:nlsLM]{minpack.lm::nlsLM}
 }
 \author{
-Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 
 Please cite the package the following way:
 

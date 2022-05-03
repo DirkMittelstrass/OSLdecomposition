@@ -17,4 +17,36 @@ systematic errors due to CW-OSL signal components with unequal physical behaviou
 This package enables an automatised workflow for signal component deconvolution
 in combination with the R package 'Luminescence'.
 }
+\details{
+\strong{Project website}
+\itemize{
+\item \url{https://luminescence.de}
+}
+
+\strong{Source code repository}
+\itemize{
+\item \url{https://github.com/DirkMittelstrass/OSLdecomposition}
+}
+
+\strong{Support and bug reporting}
+\itemize{
+\item \email{dirk.mittelstrass@luminescence.de} or
+\item \url{https://github.com/DirkMittelstrass/OSLdecomposition/issues}
+}
+
+\strong{Related projects}
+\itemize{
+\item \url{https://r-luminescence.org}
+}
+
+\strong{Package maintainer}
+
+Dirk Mittelstraß, Independent researcher, Dresden (Germany),\cr
+\email{dirk.mittelstrass@luminescence.de}
+
+\strong{Funding}
+Dirk Mittelstraß created this package as part of his master thesis and further enhanced and
+published it as private endeavour. He did not receive any specific grant from funding agencies
+in the public, commercial or not-for-profit sectors.
+}
 \keyword{package}

@@ -177,7 +177,7 @@ Radiation Measurements, Proceedings of the 10th international Conference on Lumi
 \link{plot_PhotoCrosssections}, \link[minpack.lm:nlsLM]{minpack.lm::nlsLM}, \link[DEoptim:DEoptim]{DEoptim::DEoptim}
 }
 \author{
-Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 
 Please cite the package the following way:
 

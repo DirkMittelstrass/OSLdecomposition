@@ -60,7 +60,7 @@
 #' 2020-10-29, DM: Added `parallel.computing` argument; enhanced roxygen documentation (*minor update*)
 #'
 #' @author
-#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
+#' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
 #'
 #' Please cite the package the following way:
 #'
@@ -112,11 +112,11 @@ optimise_OSLintervals <- function(
   silent <- FALSE
 
   # Check if 'components' is of valid type
-  if (class(components)=="numeric") {
+  if (inherits(components, "numeric")) {
     components <- data.frame(name = paste0("Component ", 1:length(components)),
                              lambda = sort(components, decreasing = TRUE))
 
-  }else if(class(components)=="data.frame"){
+  }else if(inherits(components, "data.frame")){
     if (!("lambda" %in% colnames(components)) | !("name" %in% colnames(components))) {
       stop("[decompose_OSLcurve()] Error: Input object 'components' needs at least a column '$lambda' and a column '$name'!")}
 
@@ -127,10 +127,10 @@ optimise_OSLintervals <- function(
   # check if template curve or channel parameters are given
   if (!is.null(curve)) {
 
-    if(!((class(curve) == "RLum.Data.Curve") | (class(curve) == "data.frame") | (class(curve) == "matrix"))){
-      stop("[decompose_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
+    if(!inherits(curve, c("RLum.Data.Curve", "data.frame", "matrix"))){
+      stop("[optimise_OSLintervals()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
 
-    if(class(curve) == "RLum.Data.Curve") curve <- as.data.frame(Luminescence::get_RLum(curve))
+    if(inherits(curve, "RLum.Data.Curve")) curve <- as.data.frame(Luminescence::get_RLum(curve))
 
     if (!("time" %in% colnames(curve)) ||
         !("signal" %in% colnames(curve))) {

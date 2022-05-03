@@ -69,7 +69,7 @@
 #'
 #' @param rmd_path [character] (*with default*):
 #' **For advanced users:** File path to the [rmarkdown] source code file of the report.
-#' This allows to execute maniputed versions of the report.
+#' This allows to execute manipulated versions of the report.
 #'
 #' @param verbose [logical] (*with default*):
 #' Enables console text output.
@@ -77,7 +77,7 @@
 #'
 #' @section Last updates:
 #'
-#' 2021-02-15, DM: Added new parameter `rmd_path`
+#' 2022-05-02, DM: Added new parameter `open_report` to give control over automatic browser opening
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -154,6 +154,7 @@ RLum.OSL_global_fitting <- function(object,
   # * 2020-11-06, DM: Added roxygen documentation
   # * 2020-11-23, SK: Moved report call into utils.R
   # * 2021-02-15, DM: Added new parameter `rmd_path`
+  # * 2022-05-02, DM: Added new parameter `open_report` to give control over automatic browser opening
   #
   # ToDo:
   # * Get stimulation.intensity from @info[["LPOWER"]]
@@ -175,7 +176,7 @@ RLum.OSL_global_fitting <- function(object,
 
     for (i in 1:length(object)) {
 
-      if (class(object[[i]]) == "RLum.Analysis") {
+      if (inherits(object[[i]], "RLum.Analysis")) {
 
         data_set[[length(data_set) + 1]] <- object[[i]]
       } else {

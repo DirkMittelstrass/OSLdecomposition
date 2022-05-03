@@ -102,7 +102,7 @@
 #' 2020-11-25, DM: Reworked console output (*minor update*)
 #'
 #' @author
-#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
+#' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
 #'
 #' Please cite the package the following way:
 #'
@@ -199,7 +199,7 @@ fit_OSLcurve <- function(
   # ToDo:
   # * Enhance documentation with more algorithm info and some F.threshold recommendation
   # * Reactivate optional background level fitting
-  # * Introduce 'fit_OSLcurve.control' which forwards algorith parameters to DEoptim.control and nls.lm.control
+  # * Introduce 'fit_OSLcurve.control' which forwards algorithm parameters to DEoptim.control and nls.lm.control
   # * Enable optional weighted fitting and give out reduced Chi²
 
   # Internal parameter (for later use in fit_OSLcurve.control)
@@ -208,10 +208,10 @@ fit_OSLcurve <- function(
 
   ################### Prepare input data ###########################
 
-  if(!((class(curve) == "RLum.Data.Curve") | (class(curve) == "data.frame") | (class(curve) == "matrix"))){
+  if(!inherits(curve, c("RLum.Data.Curve", "data.frame", "matrix"))){
     stop("[fit_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
 
-  if(class(curve) == "RLum.Data.Curve") curve <- as.data.frame(Luminescence::get_RLum(curve))
+  if(inherits(curve, "RLum.Data.Curve")) curve <- as.data.frame(Luminescence::get_RLum(curve))
 
   if (!("time" %in% colnames(curve)) |
       !("signal" %in% colnames(curve))) {

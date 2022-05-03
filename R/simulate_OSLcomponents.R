@@ -48,7 +48,7 @@
 #'
 #' @author
 #'
-#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
+#' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
 #'
 #' Please cite the package the following way:
 #'

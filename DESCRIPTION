@@ -1,24 +1,26 @@
 Package: OSLdecomposition
 Type: Package
 Title: Identify and Separate Continuous-Wave Optically Stimulated Luminescence Signal Components
-Version: 22-05-02.3
+Version: 1.0.0.9000-05
 Authors@R: c(
     person("Dirk", "Mittelstrass", email = "dirk.mittelstrass@luminescence.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9567-8791")),
-    person("Christoph", "Schmidt", role = c("aut"), comment = c(ORCID = "0000-0002-2309-3209")),
     person("Sebastian", "Kreutzer", role = c("aut"), comment = c(ORCID = "0000-0002-0734-2199")),
+    person("Christoph", "Schmidt", role = c("ctb"), comment = c(ORCID = "0000-0002-2309-3209")),
     person("Jan", "Beyer", role = c("ths"), comment = c(ORCID = "0000-0002-1403-395X")),
     person("Johannes", "Heitmann", role = c("ths")),
     person("Arno", "Straessner", role = c("ths"), comment = c(ORCID = "0000-0003-2460-6659")))
+Maintainer: Dirk Mittelstrass <dirk.mittelstrass@luminescence.de>
 Description: Function library for the identification and separation of exponentially 
     decaying signal components in continuous-wave optically stimulated luminescence (CW-OSL) measurements.
     A special emphasis is laid on luminescence dating with quartz, which is known for
     systematic errors due to CW-OSL signal components with unequal physical behaviour.
-    This package enables an automatised workflow for signal component deconvolution
-    in combination with the R package 'Luminescence'.
+    Also, this package enables an automatised and protocollized signal decomposition of 
+    CW-OSL data sets read and analysed with the R package 'Luminescence'. Further information and tutorials
+    can be found at <https://luminescence.de>.
 Depends: R (>= 4.0)
 License: GPL-3
+BugReports: https://github.com/DirkMittelstrass/OSLdecomposition/issues
 Encoding: UTF-8
-LazyData: true
 RoxygenNote: 7.1.2
 Imports: 
     Luminescence (>= 0.9.9),
@@ -32,7 +34,6 @@ Imports:
     ggplot2,
     scales,
     ggpubr,
-    knitr,
     rmarkdown
 Suggests:
     kableExtra

@@ -139,7 +139,7 @@
 #' 2020-08-30, DM: Renamed 'error.calculation' into 'error.estimation' and changed [numeric] value unit from cts/ch to cts/s  (*minor update*)
 #'
 #' @author
-#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
+#' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
 #'
 #' Please cite the package the following way:
 #'
@@ -155,7 +155,7 @@
 #'
 #' @examples
 #'
-#' # Set some arbitary decay parameter for a dim CW-OSL measurement of quartz
+#' # Set some arbitrary decay parameter for a dim CW-OSL measurement of quartz
 #' components <- data.frame(name = c("fast", "medium", "slow"),
 #'                          lambda = c(2, 0.5, 0.02),
 #'                          n = c(1000, 1000, 10000))
@@ -193,7 +193,7 @@ decompose_OSLcurve <- function(
   # Changelog:
   # * winter 2012/13: first basic version, used for Bachelor thesis DM
   # * autumn 2013   : added empiric error estimation, shown in germanLED Freiberg 2013
-  # * 2014-11-??, SK: formated into Rluminecence package standard
+  # * 2014-11-??, SK: formatted into Rluminecence package standard
   # * 2014-11-07, DM: Binomial error propagation added
   # * 2018-05-04, DM: added residuals for n values (necessary for slow component dosimetry) and many little tweaks
   # * 2018-06-22, DM: added decomposition of data sets with just 1 or 2 components
@@ -223,10 +223,10 @@ decompose_OSLcurve <- function(
 
   ########## Input checks ###########
 
-  if(!((class(curve)[1] == "RLum.Data.Curve") | (class(curve)[1] == "data.frame") | (class(curve)[1] == "matrix"))){
+  if(!inherits(curve, c("RLum.Data.Curve", "data.frame", "matrix"))){
    stop("[decompose_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
 
-  if(class(curve)[1] == "RLum.Data.Curve") curve <- as.data.frame(Luminescence::get_RLum(curve))
+  if(inherits(curve, "RLum.Data.Curve")) curve <- as.data.frame(Luminescence::get_RLum(curve))
 
   if (!("time" %in% colnames(curve)) |
       !("signal" %in% colnames(curve))) {
@@ -242,11 +242,11 @@ decompose_OSLcurve <- function(
   if (curve$time[1] == 0)  curve$time <- curve$time + dt
 
   # Check if 'components' is of valid type
-  if (class(components) == "numeric") {
+  if (inherits(components, "numeric")) {
     components <- data.frame(name = paste0("Component ", 1:length(components)),
                              lambda = sort(components, decreasing = TRUE))
 
-  }else if(class(components) == "data.frame"){
+  }else if(inherits(components, "data.frame")){
     if (!("lambda" %in% colnames(components)) | !("name" %in% colnames(components))) {
       stop("[decompose_OSLcurve()] Error: Input object 'components' needs at least a column '$lambda' and a column '$name'!")}
 

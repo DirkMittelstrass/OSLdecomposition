@@ -129,8 +129,7 @@ that those PMTs have a better pulse-pair resolution than 18 \emph{ns}.
 \section{Last updates}{
 
 
-2021-11-23, DM: Enabled \code{PMT_pulse_pair_resolution}.
-2021-02-15, DM: Enabled \code{remove_light_off} and renamed \code{cut_records} into \code{limit_duration}. Removed \code{report} parameter
+2022-01-02, DM: Revised \code{PMT_pulse_pair_resolution} algorithm.
 }
 
 \examples{

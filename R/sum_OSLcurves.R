@@ -19,7 +19,7 @@
 #' which shall be included.
 #'
 #' @param offset_value [numeric] (*with default*):
-#' Signal offset (background) which will be substracted from each record.
+#' Signal offset (background) which will be subtracted from each record.
 #'
 #' @param verbose [logical] (*with default*):
 #' Enables console text output.
@@ -54,7 +54,7 @@
 #' 2020-10-30, DM: Overworked plotting; Expanded roxygen documentation
 #'
 #' @author
-#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
+#' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
 #'
 #' Please cite the package the following way:
 #'

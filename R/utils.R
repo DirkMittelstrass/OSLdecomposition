@@ -1,6 +1,6 @@
 #' @title Render Report
 #'
-#' @description Centralised function to render the reports
+#' @description Centralized function to render the reports
 #'
 #' @param nature [character] (**required**): report nature
 #'
@@ -49,12 +49,17 @@
   rmd_path = NULL
 ){
 
+  ### Changelog
+  # * 2020-11-23, SK: Created utils.R and moved report call into it
+  # * 2022-05-02, DM: Added new parameter `open_report` to give control over automatic browser opening
+  # * 2022-05-02, DM: Fixed bug that images are not saved in the correct path by applying normalizePath() to image_path
+  #
+  ### ToDo's
+  # * Create public function "create_report" or similar to allow for the report creation at already
+  #   analysed RLum-objects
+  # * Create private function "measure_time" to move the "time needed" code snippet to here
+
 # Pre-checks ---------------------------------------------------------------
-
-  # Are the necessary packages installed?
-
- # if(!require("rmarkdown")) cat("Please install package rmarkdown to enable automatic reports")
- # if(!require("gridExtra")) cat("Please install package rmarkdown to enable automatic reports")
 
   # set file path for the report
   image_path <- NULL
@@ -95,7 +100,6 @@
   if(!(nature[1] %in% names(rmd_ht))){
     stop("[.render_report()] report nature unknown, supported are: \n",
          paste0(" ",rmd_ht, " -> '", names(rmd_ht), "'\n"))
-
   }
 
   ##preset parameters remove NULL
@@ -136,10 +140,8 @@
           in_between_text <- paste0("report and ", toupper(image_format), " images of the figures to:")}
         cat("Saved", toupper(report_format), in_between_text, output_dir, "\n")
       }
-
-      cat(paste0("URL to open report: <",output,">"), "\n")
-
-      cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")}
+      cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    }
 
   })
 
@@ -147,6 +149,10 @@
     if(open_report) {
       utils::browseURL(output)
       cat("Open", toupper(report_format), "report in the systems standard browser\n")
+    }
+    else
+    {
+      cat(paste0("URL to open the report in a browser: ",output), "\n")
     }
   })
 }

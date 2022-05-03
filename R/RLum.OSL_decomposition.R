@@ -1,9 +1,9 @@
 #' Separate CW-OSL components in RLum.Analysis data sets
 #'
-#' Calculates the CW-OSL signal component intensites for each CW-OSL measurement
-#' under the requirement that the decay rates are already given. The signal decompositon
+#' Calculates the CW-OSL signal component intensities for each CW-OSL measurement
+#' under the requirement that the decay rates are already given. The signal decomposition
 #' process uses an analytical approach described in detail in Mittelstrass (2019) and
-#' Mittelstrass et al. (in preperation). This function processes [RLum.Analysis-class] data sets created within
+#' Mittelstrass et al. (in preparation). This function processes [RLum.Analysis-class] data sets created within
 #' the [Luminescence-package] (Kreutzer et al. 2012).
 #'
 #' The workflow of this function is as follows:
@@ -69,7 +69,7 @@
 #'
 #' @param rmd_path [character] (*with default*):
 #' **For advanced users:** File path to the [rmarkdown] source code file of the report.
-#' This allows to execute a maniputed version of the report.
+#' This allows to execute a manipulated version of the report.
 #'
 #' @param verbose [logical] (*with default*):
 #' Enables console text output.
@@ -77,7 +77,7 @@
 #'
 #' @section Last updates:
 #'
-#' 2021-02-15, DM: Added new parameter `rmd_path`
+#' 2022-05-02, DM: Added new parameter `open_report` to give control over automatic browser opening
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -145,6 +145,7 @@ RLum.OSL_decomposition <- function(
   # * 2020-11-07, DM: Added roxygen documentation; Auto-switch between "det" and "det+nls" depending on background correction
   # * 2020-11-23, SK: Moved report call into utils.R
   # * 2021-02-15, DM: Added new parameter `rmd_path`
+  # * 2022-05-02, DM: Added new parameter `open_report` to give control over automatic browser opening
   #
   ### ToDo's
   # * read 'lambda.error' if available and transfer it to decompose_OSLcurve for better error calculation
@@ -169,7 +170,7 @@ RLum.OSL_decomposition <- function(
 
     for (i in 1:length(object)) {
 
-      if (class(object[[i]]) == "RLum.Analysis") {
+      if (inherits(object[[i]], "RLum.Analysis")) {
 
         data_set[[length(data_set) + 1]] <- object[[i]]
 
@@ -186,7 +187,7 @@ RLum.OSL_decomposition <- function(
 
   } else {
 
-    if (class(object) == "RLum.Analysis") {
+    if (inherits(object, "RLum.Analysis")) {
 
       data_set <- list(object)
     } else {
@@ -228,7 +229,7 @@ RLum.OSL_decomposition <- function(
     }
 
 
-  } else if ((class(decay_rates) == "data.frame") && ("lambda" %in% colnames(decay_rates))) {
+  } else if ((inherits(decay_rates, "data.frame")) && ("lambda" %in% colnames(decay_rates))) {
     component_table <- decay_rates
 
   } else if (is.numeric(decay_rates) && (length(decay_rates < 8))) {

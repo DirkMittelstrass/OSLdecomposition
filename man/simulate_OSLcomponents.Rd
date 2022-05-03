@@ -85,7 +85,7 @@ Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence 
 \link{fit_OSLcurve}, \link{decompose_OSLcurve}, \link{plot_OSLcurve}
 }
 \author{
-Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 
 Please cite the package the following way:
 

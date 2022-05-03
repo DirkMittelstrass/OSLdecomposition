@@ -12,6 +12,7 @@ RLum.OSL_decomposition(
   report = FALSE,
   report_dir = NULL,
   image_format = "pdf",
+  open_report = TRUE,
   rmd_path = NULL,
   verbose = TRUE
 )
@@ -34,7 +35,7 @@ User-defined component decay rates. If this parameter is defined, the parameter 
 If the input object is a \link{data.frame}, then the decay rates must be stored in the column \verb{$lambda}.}
 
 \item{report}{\link{logical} (\emph{with default}):
-Creates a \code{html} report, saves it in the \code{report_dir} directory and opens it in the default web browser.
+Creates a \code{html} report, saves it in the \code{report_dir} directory.
 The report contains the results and detailed information on the data processing.}
 
 \item{report_dir}{\link{character} (\emph{optional}):
@@ -49,9 +50,12 @@ Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}
 and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}. The images are saved in the \code{report_dir} subfolder \verb{/report_figures}.
 Set \code{image_format = NULL} if no images shall be saved.}
 
+\item{open_report}{\link{logical} (\emph{with default}):
+If set to \code{TRUE} a browser window displaying the report will be opened automatically.}
+
 \item{rmd_path}{\link{character} (\emph{with default}):
 \strong{For advanced users:} File path to the \link{rmarkdown} source code file of the report.
-This allows to execute a maniputed version of the report.}
+This allows to execute a manipulated version of the report.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
 Enables console text output.}
@@ -73,10 +77,10 @@ It can be read for example by:
 \code{object[[i]]@records[[j]]@info[["COMPONENTS"]]}
 }
 \description{
-Calculates the CW-OSL signal component intensites for each CW-OSL measurement
-under the requirement that the decay rates are already given. The signal decompositon
+Calculates the CW-OSL signal component intensities for each CW-OSL measurement
+under the requirement that the decay rates are already given. The signal decomposition
 process uses an analytical approach described in detail in Mittelstrass (2019) and
-Mittelstrass et al. (in preperation). This function processes \linkS4class{RLum.Analysis} data sets created within
+Mittelstrass et al. (in preparation). This function processes \linkS4class{RLum.Analysis} data sets created within
 the \link{Luminescence-package} (Kreutzer et al. 2012).
 }
 \details{
@@ -108,7 +112,7 @@ The \emph{Rmarkdown} source code of the report can be found with the following c
 \section{Last updates}{
 
 
-2021-02-15, DM: Added new parameter \code{rmd_path}
+2022-05-02, DM: Added new parameter \code{open_report} to give control over automatic browser opening
 }
 
 \examples{

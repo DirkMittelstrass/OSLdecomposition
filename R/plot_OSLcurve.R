@@ -12,7 +12,7 @@
 #'  `"compare_lin"` \tab Linear CW-OSL plot with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
 #'  `"log"` \tab CW-OSL plot with logarithmic y-Axis and linear x-Axis \cr
 #'  `"compare_log"` \tab CW-OSL plot with logarithmic y-Axis with residual curve below and component table on bottom. Useful if two CW-OSL measurements shall be compared side by side \cr
-#'  `"loglog"` \tab Double-logarithic CW-OSL plot \cr
+#'  `"loglog"` \tab Double-logarithmic CW-OSL plot \cr
 #'  `"LM"` \tab PseudoLM-OSL plot \cr
 #'  `"res"` \tab Plot of residual curve: Measurement minus fitting model \cr
 #'  `"tab"` \tab Table of component parameters as image \cr
@@ -79,7 +79,7 @@
 #' 2021-03-29, DM: Hidden output objects are now [ggplot2] objects if the plot is not a composite diagram
 #'
 #' @author
-#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
+#' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
 #'
 #' Please cite the package the following way:
 #'
@@ -98,7 +98,7 @@
 #'
 #' @examples
 #'
-#' # Set some arbitary decay parameter for a dim CW-OSL measurement of quartz
+#' # Set some arbitrary decay parameter for a dim CW-OSL measurement of quartz
 #' components <- data.frame(name = c("fast", "medium", "slow"),
 #'                          lambda = c(2, 0.5, 0.02),
 #'                          n = c(1000, 1000, 10000))
@@ -195,10 +195,10 @@ plot_OSLcurve <- function(curve = NULL,
   } else {
 
     # Check input curve
-    if(!((class(curve) == "RLum.Data.Curve") | (class(curve) == "data.frame") | (class(curve) == "matrix"))){
-      stop("[plot_OSLcurve()] Error: Input object is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!") }
+    if(!inherits(curve, c("RLum.Data.Curve", "data.frame", "matrix"))){
+      stop("[plot_OSLcurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
 
-    if(class(curve) == "RLum.Data.Curve") {
+    if(inherits(curve, "RLum.Data.Curve")) {
 
       # if no component table is given, check if the data set was already decomposed by RLum.OSL_decomposition
       if (is.null(components)) {

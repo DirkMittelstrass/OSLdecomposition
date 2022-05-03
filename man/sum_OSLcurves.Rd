@@ -30,7 +30,7 @@ Vector specifying the indicies of elements (aliquots) of a list of \linkS4class{
 which shall be included.}
 
 \item{offset_value}{\link{numeric} (\emph{with default}):
-Signal offset (background) which will be substracted from each record.}
+Signal offset (background) which will be subtracted from each record.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
 Enables console text output.}
@@ -86,7 +86,7 @@ average_curve <- sum_OSLcurves(data_set)
 \link{fit_OSLcurve}, \link{RLum.OSL_correction}, \link{RLum.OSL_global_fitting}
 }
 \author{
-Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 
 Please cite the package the following way:
 

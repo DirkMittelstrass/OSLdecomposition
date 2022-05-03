@@ -105,8 +105,7 @@
 #'
 #' @section Last updates:
 #'
-#' 2021-11-23, DM: Enabled `PMT_pulse_pair_resolution`.
-#' 2021-02-15, DM: Enabled `remove_light_off` and renamed `cut_records` into `limit_duration`. Removed `report` parameter
+#' 2022-01-02, DM: Revised `PMT_pulse_pair_resolution` algorithm.
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -176,6 +175,7 @@ RLum.OSL_correction <- function(
   # * 2020-11-05, DM: Added roxygen documentation
   # * 2021-02-15, DM: Enabled `remove_light_off` and renamed `cut_records` into `limit_duration`. Removed `report` parameter
   # * 2021-11-23, DM: Added pulse-pair-resolution correction
+  # * 2022-01-02, DM: Revised `PMT_pulse_pair_resolution` algorithm.
   #
   # ToDo:
   # * Check for Zero as first value at the time axis
@@ -209,7 +209,7 @@ RLum.OSL_correction <- function(
 
     for (i in 1:length(object)) {
 
-      if (class(object[[i]]) == "RLum.Analysis") {
+      if (inherits(object[[i]], "RLum.Analysis")) {
 
         data_set[[length(data_set) + 1]] <- object[[i]]
       } else {

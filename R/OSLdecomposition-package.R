@@ -16,6 +16,35 @@
 #' @keywords package
 #' @docType package
 #'
+#' @details
+#'
+#' **Project website**
+#'
+#' - [https://luminescence.de]()
+#'
+#' **Source code repository**
+#'
+#' - [https://github.com/DirkMittelstrass/OSLdecomposition]()
+#'
+#' **Support and bug reporting**
+#'
+#' - \email{dirk.mittelstrass@@luminescence.de} or
+#' - [https://github.com/DirkMittelstrass/OSLdecomposition/issues]()
+#'
+#' **Related projects**
+#'
+#' - [https://r-luminescence.org]()
+#'
+#' **Package maintainer**
+#'
+#' Dirk Mittelstraß, Independent researcher, Dresden (Germany),\cr
+#' \email{dirk.mittelstrass@@luminescence.de}
+#'
+#'
+#' **Funding**
+#' Dirk Mittelstraß created this package as part of his master thesis and further enhanced and
+#' published it as private endeavour. He did not receive any specific grant from funding agencies
+#' in the public, commercial or not-for-profit sectors.
 #'
 #' @md
 NULL

@@ -34,7 +34,7 @@ params:
 </style>
 
 ```{r step1_setup, include=FALSE}
-# Add the following lines to the YAML header to enable offline display of the equations:
+# NOTE: Add the following lines to the YAML header to enable offline display of the equations:
 #   mathjax: local
 #   self_contained: false
 
@@ -363,16 +363,8 @@ if (kable_extra) {
   pack_rows("Global curve properties", 7, 11)
 }else{
   kable(para_table, escape = TRUE, align = "l",)
+  
+  cat("<br><b>Note:</b> Install package 'kableExtra' for improved table style in this report.")
 }
-
-
 ```
 <br><br>
-Last major change in the script code: `r Last_changed`  by D. Mittelstraß
-<br></font>
-
-**Session info:**
-
-```{r session_info}
-print(sessionInfo(), locale = FALSE)
-```

@@ -94,7 +94,7 @@ Storn, R., Price, K., 1997. Differential Evolution – A Simple and Efficient He
 \link{decompose_OSLcurve}, \link{RLum.OSL_decomposition}, \link[DEoptim:DEoptim]{DEoptim::DEoptim}, \link{fit_OSLcurve}
 }
 \author{
-Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 
 Please cite the package the following way:
 
