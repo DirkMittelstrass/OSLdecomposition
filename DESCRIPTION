@@ -1,7 +1,7 @@
 Package: OSLdecomposition
 Type: Package
 Title: Identify and Separate Continuous-Wave Optically Stimulated Luminescence Signal Components
-Version: 1.0.0.9000-05
+Version: 1.0.0
 Authors@R: c(
     person("Dirk", "Mittelstrass", email = "dirk.mittelstrass@luminescence.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9567-8791")),
     person("Sebastian", "Kreutzer", role = c("aut"), comment = c(ORCID = "0000-0002-0734-2199")),
@@ -14,8 +14,9 @@ Description: Function library for the identification and separation of exponenti
     decaying signal components in continuous-wave optically stimulated luminescence (CW-OSL) measurements.
     A special emphasis is laid on luminescence dating with quartz, which is known for
     systematic errors due to CW-OSL signal components with unequal physical behaviour.
-    Also, this package enables an automatised and protocollized signal decomposition of 
-    CW-OSL data sets read and analysed with the R package 'Luminescence'. Further information and tutorials
+    Also, this package enables an easy to use signal decomposition of 
+    CW-OSL data sets imported and analysed with the R package 'Luminescence'. 
+    This includes the optional automatic creation of HTML reports. Further information and tutorials
     can be found at <https://luminescence.de>.
 Depends: R (>= 4.0)
 License: GPL-3

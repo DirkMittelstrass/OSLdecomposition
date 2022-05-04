@@ -2,7 +2,7 @@
 title: "Step 2: Algebraic decomposition of all CW-OSL curves"
 output:
   html_document:
-    theme: yeti
+    theme: readable
     toc: true
     toc_depth: 2
     toc_float:
@@ -18,16 +18,16 @@ params:
 <style type="text/css">
 
 .toc-content {
-  padding-left: 15px;
+  padding-left: 0px;
   padding-right: 15px;
 }
 
 .tocify-header .tocify-item {
-  font-size: 1.20em;
+  font-size: 1.00em;
 }
 
 .tocify-subheader .tocify-item {
-  font-size: 1.10em;
+  font-size: 0.85em;
   padding-left: 25px;
   text-indent: 0;
 }
@@ -35,14 +35,15 @@ params:
 
 ```{r step2_setup, include=FALSE}
  
-# NOTE: Add the following lines to the YAML header to enable offline display of the equations:
-#   mathjax: local
-#   self_contained: false
-
-Last_changed <-"2021-02-15" 
+# Changelog:
+# * 2020-May  , DM: First reasonable version
+#   ... 
+# * 2022-05-04, DM: Added handling in case kableExtra is not installed
+# * 2022-05-04, DM: Changed style to have better match between text font and formulas
 
 # ToDo's:
-# * Bug: The barplots sort the columns alphabetically
+# * Reduce font size of the intensity tables if there are more than 3 components
+# * Add more parameters to Script Parameter table (see table for Step 1)
 
 ### Planned further features:
 #
@@ -57,10 +58,15 @@ Last_changed <-"2021-02-15"
 #     simple example:
 #     pairs(subset(results, select = c("n.1", "n.2", "n.3", "IRR_TIME")))
 
+
+# NOTE: Add the following lines to the YAML header to enable offline display of the equations:
+#   mathjax: local
+#   self_contained: false
+
+kable_extra <- require(kableExtra, quietly = TRUE)
 library(knitr)
 library(ggplot2)
 library(gridExtra)
-library(kableExtra)
 library(scales)
 
 knitr::opts_chunk$set(fig.width=8,
@@ -154,12 +160,14 @@ for (j in 1:length(record)) {
     
     # Append current component to Table 1 table
     new_col <- data.frame(row = paste0(round(intensities), " ± ", round(sigmas)))
-    colnames(new_col) <- input_table$name[k]
+    if (kable_extra) {
+      colnames(new_col) <- input_table$name[k]
+    } else {
+      colnames(new_col) <- paste0("$n_{", input_table$name[k],"}$")
+    }
     aliquot_table <- cbind(aliquot_table, new_col)
     
-
-    
-    # Include component only in the bar-plot if it is bleached to at least 50 %
+    # Include component only in the bar-plot if it is bleached to at least 95 %
     bleaching_grade <- 1 - sum(result[,colnames(result) == paste0("n.residual.", k)], na.rm = TRUE) / 
                            sum(intensities, na.rm = TRUE)
     if (bleaching_grade >= 0.95) {
@@ -181,7 +189,11 @@ for (j in 1:length(record)) {
     
     initial_signals <- result[,colnames(result) == paste0("initial.signal.", k)]
     new_col <- data.frame(row = scales::percent(initial_signals, accuracy = 0.1, suffix = " %"))
-    colnames(new_col) <- input_table$name[k]
+    if (kable_extra) {
+      colnames(new_col) <- input_table$name[k]
+    } else {
+      colnames(new_col) <- paste0("$I_0$ (", input_table$name[k], ")")
+    }
     aliquot_table <- cbind(aliquot_table, new_col)
     
   }
@@ -349,17 +361,21 @@ tabs <- lapply(as.list(1:length(record)),
 The following tables summarize all in Step 2 calculated values for each `RLum.Analysis` object (= aliquot). The column *record index* refers to the index needed to plot a single measurement by calling: `plot_OSLcurve(data_set[[aliquot_index]]@records[[data_index]])`
 
 ```{r step2_create_result_tabs1} 
+# Depending if the kableExtra package is installed, do more or less formatting of the table
+create_table <- "kable(intensity_tables[[{{j}}]], escape = TRUE, row.names = FALSE, align = \"c\")"
+if (kable_extra) {
+  create_table <- c(create_table, " %>%\n",
+    "add_header_above(c(\" \" = 2,\"Component intensity $n ± \\\\sigma$\" = K,\"Contribution to first channel\" = K))%>%\n",
+    "kable_styling(bootstrap_options = c(\"striped\", \"condensed\", \"scale_down\"),  fixed_thead = TRUE)")
+} 
+
 # Define dynamic Rmarkdown code, structured in tabs
 dynamic_code <- c("### #{{j}}\n",
                   
 # Print the full intensity table
     "<i><b>Table 1.`r {{j}}`:</b> CW-OSL signal intensities of all records for aliquot #{{j}}. </i><br>",
     "```{r tab_{{j}}_result_table}\n",
-   # "kable_table <- intensity_tables[[{{j}}]]\n",
-    "kable(intensity_tables[[{{j}}]], escape = TRUE, row.names = FALSE, align = \"c\") %>%\n",
-    "add_header_above(c(\" \" = 2,\"Component intensity $n ± \\\\sigma$\" = K,\"Contribution to first channel\" = K))%>%\n",
-    "kable_styling(bootstrap_options = c(\"striped\", \"condensed\", \"scale_down\"),  fixed_thead = TRUE)",
-    "```\n",  #font_size = 9,
+    create_table, "```\n",
     "<br><br>\n")
 
 tabs <- lapply(as.list(1:length(record)),
@@ -369,7 +385,7 @@ tabs <- lapply(as.list(1:length(record)),
 ```
 `r knitr::knit(text = unlist(tabs))`
 
-
+<br><br>
 
 # Methods
 
@@ -424,9 +440,13 @@ if ("bin" %in% colnames(dec_data$decompositon.input)) {
 } else {
   colnames(interval_table) <- c("signal bin","  $t_{start}$  ","  $t_{end}$  ", "channels")
 }
-
-kable(interval_table, escape = TRUE, align = "c",) %>%
+if (kable_extra) {
+  kable(interval_table, escape = TRUE, align = "c") %>%
   kable_styling(bootstrap_options = c("condensed", "striped"), full_width = TRUE, position = "center")
+} else {
+  kable(interval_table, escape = TRUE, align = "c")
+}
+
 
 ```
 
@@ -454,6 +474,8 @@ The intensity error values $\sigma$  account just for statistical noise (e. g. [
 * Unstable light stimulation
 * Inadequate or missing background correction
 
+<br><br>
+
 # General remarks {#disclaimer}
 
 This report was automatically generated by functions of the **R** package `OSLdecomposition` written and maintained by Dirk Mittelstraß (<dirk.mittelstrass@luminescence.de>). This package is preferably used together with the **R** package `Luminescence` ([link](https://cran.r-project.org/package=Luminescence)) by [Kreutzer *et al.* (2012)](#ref). For the dynamic creation of this HTML report, the **R** packages `knitr` and `rmarkdown` are used, see [Xie (2015)](#ref) and [Xie *et al.* (2018)](#ref). All diagrams are drawn with `ggplot2` [(Wickham 2016)](#ref).
@@ -468,7 +490,7 @@ Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence 
 
 We allow and encourage you to add the HTML file of this report to the electronical supplement of your publication.  
 
-
+<br><br>
 
 # References {#ref}
 
@@ -505,10 +527,11 @@ https://yihui.org/knitr/
 Xie, Y., Allaire, J.J., Grolemund, G., 2018. R Markdown: the definitive guide. Taylor & Francis, CRC Press, Boca Raton.<br>
 https://bookdown.org/yihui/rmarkdown/
 
+<br><br>
 
 # Script parameters
 
-```{r step1_build_parameter_table}
+```{r step2_build_parameter_table}
 
 # Algorithm settings
 para_table <- data.frame(n = "Analyzed data set", t = object_name)
@@ -523,12 +546,16 @@ para_table <- rbind(para_table,
                     data.frame(n = "Error estimation approach ", t = dec_data$parameters$error_calculation),
                     data.frame(n = "With background component? ", t = format(dec_data$parameters$background_fitting)))
 
-
-colnames(para_table) <- c("","")
-kable(para_table, escape = TRUE, align = "l",) %>%
+if (kable_extra) {
+  colnames(para_table) <- c("","")
+  kable(para_table, escape = TRUE, align = "l") %>%
   kable_styling(bootstrap_options = c("condensed"), full_width = FALSE, position = "left") %>%
   pack_rows("Input data", 1, 4) %>%
   pack_rows("Algorithm parameter", 5, 7)
+} else {
+  colnames(para_table) <- c("Parameter","Value")
+  kable(para_table, escape = TRUE, align = "l")
+}
 
 ```
 <br><br>
@@ -536,8 +563,9 @@ kable(para_table, escape = TRUE, align = "l",) %>%
 ```{r curve_viewer, eval=FALSE, include=FALSE}
 
 #### CURVE VIEWER beta ####
-# Creates shiny plot to surf through curves
-# does not work with static Rmarkdown documents
+# Creates an interactive shiny plot to surf through curves
+# does not work with static Rmarkdown documents and is therefore disabled here
+# However, can be useful in case a database driven client<->server setup is ever realized
 
 numericInput("aliquot_i", "Aliquot no.: ", value = 1, min = 1, max = length(data_set))
 numericInput("record_i", "Record no.: ", value = 1, min = 1, max = length(record_index))

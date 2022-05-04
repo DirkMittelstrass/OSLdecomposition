@@ -2,7 +2,7 @@
 title: "Step 1: Multi-exponential regression at global average CW-OSL curve"
 output:
   html_document:
-    theme: yeti
+    theme: readable
     toc: true
     toc_depth: 2
     toc_float:
@@ -18,28 +18,38 @@ params:
 <style type="text/css">
 
 .toc-content {
-  padding-left: 15px;
+  padding-left: 0px;
   padding-right: 15px;
 }
 
 .tocify-header .tocify-item {
-  font-size: 1.20em;
+  font-size: 1.00em;
 }
 
 .tocify-subheader .tocify-item {
-  font-size: 1.10em;
+  font-size: 0.85em;
   padding-left: 25px;
   text-indent: 0;
 }
 </style>
 
 ```{r step1_setup, include=FALSE}
+# Changelog:
+# * 2020-May  , DM: First reasonable version
+#   ... 
+# * 2022-05-04, DM: Revised handling in case kableExtra is not installed
+# * 2022-05-04, DM: Changed style to have better match between text font and formulas
+#
+# ToDo:
+# * Get No. of record_type info and the global_average data directly from #
+#   sum_OSLcurves outout to save computing time
+# * Create some kind of overview diagram to set residual signals into better relation (see idea in code)
+#
 # NOTE: Add the following lines to the YAML header to enable offline display of the equations:
 #   mathjax: local
 #   self_contained: false
 
-Last_changed <- "2022-01-10"
-kable_extra <- require(kableExtra)
+kable_extra <- require(kableExtra, quietly = TRUE)
 library(knitr)
 library(ggplot2)
 library(gridExtra)
@@ -57,8 +67,6 @@ knitr::opts_chunk$set(fig.width=8,
                       echo=FALSE,
                       cache=FALSE)
 
-# Find out the overall number of 'record_type' curves
-# ToDo: Get this info (and the global_average data) directly from sum_OSLcurves outout
 record_type <- fit_data$parameters$record_type
 n.curves <- 0
 for (j in 1:length(data_set)) {
@@ -160,19 +168,24 @@ F_table <- fit_data$F.test.print
 row_index <- c(1:nrow(F_table))
 F_table <- cbind(data.frame(K = row_index), F_table)
 
+# Extra 
 # if (fit_data$parameters$background.fitting == TRUE) {
 # colnames(F_table) <- c("  $K$  ", paste0("$\\lambda_", row_index,"$ $(s^{-1})$"), "background", "RSS", "$F_K$")
 
 # Default model with K = 3
 K.default <- 3
-K.default.text <- "<u>Green stripe</u>: Default CW-OSL model for quartz."
-if (fit_data$K.selected < 4) {
-  
-  K.default <- fit_data$K.selected
-  K.default.text <- ""}
+K.default.text <- ""
+if (kable_extra) {
+  K.default.text <- "<u>Blue stripe</u>: Algorithm selected model.<br>"
+  if (fit_data$K.selected <= K.default) {
+    K.default <- fit_data$K.selected
+  } else {
+    K.default.text <- paste0("<u>Green stripe</u>: Default CW-OSL model for quartz (recommended). ", K.default.text)
+  }
+}
 
 # Table caption:
-cat(paste0("<br><i><b>Table 2:</b> Decay rates and fitting quality parameters as function of component number $K$. <br>$RSS$: Residual square sum. $F_K$:  Measure of fitting improvement.</i><br>", K.default.text, " <u>Blue stripe</u>: F-test selected model.<br>"))
+cat(paste0("<br><i><b>Table 2:</b> Decay rates and fitting quality parameters as function of component number $K$. <br>$RSS$: Residual square sum. $F_K$:  Measure of fitting improvement.</i><br>", K.default.text))
 
 # print F-test table
 colnames(F_table) <- c("  $K$  ", paste0("$\\lambda_", row_index,"$ $(s^{-1})$"), "$RSS$","$F_K$")
@@ -200,7 +213,7 @@ if (kable_extra) {
 
 ```
 
-<br><br><br>
+<br><br>
 
 
 # Methods 
@@ -267,6 +280,7 @@ Here, $N$ is the number data points (channels) of the global average curve and $
 
 However, CW-OSL components with non-first-order kinetics, variations in the decay rates and too long measurement duration can lead to the detection of imaginary signal components, as [Mittelstraß (2019)](#ref) discussed in more detail. Therefore, the F-test outcome should be taken with care as over-fitting is still likely.
 
+<br><br>
 
 # General remarks {#disclaimer}
 
@@ -282,6 +296,7 @@ Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence 
 
 We allow and encourage you to add the HTML file of this report to the electronical supplement of your publication.  
 
+<br><br>
 
 # References {#ref}
 
@@ -326,6 +341,7 @@ https://yihui.org/knitr/
 Xie, Y., Allaire, J.J., Grolemund, G., 2018. R Markdown: the definitive guide. Taylor & Francis, CRC Press, Boca Raton.<br>
 https://bookdown.org/yihui/rmarkdown/
 
+<br><br>
 
 # Script parameters
 
@@ -349,22 +365,22 @@ ch.W <- fit_data$curve$time[2]-fit_data$curve$time[1]
 para_table <- rbind(para_table, 
                     data.frame(n = "No. of input measurements", t = format(n.curves)),
                     data.frame(n = "No. of input aliquots", t = format(length(data_set))),
-                    data.frame(n = "Channel time ", t = paste0("$\\delta$*t* = ", prettyNum(ch.W), " s")),
+                    data.frame(n = "Channel time ", t = paste0("$\\Delta$*t* = ", prettyNum(ch.W), " s")),
                     data.frame(n = "Channels ", t = paste0("*N* = ", ch.N)),
                     data.frame(n = "Global curve length ", t = paste0("*t* = ", prettyNum(ch.W*ch.N), " s")))
 
-
-colnames(para_table) <- c("","")
 if (kable_extra) {
+  colnames(para_table) <- c("","")
   kable(para_table, escape = TRUE, align = "l",) %>%
   kable_styling(bootstrap_options = c("condensed"), full_width = FALSE, position = "left") %>%
   pack_rows("Settings", 1, 4) %>%
   pack_rows("Photoionisation cross section parameter", 5, 6) %>%
   pack_rows("Global curve properties", 7, 11)
-}else{
-  kable(para_table, escape = TRUE, align = "l",)
-  
-  cat("<br><b>Note:</b> Install package 'kableExtra' for improved table style in this report.")
+} else {
+  colnames(para_table) <- c("Parameter", "Value")
+  kable(para_table, escape = TRUE, align = "l")
+ # kable(para_table)
+ # cat("<br><b>Note:</b> Install package 'kableExtra' for improved table style in this report.")
 }
 ```
 <br><br>

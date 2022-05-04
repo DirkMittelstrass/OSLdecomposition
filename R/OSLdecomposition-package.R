@@ -1,15 +1,16 @@
 #' @title Identify and Separate Continuous-Wave Optically Stimulated Luminescence Signal Components\cr
 #'
 #' \if{html}{
-#' \figure{OSLdecomposition_logo.png}{options: width="50px" alt="luminescence.de"}\cr
+#' \figure{OSLdecomposition_logo.png}{options: width="75" alt="luminescence.de"}\cr
 #' }
 #'
 #' @description Function library for the identification and separation of exponentially
 #' decaying signal components in continuous-wave optically stimulated luminescence (CW-OSL) measurements.
 #' A special emphasis is laid on luminescence dating with quartz, which is known for
 #' systematic errors due to CW-OSL signal components with unequal physical behaviour.
-#' This package enables an automatised workflow for signal component deconvolution
-#' in combination with the R package 'Luminescence'.
+#' Also, this package enables an easy to use signal decomposition of
+#' CW-OSL data sets imported and analysed with the R package 'Luminescence'.
+#' This includes the optional automatic creation of HTML reports.
 #'
 #' @name OSLdecomposition-package
 #' @aliases OSLdecomposition
@@ -26,12 +27,11 @@
 #'
 #' - [https://github.com/DirkMittelstrass/OSLdecomposition]()
 #'
-#' **Support and bug reporting**
+#' **Bug reporting**
 #'
-#' - \email{dirk.mittelstrass@@luminescence.de} or
 #' - [https://github.com/DirkMittelstrass/OSLdecomposition/issues]()
 #'
-#' **Related projects**
+#' **Part of the RLum.Network**
 #'
 #' - [https://r-luminescence.org]()
 #'

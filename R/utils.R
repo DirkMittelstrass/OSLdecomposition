@@ -58,6 +58,7 @@
   # * Create public function "create_report" or similar to allow for the report creation at already
   #   analysed RLum-objects
   # * Create private function "measure_time" to move the "time needed" code snippet to here
+  # * Store the output path in the RLum-object
 
 # Pre-checks ---------------------------------------------------------------
 
