@@ -85,7 +85,7 @@
 #' Please cite the package the following way:
 #'
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+#' R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, *in preparation*.
 #'
 #' @seealso [RLum.OSL_correction], [RLum.OSL_decomposition], [sum_OSLcurves], [fit_OSLcurve]
 #'

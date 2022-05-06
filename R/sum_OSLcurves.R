@@ -15,7 +15,7 @@
 #' for example: `"OSL"`,`"SGOSL"` or `"IRSL"`.
 #'
 #' @param aliquot_selection [numeric] vector (*optional*):
-#' Vector specifying the indicies of elements (aliquots) of a list of [RLum.Analysis-class] objects
+#' Vector specifying the indices of elements (aliquots) of a list of [RLum.Analysis-class] objects
 #' which shall be included.
 #'
 #' @param offset_value [numeric] (*with default*):
@@ -59,7 +59,7 @@
 #' Please cite the package the following way:
 #'
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+#' R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, *in preparation*.
 #'
 #' @seealso [fit_OSLcurve], [RLum.OSL_correction], [RLum.OSL_global_fitting]
 #'
@@ -91,7 +91,7 @@ sum_OSLcurves <- function(
 
   # Changelog:
   # * 2018-05-23, DM: first version
-  # * 2019-03-15, DM: rewritten for ggplots and new data format, renamend into sum_OSLcurves
+  # * 2019-03-15, DM: rewritten for ggplots and new data format, renamed into sum_OSLcurves
   # * 2020-08-30, DM: Overworked plotting; Expanded roxygen documentation
   #
   #  ToDo:

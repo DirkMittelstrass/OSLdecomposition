@@ -26,7 +26,7 @@ Other columns will be plotted as component curves, in case no input object \code
 If no input is given, a CW-OSL curve will be simulated with the parameters of \code{components}}
 
 \item{components}{\link{data.frame} (\emph{optional}):
-Table with OSL component parameters. The parameters are used to approximate seperate signal decay curves
+Table with OSL component parameters. The parameters are used to approximate separate signal decay curves
 for each component. Need to have at least the columns: \verb{$names}, \verb{$lambda} and \verb{$n}.
 If an insufficient or no input object is provided, the `curve`` object will be searched for
 component-related signal values.}
@@ -129,5 +129,5 @@ Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 Please cite the package the following way:
 
 Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
+R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, \emph{in preparation}.
 }

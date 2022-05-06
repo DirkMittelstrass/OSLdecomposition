@@ -31,7 +31,7 @@
 #' If no input is given, a CW-OSL curve will be simulated with the parameters of `components`
 #'
 #' @param components [data.frame] (*optional*):
-#' Table with OSL component parameters. The parameters are used to approximate seperate signal decay curves
+#' Table with OSL component parameters. The parameters are used to approximate separate signal decay curves
 #' for each component. Need to have at least the columns: `$names`, `$lambda` and `$n`.
 #' If an insufficient or no input object is provided, the `curve`` object will be searched for
 #' component-related signal values.
@@ -84,7 +84,7 @@
 #' Please cite the package the following way:
 #'
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+#' R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, *in preparation*.
 #'
 #' @seealso [fit_OSLcurve], [RLum.OSL_decomposition, [RLum.OSL_global_fitting], [simulate_OSLcomponents]
 #'

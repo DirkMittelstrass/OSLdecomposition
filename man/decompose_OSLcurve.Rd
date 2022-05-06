@@ -194,5 +194,5 @@ Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 Please cite the package the following way:
 
 Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
+R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, \emph{in preparation}.
 }

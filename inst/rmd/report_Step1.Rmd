@@ -42,7 +42,7 @@ params:
 #
 # ToDo:
 # * Get No. of record_type info and the global_average data directly from #
-#   sum_OSLcurves outout to save computing time
+#   sum_OSLcurves output to save computing time
 # * Create some kind of overview diagram to set residual signals into better relation (see idea in code)
 #
 # NOTE: Add the following lines to the YAML header to enable offline display of the equations:
@@ -130,7 +130,7 @@ tabs <- lapply(as.list(1:nrow(fit_data$F.test)),
                 function(i) knitr::knit_expand(text = dynamic_code))
 
 
-# Now knit the dynamic code. This has to be in a seperate chunk
+# Now knit the dynamic code. This has to be in a separate chunk
 ```
 
 `r knitr::knit(text = unlist(tabs))`
@@ -238,7 +238,7 @@ $$I(t) = \sum_{i=1}^K n_ie^{-\lambda_it}$$
 
 Here, $I(t)$ is the CW-OSL signal, $K$ is the number of signal components. Each component is defined by its intensity $n$ and its decay rate $\lambda$.  
 
-To achieve component-seperated dose information, the data analysis process is divided into multiple steps:
+To achieve component-separated dose information, the data analysis process is divided into multiple steps:
 
 <center>
 
@@ -290,7 +290,8 @@ The data analysis method covered with this report was developed for CW-OSL SAR p
 
 -------------------
 
-Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz, Master thesis, TU Dresden, Dresden. <br> https://iktp.tu-dresden.de/IKTP/pub/19/Dirk_Mittelstrass_Master.pdf  <br>
+Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, *in preparation*.<br>
 
 -------------------
 
@@ -320,6 +321,9 @@ https://doi.org/10.1016/S1350-4487(03)00052-0
 
 Kreutzer, S., Schmidt, C., Fuchs, M.C., Dietze, M., Fuchs, M., 2012. Introducing an R package for luminescence dating analysis. Ancient TL 30.<br>
 http://ancienttl.org/ATL_30-1_2012/ATL_30-1_Kreutzer_p1-8.pdf
+
+Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and its application in retrospective dosimetry at quartz, Master thesis, TU Dresden, Dresden.<br>
+https://iktp.tu-dresden.de/IKTP/pub/19/Dirk_Mittelstrass_Master.pdf
 
 Mittelstraß D., Schmidt C., Beyer J., and Straessner A., 2019. Automated identification and separation of quartz CW-OSL signal components with R. talk presented at the Central European Conference on Luminescence and Trapped-Charge dating: DLED 2019, Bingen, Germany<br>
 http://luminescence.de/OSLdecomp_talk.pdf

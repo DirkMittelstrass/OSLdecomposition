@@ -9,10 +9,10 @@
 #'
 #' with \eqn{I(t)} the CW-OSL signal, \eqn{n} the signal component intensity,
 #' \eqn{\lambda} the signal component decay constant and \eqn{K} the number of signal components.
-#' For actual fitting, the integrated version of this formula is used, see Mittelstrass et al. (2021) for details.
+#' For actual fitting, the integrated version of this formula is used, see Mittelstraß et al. (2021) for details.
 #'
 #' The fitting algorithm is an implementation of the *hybrid evolutionary-linear algorithm* (HELA)
-#' by Bluszcz & Adamiec (2006). See there or Mittelstrass et al. (in preperation) for details.
+#' by Bluszcz & Adamiec (2006). See there or Mittelstraß et al. (in preparation) for details.
 #' The differential evolution part of HELA is performed by [DEoptim::DEoptim].
 #' The linear regression part of HELA is performed by [decompose_OSLcurve].
 #' The parameter refinement by Levenberg-Marquardt fitting is performed by [minpack.lm::nlsLM].
@@ -107,7 +107,7 @@
 #' Please cite the package the following way:
 #'
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+#' R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, *in preparation*.
 #'
 #' @seealso [RLum.OSL_decomposition], [sum_OSLcurves], [decompose_OSLcurve], [plot_OSLcurve],
 #' [plot_PhotoCrosssections], [minpack.lm::nlsLM], [DEoptim::DEoptim]
@@ -182,15 +182,15 @@ fit_OSLcurve <- function(
 
   # Changelog:
   # * 2019-02-14, DM: First version
-  # * 2019-03-15, DM: Seperated 'decompose_OSLalternatively()'
+  # * 2019-03-15, DM: Separated 'decompose_OSLalternatively()'
   # * 2019-04-29, DM: Added Blucszs & Adamiec-like approach using numOSL::decomp (Peng et al. 2014)
   # * 2019-05-14, DM: Added "fit_OSLLifeTimes" approach from Luminescence package 0.9; Corrected and improved numOSL approach; Deleted nls.default approach
   # * 2019-06-28, DM: Deleted "fit_OSLLifeTimes" approach. Added stretched exponentials for testing. Added overview plot
   # * 2019-10-07, DM: Streamlined function; added optional background fitting
-  # * 2019-10-08, DM: Seperated plotting to plot_PhotoCrosssections()
+  # * 2019-10-08, DM: Separated plotting to plot_PhotoCrosssections()
   # * 2020-04-04, DM: Extended output list (curve & arguments)
   # * 2020-04-06, DM: Extended print output and made some  tweaks. Replaced 'SAR.compatible' with 'fully.bleached'
-  # * 2020-05-05, DM: Replaced bolean 'fully.bleached' with numeric 'bleaching.grade'
+  # * 2020-05-05, DM: Replaced boolean 'fully.bleached' with numeric 'bleaching.grade'
   # * 2020-08-05, DM: Added DEoptim + nlsLM algorithm
   # * 2020-08-10, DM: Optional parallel computing enabled
   # * 2020-10-26, DM: Roxygen documentation

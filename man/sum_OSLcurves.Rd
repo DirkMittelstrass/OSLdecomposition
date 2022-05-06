@@ -26,7 +26,7 @@ Type of records which are selected from the input \code{object},
 for example: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}.}
 
 \item{aliquot_selection}{\link{numeric} vector (\emph{optional}):
-Vector specifying the indicies of elements (aliquots) of a list of \linkS4class{RLum.Analysis} objects
+Vector specifying the indices of elements (aliquots) of a list of \linkS4class{RLum.Analysis} objects
 which shall be included.}
 
 \item{offset_value}{\link{numeric} (\emph{with default}):
@@ -91,5 +91,5 @@ Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 Please cite the package the following way:
 
 Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
+R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, \emph{in preparation}.
 }

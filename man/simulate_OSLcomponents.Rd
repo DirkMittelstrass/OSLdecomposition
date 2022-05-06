@@ -66,7 +66,7 @@ Renamed argument from \emph{template.curve} to \emph{curve}; Rewrote roxygen doc
 
 \examples{
 
-# Set some arbitary decay parameter for a dim CW-OSL measurement of quartz
+# Set some arbitrary decay parameter for a dim CW-OSL measurement of quartz
 components <- data.frame(name = c("fast", "medium", "slow"),
                          lambda = c(2, 0.5, 0.02),
                          n = c(1000, 1000, 10000))
@@ -90,5 +90,5 @@ Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 Please cite the package the following way:
 
 Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
+R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, \emph{in preparation}.
 }

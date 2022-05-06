@@ -61,11 +61,11 @@ This function defines integration intervals for CW-OSL component separation with
 The underlying iterative optimisation process aims for minimum cross-correlation between the signal components.
 }
 \details{
-The precision of the component seperation with \link{decompose_OSLcurve} and the impact of
-systematic decay rate errors on the component seperation depends on the integration interval definition.
+The precision of the component separation with \link{decompose_OSLcurve} and the impact of
+systematic decay rate errors on the component separation depends on the integration interval definition.
 This function minimises the influence of an under/over-estimated decay rate to the
 signal intensity calculation of other component. This is done by maximizing the denominator
-determinant in Cramers rule, see Mittelstrass (2019) for details. For maximisation, the iterative
+determinant in Cramers rule, see Mittelstraß (2019) for details. For maximisation, the iterative
 evolutionary algorithm of Storn and Price (1997) is used, available in \emph{R} through \link[DEoptim:DEoptim]{DEoptim::DEoptim}.
 
 The inclusion of a background component is supported, see \link{decompose_OSLcurve} for details.
@@ -73,7 +73,7 @@ The inclusion of a background component is supported, see \link{decompose_OSLcur
 \section{Last updates}{
 
 
-2020-08-23, DM: Replaced own maxmimum searching algorithm with \link[DEoptim:DEoptim]{DEoptim::DEoptim}
+2020-08-23, DM: Replaced previous maximum searching algorithm with \link[DEoptim:DEoptim]{DEoptim::DEoptim}
 (\strong{update may have changed analysis results})
 
 2020-10-29, DM: Added \code{parallel.computing} argument; enhanced roxygen documentation (\emph{minor update})
@@ -99,5 +99,5 @@ Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 Please cite the package the following way:
 
 Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
+R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, \emph{in preparation}.
 }

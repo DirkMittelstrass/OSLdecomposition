@@ -1,7 +1,7 @@
 #' @title Identify and Separate Continuous-Wave Optically Stimulated Luminescence Signal Components\cr
 #'
 #' \if{html}{
-#' \figure{OSLdecomposition_logo.png}{options: width="75" alt="luminescence.de"}\cr
+#' \figure{OSLdecomposition_logo.png}{options: width="90" alt="luminescence.de"}\cr
 #' }
 #'
 #' @description Function library for the identification and separation of exponentially
@@ -31,7 +31,7 @@
 #'
 #' - [https://github.com/DirkMittelstrass/OSLdecomposition/issues]()
 #'
-#' **Part of the RLum.Network**
+#' **This package is part of the RLum.Network**
 #'
 #' - [https://r-luminescence.org]()
 #'
@@ -40,6 +40,10 @@
 #' Dirk Mittelstraß, Independent researcher, Dresden (Germany),\cr
 #' \email{dirk.mittelstrass@@luminescence.de}
 #'
+#' **Citation**
+#'
+#' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
+#' R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, *in preparation*.
 #'
 #' **Funding**
 #' Dirk Mittelstraß created this package as part of his master thesis and further enhanced and

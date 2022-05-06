@@ -82,10 +82,10 @@ The function assumes multiple exponentially decaying signal components with firs
 
 with \eqn{I(t)} the CW-OSL signal, \eqn{n} the signal component intensity,
 \eqn{\lambda} the signal component decay constant and \eqn{K} the number of signal components.
-For actual fitting, the integrated version of this formula is used, see Mittelstrass et al. (2021) for details.
+For actual fitting, the integrated version of this formula is used, see Mittelstraß et al. (2021) for details.
 
 The fitting algorithm is an implementation of the \emph{hybrid evolutionary-linear algorithm} (HELA)
-by Bluszcz & Adamiec (2006). See there or Mittelstrass et al. (in preperation) for details.
+by Bluszcz & Adamiec (2006). See there or Mittelstraß et al. (in preparation) for details.
 The differential evolution part of HELA is performed by \link[DEoptim:DEoptim]{DEoptim::DEoptim}.
 The linear regression part of HELA is performed by \link{decompose_OSLcurve}.
 The parameter refinement by Levenberg-Marquardt fitting is performed by \link[minpack.lm:nlsLM]{minpack.lm::nlsLM}.
@@ -182,5 +182,5 @@ Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 Please cite the package the following way:
 
 Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-Automated identification and separation of quartz CW-OSL signal components with R, \emph{in preparation}.
+R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, \emph{in preparation}.
 }

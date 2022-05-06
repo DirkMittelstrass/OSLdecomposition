@@ -58,7 +58,7 @@
 #' Please cite the package the following way:
 #'
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-#' Automated identification and separation of quartz CW-OSL signal components with R, *in preparation*.
+#' R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, *in preparation*.
 #'
 #' @seealso [fit_OSLcurve], [RLum.OSL_global_fitting]
 #'
@@ -114,7 +114,7 @@ plot_PhotoCrosssections <- function(
 ){
 
   # Changelog:
-  # * 2019-10-08 Seperated from fit_OSLcurve()
+  # * 2019-10-08 Separated from fit_OSLcurve()
   # * 2020-04-09 Changed from decay rates to photoionisation cross-sections; cleaned code
   # * 2020-09-13 Added: K.selected, hide.plot, filename and auto-finding simulation parameters
   # * 2020-11-04, DM: Added roxygen documentation; Removed library(XXX)
