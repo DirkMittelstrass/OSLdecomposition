@@ -11,6 +11,11 @@ has not yet been a stable, usable release suitable for the
 public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![R-CMD-check](https://github.com/DirkMittelstrass/OSLdecomposition/workflows/GitHub%20Actions%20CI/badge.svg)](https://github.com/DirkMittelstrass/OSLdecomposition/actions)
 
+## General information
+
+An installation guide, tutorials, news and further resources can be
+found at [luminescence.de](https://luminescence.de/index.html).
+
 ## License
 
 This program is free software: you can redistribute it and/or modify it

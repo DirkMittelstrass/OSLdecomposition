@@ -11,6 +11,9 @@ knitr::opts_chunk$set(
 )
 
 library(OSLdecomposition)
+
+# Change when CRAN version is successful released
+#[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 ```
 
 # OSLdecomposition  <img width=120px src="man/figures/OSLdecomposition_logo.png" align="right" />
@@ -18,13 +21,12 @@ library(OSLdecomposition)
 Identify and Separate Continuous-Wave Optically Stimulated Luminescence (CW-OSL) Signal Components
 
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
-#[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![R-CMD-check](https://github.com/DirkMittelstrass/OSLdecomposition/workflows/GitHub Actions CI/badge.svg)](https://github.com/DirkMittelstrass/OSLdecomposition/actions)
 
 
 ## General information 
 
-An installation guide, Tutorials, news and further resources can be found at [luminescence.de](https://luminescence.de/index.html).
+An installation guide, tutorials, news and further resources can be found at [luminescence.de](https://luminescence.de/index.html).
 
 ## License
 
