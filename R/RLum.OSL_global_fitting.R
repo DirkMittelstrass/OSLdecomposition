@@ -123,7 +123,9 @@
 #' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 #'
 #' # Check data set and perform background correction
-#' data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
+#' data_set_corrected <- RLum.OSL_correction(data_set,
+#'  background = 11,
+#'  remove_light_off = FALSE)
 #'
 #' # Identify components
 #' data_set_fitted <- RLum.OSL_global_fitting(

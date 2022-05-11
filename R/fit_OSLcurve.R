@@ -385,7 +385,7 @@ fit_OSLcurve <- function(
       control = DEoptim::DEoptim.control(
         NP = K * 15,
         strategy = 2,
-        itermax = 100,
+        itermax = 80 + K * 10,
         c = 0.2,
         reltol = 1e-4,
         steptol = 10,
@@ -425,7 +425,7 @@ fit_OSLcurve <- function(
       n.names <- paste0("n.",1:K)
       lambda.names <- paste0("lambda.",1:K)
 
-      # now creat the optimization formula
+      # now create the optimization formula
       fit.formula <- stats::formula(paste0("signal ~ ",
                                        paste(n.names," * (exp(-", lambda.names," * (time - ", channel_width,")) - exp(-", lambda.names," * time))",
                                              collapse=" + ")))

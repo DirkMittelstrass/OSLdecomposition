@@ -185,6 +185,7 @@ RLum.OSL_correction <- function(
   # * handle previous CORRECTION steps
   # * new 'reduce data' argument to delete all unnecessary data (like TL curves etc.)
   # * IMPORTANT: If a RLum.object is manipulated, change its @info accordingly
+  # * The routine for 'remove_light_off' is quite slow and needs performance improvement
 
 
   ##########################

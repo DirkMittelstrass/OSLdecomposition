@@ -7,7 +7,7 @@
 #' reference curve.
 #'
 #'
-#' @param object [RLum.Analysis-class] or [list](RLum.Analysis) (**required**):
+#' @param object [RLum.Analysis-class] or [list] of [RLum.Analysis-class] (**required**):
 #' Data set of one or multiple aliquots containing CW-OSL records.
 #'
 #' @param record_type [character] (*with default*):
@@ -139,7 +139,7 @@ sum_OSLcurves <- function(
       if (verbose) warning("Item ", j," is not a part of the data set. Item skipped")
 
     } else {
-      if (class(object[[j]]) != "RLum.Analysis") {
+      if(!inherits(object[[j]], "RLum.Analysis")) {
         if (verbose) warning("Item ", j," is not of class RLum.Analysis. Item skipped")
 
       } else {######### LOOP BEGINS ########

@@ -18,7 +18,7 @@ sum_OSLcurves(
 )
 }
 \arguments{
-\item{object}{\linkS4class{RLum.Analysis} or \href{RLum.Analysis}{list} (\strong{required}):
+\item{object}{\linkS4class{RLum.Analysis} or \link{list} of \linkS4class{RLum.Analysis} (\strong{required}):
 Data set of one or multiple aliquots containing CW-OSL records.}
 
 \item{record_type}{\link{character} (\emph{with default}):
