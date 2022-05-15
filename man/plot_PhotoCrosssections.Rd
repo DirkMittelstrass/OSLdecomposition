@@ -42,6 +42,12 @@ saved in the working directory. The image type is chosen by the file ending. Bot
 as well as pixel images are possible. Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics),
 \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics) and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}.}
 }
+\value{
+An invisible \link[ggplot2:ggplot]{ggplot2::ggplot} object containing the diagram will returned. "Invisible" means, the no value
+will be returned (e.g. no console printout) if the function is not assigned to a variable via \verb{<-}.
+If the function is assigned, the returned object can be further manipulated by \link{ggplot2-package} methods
+or manually drawn by various functions like for example \link[gridExtra:arrangeGrob]{gridExtra::grid.arrange}.
+}
 \description{
 This function takes the \code{output.complex = TRUE} output of \link{fit_OSLcurve} and draws the
 photoionisation cross sections of different models in relation to each other.
@@ -72,9 +78,9 @@ Slow4 \tab 1e-21 \tab 1e-20
 \examples{
 
 # Set some arbitrary decay parameter for a dim CW-OSL measurement of quartz
-name <- c("fast", "medium", "slow")
-lambda <- c(2, 0.5, 0.02)
-n <- c(1e6, 1e6, 1e7)
+name <- c("fast", "slow")
+lambda <- c(2, 0.02)
+n <- c(1e6, 5e7)
 
 # Build a component table
 components <- data.frame(name, lambda, n)
@@ -83,20 +89,11 @@ components <- data.frame(name, lambda, n)
 curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
 
 # Perform nonlinear regression at the simulated curve
-\dontrun{
-fit_results <- fit_OSLcurve(curve, output.complex = TRUE)
+fit_results <- fit_OSLcurve(curve, K.max = 2, output.complex = TRUE)
 
 # Plot the fitting iterations and set them into context
 plot_PhotoCrosssections(fit_results)
-}
 
-# How to create figures meant for publication:
-# Open new graphics device to set image dimensions manually and save image as vector graphic
-\dontrun{
-dev.new(width = 10, height = 3, unit = "cm", noRStudioGD = TRUE)
-plot_PhotoCrosssections(fit_results, filename = paste0(getwd(), "//plot.pdf"))
-dev.off()
-}
 
 }
 \references{
@@ -111,7 +108,7 @@ Radiation Measurements, Proceedings of the 10th international Conference on Lumi
 \link{fit_OSLcurve}, \link{RLum.OSL_global_fitting}
 }
 \author{
-Dirk Mittelstrass, \email{dirk.mittelstrass@luminescence.de}
+Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 
 Please cite the package the following way:
 

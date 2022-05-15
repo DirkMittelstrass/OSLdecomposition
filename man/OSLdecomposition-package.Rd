@@ -4,11 +4,7 @@
 \name{OSLdecomposition-package}
 \alias{OSLdecomposition-package}
 \alias{OSLdecomposition}
-\title{Identify and Separate Continuous-Wave Optically Stimulated Luminescence Signal Components\cr
-
-\if{html}{
-\figure{OSLdecomposition_logo.png}{options: width="90" alt="luminescence.de"}\cr
-}}
+\title{Signal Component Analysis for Optically Stimulated Luminescence}
 \description{
 Function library for the identification and separation of exponentially
 decaying signal components in continuous-wave optically stimulated luminescence (CW-OSL) measurements.

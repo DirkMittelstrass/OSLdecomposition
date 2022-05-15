@@ -144,7 +144,7 @@ data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
 
 # Plot background corrected global average CW-OSL curve
-\dontrun{
+\donttest{
 sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSL")
 
 # Plot background curve

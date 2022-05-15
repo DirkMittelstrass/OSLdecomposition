@@ -47,13 +47,18 @@
 #' as well as pixel images are possible. Allowed are `.pdf`, `.eps`, `.svg` (vector graphics),
 #' `.jpg`, `.png`, `.bmp` (pixel graphics) and more, see [ggplot2::ggsave].
 #'
+#' @return
+#' An invisible [ggplot2::ggplot] object containing the diagram will returned. "Invisible" means, the no value
+#' will be returned (e.g. no console printout) if the function is not assigned to a variable via `<-`.
+#' If the function is assigned, the returned object can be further manipulated by [ggplot2-package] methods
+#' or manually drawn by various functions like for example [gridExtra::grid.arrange].
 #'
 #' @section Last updates:
 #'
 #' 2020-11-04, DM: Added roxygen documentation
 #'
 #' @author
-#' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
+#' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
 #'
 #' Please cite the package the following way:
 #'
@@ -75,9 +80,9 @@
 #' @examples
 #'
 #' # Set some arbitrary decay parameter for a dim CW-OSL measurement of quartz
-#' name <- c("fast", "medium", "slow")
-#' lambda <- c(2, 0.5, 0.02)
-#' n <- c(1e6, 1e6, 1e7)
+#' name <- c("fast", "slow")
+#' lambda <- c(2, 0.02)
+#' n <- c(1e6, 5e7)
 #'
 #' # Build a component table
 #' components <- data.frame(name, lambda, n)
@@ -86,20 +91,11 @@
 #' curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, add.poisson.noise = TRUE)
 #'
 #' # Perform nonlinear regression at the simulated curve
-#' \dontrun{
-#' fit_results <- fit_OSLcurve(curve, output.complex = TRUE)
+#' fit_results <- fit_OSLcurve(curve, K.max = 2, output.complex = TRUE)
 #'
 #' # Plot the fitting iterations and set them into context
 #' plot_PhotoCrosssections(fit_results)
-#' }
 #'
-#' # How to create figures meant for publication:
-#' # Open new graphics device to set image dimensions manually and save image as vector graphic
-#' \dontrun{
-#' dev.new(width = 10, height = 3, unit = "cm", noRStudioGD = TRUE)
-#' plot_PhotoCrosssections(fit_results, filename = paste0(getwd(), "//plot.pdf"))
-#' dev.off()
-#' }
 #'
 #' @md
 #' @export
@@ -132,9 +128,6 @@ plot_PhotoCrosssections <- function(
   if (is.null(stimulation.intensity)) stimulation.intensity <- fit.list$parameters$stimulation.intensity
 
   if (is.null(stimulation.wavelength)) stimulation.wavelength <- fit.list$parameters$stimulation.wavelength
-
-  # supress warnings in the whole script
-  options( warn = -1 )
 
   plot_data <- fit.list$plot.data
   x <- nrow(fit.list$F.test)
@@ -258,7 +251,7 @@ plot_PhotoCrosssections <- function(
                        colour = "red", size = 1, fill = NA)}
 
 
-  # rotate diagramm and delete unnecessary visual elements
+  # rotate diagram and delete unnecessary visual elements
   p <- p + ggplot2::coord_flip() +
     ggplot2::ylab(expression(italic(sigma) ~~ (cm^2))) +
     ggplot2::theme(panel.border = ggplot2::element_blank(),

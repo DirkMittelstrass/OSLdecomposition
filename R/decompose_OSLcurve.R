@@ -218,9 +218,6 @@ decompose_OSLcurve <- function(
   # * Enhance Auto-interval finder to work when 'background.fitting = TRUE'
   # * It should be sufficient if t.start OR ch.start is given
 
-  # Hidden parameters
-  silent <- TRUE # don't display warnings or not-fatal errors
-
   ########## Input checks ###########
 
   if(!inherits(curve, c("RLum.Data.Curve", "data.frame", "matrix"))){
@@ -287,7 +284,7 @@ decompose_OSLcurve <- function(
 
     if (K > 1) {
 
-      # Calc the logarithmic means between following lambdas
+      # Calculate the logarithmic means between following lambdas
       intervals <- diff(log(lambda)) / diff(lambda)
 
       # Test if each interval starts before k/K
@@ -338,9 +335,6 @@ decompose_OSLcurve <- function(
   for (i in X) I <- c(I, sum(signal[c(ch.start[i]:ch.end[i])]))
   components$bin <- I
 
-  # supress warnings in the further script
-  if (silent) options(warn = -1)
-
   ######################### DET ###########################
 
   if ((algorithm == "det")||(algorithm == "det+nls")) {
@@ -378,7 +372,7 @@ decompose_OSLcurve <- function(
 
     for (k in X) {
 
-      # each enumarator matrix is equal to the denominator matrix but with
+      # each enumerator matrix is equal to the denominator matrix but with
       # the column k replaced by the vector I build of the signal bin values
       A.temp <- D
       A.temp[,k] <- I
@@ -428,19 +422,17 @@ decompose_OSLcurve <- function(
     fit <- try(minpack.lm::nlsLM(fit.formula,
                                     data = curve,
                                     start = c(n)),
-               silent = silent)
+               silent = TRUE)
 
     if (attr(fit,"class") == "try-error") {
 
       if (algorithm == "nls") {
 
         warning("nls-fit failed. Input component table returned")
-        #if (is.na(components$lambda[K])) {warning("A") } else { warning("B")}
         return(components)
       } else {
 
         if (verbose) cat("Levenberg-Marquardt fitting failed. Returning equation system solution instead")
-        #if (is.na(components$lambda[K])) {  warning("X") } else { warning("Y")}
         algorithm <- "det-fallback"}
 
     } else {
@@ -474,13 +466,13 @@ decompose_OSLcurve <- function(
         if (ch.start[i] == ch.end[i]) {
 
           # if signal bin consists just of one channel, assume Poisson statistics:
-          I.err <- I[i]^0.5
+          I.err <- sqrt(I[i])
         } else {
 
           # in all other cases: Use the corrected sample variance formula
           korrektor <- length(ch.start[i]:ch.end[i]) / (length(ch.start[i]:ch.end[i]) - 1)
           I.err <- c(I.err,
-                     (korrektor * sum(curve$residual[ch.start[i]:ch.end[i]]^2))^0.5)}}
+                     sqrt(korrektor * sum(curve$residual[ch.start[i]:ch.end[i]]^2)))}}
     } else {
 
       # Use poisson approach, add instrumental noise if defined
@@ -488,7 +480,7 @@ decompose_OSLcurve <- function(
 
       for (i in X) {
 
-        I.err[i] <- (I[i] + (t.end[i] - t.start[i]) * error.estimation^2 )^0.5}}
+        I.err[i] <- sqrt(I[i] + (t.end[i] - t.start[i]) * error.estimation^2 )}}
 
     components$bin.error <- I.err
 
@@ -506,7 +498,7 @@ decompose_OSLcurve <- function(
         A.k[i,k] <- 1
         sum.err <- sum.err + (det(A.k) * I.err[i])^2}
 
-      components$n.error[k] <- sum.err^0.5 / det(D)}
+      components$n.error[k] <- sqrt(sum.err) / det(D)}
 
   } ############ end ERROR CALC ############
 

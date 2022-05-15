@@ -364,7 +364,7 @@ The following tables summarize all in Step 2 calculated values for each `RLum.An
 # Depending if the kableExtra package is installed, do more or less formatting of the table
 create_table <- "kable(intensity_tables[[{{j}}]], escape = TRUE, row.names = FALSE, align = \"c\")"
 if (kable_extra) {
-  create_table <- c(create_table, " %>%\n",
+  create_table <- c("kable(intensity_tables[[{{j}}]], escape = TRUE, row.names = FALSE, align = \"c\")%>%\n",
     "add_header_above(c(\" \" = 2,\"Component intensity $n ± \\\\sigma$\" = K,\"Contribution to first channel\" = K))%>%\n",
     "kable_styling(bootstrap_options = c(\"striped\", \"condensed\", \"scale_down\"),  fixed_thead = TRUE)")
 } 
@@ -375,8 +375,7 @@ dynamic_code <- c("### #{{j}}\n",
 # Print the full intensity table
     "<i><b>Table 1.`r {{j}}`:</b> CW-OSL signal intensities of all records for aliquot #{{j}}. </i><br>",
     "```{r tab_{{j}}_result_table}\n",
-    create_table, "```\n",
-    "<br><br>\n")
+    create_table, "```\n")
 
 tabs <- lapply(as.list(1:length(record)),
                 function(j) knitr::knit_expand(text = dynamic_code))

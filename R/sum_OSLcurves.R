@@ -190,9 +190,6 @@ sum_OSLcurves <- function(
 
   if (output.plot == TRUE) {
 
-    # supress warnings
-    options(warn = -1)
-
     #ggplot2::theme_set(ggplot2::theme_bw())
     ggplot2::theme_set(theme.set)
 
@@ -230,16 +227,16 @@ sum_OSLcurves <- function(
     P = 2*max(curve$time)
 
     LMdata <- all.values
-    LMdata$signal <- LMdata$signal * (2 * LMdata$time / P)^0.5
-    LMdata$time <- (2 * P * LMdata$time)^0.5
+    LMdata$signal <- LMdata$signal * sqrt(2 * LMdata$time / P)
+    LMdata$time <- sqrt(2 * P * LMdata$time)
 
     LMcurve <- curve
-    LMcurve$signal <- LMcurve$signal * (2 * LMcurve$time / P)^0.5
-    LMcurve$time <- (2 * P * LMcurve$time)^0.5
+    LMcurve$signal <- LMcurve$signal * sqrt(2 * LMcurve$time / P)
+    LMcurve$time <- sqrt(2 * P * LMcurve$time)
 
     LMfirst.curve <- first.curve
-    LMfirst.curve$signal <- LMfirst.curve$signal * (2 * LMfirst.curve$time / P)^0.5
-    LMfirst.curve$time <- (2 * P * LMfirst.curve$time)^0.5
+    LMfirst.curve$signal <- LMfirst.curve$signal * sqrt(2 * LMfirst.curve$time / P)
+    LMfirst.curve$time <- sqrt(2 * P * LMfirst.curve$time)
 
 
     p.LM <- ggplot2::ggplot(LMdata, ggplot2::aes(x=time, y=signal, group=record)) +

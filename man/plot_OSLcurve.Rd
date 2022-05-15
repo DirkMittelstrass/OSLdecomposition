@@ -68,6 +68,12 @@ saved in the working directory. The image type is chosen by the file ending. Bot
 as well as pixel images are possible. Allowed are \code{.pdf}, \code{.eps}, \code{.svg} (vector graphics), \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics)
 and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}.}
 }
+\value{
+An invisible \link[ggplot2:ggplot]{ggplot2::ggplot} object containing the diagram will returned. "Invisible" means, the no value
+will be returned (e.g. no console printout) if the function is not assigned to a variable via \verb{<-}.
+If the function is assigned, the returned object can be further manipulated by \link{ggplot2-package} methods
+or manually drawn by various functions like for example \link[gridExtra:arrangeGrob]{gridExtra::grid.arrange}.
+}
 \description{
 This function is used for plotting CW-OSL curves and its signal components. It can handle data returned
 by \link{fit_OSLcurve} or \link{decompose_OSLcurve}. Besides CW-OSL curves, pseudoLM-OSL curves and

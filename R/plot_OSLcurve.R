@@ -73,6 +73,11 @@
 #' as well as pixel images are possible. Allowed are `.pdf`, `.eps`, `.svg` (vector graphics), `.jpg`, `.png`, `.bmp` (pixel graphics)
 #' and more, see [ggplot2::ggsave].
 #'
+#' @return
+#' An invisible [ggplot2::ggplot] object containing the diagram will returned. "Invisible" means, the no value
+#' will be returned (e.g. no console printout) if the function is not assigned to a variable via `<-`.
+#' If the function is assigned, the returned object can be further manipulated by [ggplot2-package] methods
+#' or manually drawn by various functions like for example [gridExtra::grid.arrange].
 #'
 #' @section Last update:
 #'
@@ -370,8 +375,8 @@ plot_OSLcurve <- function(curve = NULL,
     # transform data
     P = 2*max(time)
     LMdata <- data
-    LMdata$signal <- LMdata$signal * (2 * LMdata$time / P)^0.5
-    LMdata$time <- (2 * P * LMdata$time)^0.5
+    LMdata$signal <- LMdata$signal * sqrt(2 * LMdata$time / P)
+    LMdata$time <- sqrt(2 * P * LMdata$time)
 
 
     p.LM <- ggplot2::ggplot(LMdata, ggplot2::aes(x=time, y=signal, colour=graph, size=graph, shape=graph, linetype=graph)) +

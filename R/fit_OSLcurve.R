@@ -132,7 +132,7 @@
 #'
 #' If `output.complex = FALSE`, a [data.frame] is returned. It contains the signal decay rates
 #' and signal intensities of the best fit. The best fit was either chosen by the F-test or
-#' the last sucessful fitting iteration.
+#' the last successful fitting iteration.
 #'
 #' If `output.complex = TRUE`, a [list] of objects is returned:
 #'
@@ -154,18 +154,15 @@
 #'
 #' @examples
 #'
-#' # Create curve with two components
+#' # Create a simple curve with just one component
 #' curve <- data.frame(
-#' X = c(1, 2, 3, 4, 5, 6, 7, 8, 9),
-#' Y = c(42, 20, 12, 7, 5, 4, 3.1, 2.4, 2))
-#'
-#' \dontrun{
+#'   X = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
+#'   Y = c(377, 244, 163, 93, 59, 28, 17, 13, 10, 8, 9, 5))
 #' # Perform fitting
 #' components <- fit_OSLcurve(curve, F.threshold = 3)
 #'
 #' # Display results
 #' plot_OSLcurve(curve, components)
-#' }
 #'
 #' @md
 #' @export
@@ -232,7 +229,6 @@ fit_OSLcurve <- function(
 
   # Some presets ...
   K_selected <- 0
-  #x <- 1
   X <- c(1:K.max)
   RSS <- NA
   RSS_old <- Inf
@@ -243,9 +239,6 @@ fit_OSLcurve <- function(
   plot_data <- data.frame(NULL)
   lambda <- c(NULL)
   info_text <- ""
-
-  # supress warnings in the whole script
-  if (silent) options(warn = -1)
 
   # prepare printed table
   if (verbose) cat("\nDecay rates (s^-1):\n")

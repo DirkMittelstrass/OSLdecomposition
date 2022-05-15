@@ -148,7 +148,7 @@
 #' data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
 #'
 #' # Plot background corrected global average CW-OSL curve
-#' \dontrun{
+#' \donttest{
 #' sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSL")
 #'
 #' # Plot background curve
@@ -459,7 +459,7 @@ RLum.OSL_correction <- function(
     # To save computing time (especially in case of single-grain measurements)
     # channels are only manipulated, if the signal is above the significance level
     significance_threshold <- 0.5
-    significance_level <- -0.5 * significance_threshold + 0.5*(significance_threshold^2 + 2 / resolution)^0.5
+    significance_level <- -0.5 * significance_threshold + 0.5 * sqrt(significance_threshold^2 + 2 / resolution)
     if(verbose) cat("Every channel with a signal higher than ", round(significance_level) ," counts/sec will be increased. \n")
     records_tested <- 0
     records_corrected <- 0

@@ -131,13 +131,10 @@ simulate_OSLcomponents <- function(components,
     time <- c(1:channel.number) * channel.width}
 
   # Create another time vector, which includes zero. You will see why
-  #time0 <- c(0, time[1:(length(time)-1)])
   time0 <- c(0, time)
 
   # create a data table
   data <- data.frame(time = time, signal = signal, sum = 0, residual = 0)
-
-
 
 
   ##============================================================================##
@@ -161,11 +158,11 @@ simulate_OSLcomponents <- function(components,
 
     } else {
 
-      # Speed up things here by calculating just "exp(-lambda*time)" and subtracting
-      # it from
+      # Speed up things here by calculating "exp(-lambda*time)" vector and applying it
+      # on the component intensity n. This is an obscure but faster variant of the formula
+      # component$A <- n * (exp(-lambda*(time - channel.width)) - exp(-lambda*time))
       channel_probs <- exp(-lambda * time0)
       component$A <- - n * diff(channel_probs)
-      #component$A <- n * (exp(-lambda*(time - channel.width)) - exp(-lambda*time))
     }
 
 
