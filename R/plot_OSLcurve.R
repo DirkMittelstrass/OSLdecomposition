@@ -179,7 +179,7 @@ plot_OSLcurve <- function(curve = NULL,
   breaks <- 10^(-10:10)
   minor_breaks <- rep(1:9, 21)*(10^rep(-10:10, each=9))
 
-  guide <- FALSE
+  guide <- "none"
   if (show.legend) guide <- "legend"
 
 
@@ -300,7 +300,7 @@ plot_OSLcurve <- function(curve = NULL,
       ggplot2::labs(subtitle = subtitle, x = "Time (s)", y = "Signal (cts)") +
       text_format
 
-    guide <- FALSE}
+    guide <- "none"}
 
   ######################## LOG PLOT #########################################################
 

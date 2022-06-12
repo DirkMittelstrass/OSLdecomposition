@@ -349,9 +349,6 @@ fit_OSLcurve <- function(
 
 
 
-
-
-
   #----------------------------------------------------------------------------------------------------#
   #------------------------------------- K = K + 1 cycle ----------------------------------------------#
   #----------------------------------------------------------------------------------------------------#
@@ -391,8 +388,10 @@ fit_OSLcurve <- function(
     # Did the DE algorithm break?
     if (methods::is(DE_min)[1] == "try-error"){
 
-      #if (verbose & (is(DE_min)[1] == "try-error")) cat(DE_min[1])
       if (verbose) cat("-> Differential evolution failed at K =", K, ". Algorithm stopped.\n")
+
+      # Discard the current component number
+      K <- K - 1
 
       # leave loop
       break}
@@ -499,7 +498,7 @@ fit_OSLcurve <- function(
       if (verbose) cat(info_line)
       break}
 
-    # If the current iteration cycle succeded until this point, it must be the best fit so far. Therefore:
+    # If the current iteration cycle succeed until this point, it must be the best fit so far. Therefore:
     K_selected <- K
 
     if (K == K.max) {
