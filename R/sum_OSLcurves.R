@@ -71,7 +71,7 @@
 #' data_path <- system.file("examples", "FB_10Gy_SAR.bin", package = "OSLdecomposition")
 #' data_set <- Luminescence::read_BIN2R(data_path, fastForward = TRUE)
 #'
-#' # Plot all data points and give average CW-OSL curve back
+#' # Give average CW-OSL curve back
 #' average_curve <- sum_OSLcurves(data_set)
 #'
 #' @md

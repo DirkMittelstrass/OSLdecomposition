@@ -1,4 +1,4 @@
-#' Multi-exponential CW-OSL decomposition
+#' Multi-exponential CW-OSL decomposition DEV
 #'
 #' Function for determining the signal component amplitudes of a multi-exponential decay curve if
 #' the signal component decay parameters are already given. Thus, this function decomposes CW-OSL
@@ -69,7 +69,7 @@
 #' **Error estimation**
 #'
 #' In case of `algorithm = "det"` or `"det+nls"` the Propagation of Uncertainty method is used to
-#' transform signal bin error values into component intensity error values. The signal bin error
+#' transform signal bin error values (column `$I.error`) into component intensity error values (column `$n.error`). The signal bin error
 #' calculation depends on the argument `error.estimation`, see below.
 #' If `algorithm = "nls"` is used, the error values provided by [minpack.lm::nlsLM] are returned.
 #'
@@ -80,7 +80,7 @@
 #' for that interval. Thus, statistical errors are monitored accurately without any prior knowledge required.
 #' However, potential systematic errors are monitored insufficiently. Also, at least two (better more) data points
 #' per signal bin are needed to estimate its standard deviation. If a signal bin consists just of one data point,
-#' its square root value is taken as standard deviation, in accordance to the Poisson distribution.#'
+#' its square root value is taken as standard deviation, in accordance to the Poisson distribution.
 #'
 #' `error.estimation = "poisson"` or [numeric] value
 #'
@@ -89,6 +89,14 @@
 #' estimation, like with spatially or spectrally resolved CCD measurements. Also the parameter can be set to a [numeric]
 #' value, which  represents the detector noise in *cts / s* and is assumed to be normal distributed.
 #' The detector noise will be added on top of the Poisson distributed shot noise.
+#'
+#' `error.estimation = "only.bin.error"`
+#'
+#' To save computing time
+#'
+#' `error.estimation = "none"`
+#'
+#'
 #'
 #' *Systematic errors*
 #'
@@ -181,12 +189,12 @@
 #'
 #' @md
 #' @export
-decompose_OSLcurve <- function(
+decompose_OSLcurve_dev <- function(
   curve,
   components,
   background.fitting = FALSE,
   algorithm = "det", # "det", "nls", "det+nls"
-  error.estimation = "empiric",   # "poisson", "empiric", "nls", numeric value
+  error.estimation = "empiric",   # "poisson", "empiric", "only.bin.error", "nls", numeric value
   verbose = TRUE
 ){
 
@@ -235,7 +243,7 @@ decompose_OSLcurve <- function(
   # What is the channel width?
   dt <- curve$time[2] - curve$time[1]
 
-  # check if time beginns with zero and add dt if the case
+  # check if time begins with zero and add dt if the case
   if (curve$time[1] == 0)  curve$time <- curve$time + dt
 
   # Check if 'components' is of valid type
@@ -309,7 +317,6 @@ decompose_OSLcurve <- function(
 
     t.start <- (ch.start - 1) * dt
     t.end <- ch.end * dt
-    #if (verbose) cat("Intervals set to: ")
 
     components$t.start <- t.start
     components$t.end <- t.end
@@ -325,7 +332,6 @@ decompose_OSLcurve <- function(
 
   # preset some basic objects
   signal <- curve$signal[1:components$ch.end[K]]
-  time <- curve$time[1:components$ch.end[K]]
   components$n <- rep(NA, K)
   components$n.residual <- rep(NA, K)
   n <- NULL
@@ -451,17 +457,36 @@ decompose_OSLcurve <- function(
 
   if ((error.estimation == "empiric")
       || (error.estimation == "poisson")
+      || (error.estimation == "only.bin.error")
       || is.numeric(error.estimation)) {
 
     ### Calculate signal bin variances  ###
     I.err <- NULL
-    if (error.estimation == "empiric") {
+    if ((error.estimation == "empiric")
+        || (error.estimation == "only.bin.error")) {
 
-      # Calc reconstructed noise-free curve
-      curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
+        # Calc reconstructed noise-free curve
+        #curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
+        ##########################
+
+        # Use the signal vector as residual vector to save memory allocations
+
+        # Speed up things here by calculating "exp(-lambda*time)" vector and applying it
+        # on the component intensity n. This is an obscure but faster variant of the formula
+        # component$A <- n * (exp(-lambda*(time - channel.width)) - exp(-lambda*time))
+
+      for (k in X) {
+        signal <- signal + n[k] * diff(exp(-lambda[k] * c(0, curve$time)))
+      }
+      # ToDo: Add special case lambda = NA
+
+
+        ######################
+
 
       # Calc corrected sample variance
       for (i in X) {
+
 
         if (ch.start[i] == ch.end[i]) {
 
@@ -471,8 +496,9 @@ decompose_OSLcurve <- function(
 
           # in all other cases: Use the corrected sample variance formula
           korrektor <- length(ch.start[i]:ch.end[i]) / (length(ch.start[i]:ch.end[i]) - 1)
-          I.err <- c(I.err,
-                     sqrt(korrektor * sum(curve$residual[ch.start[i]:ch.end[i]]^2)))}}
+          I.err <- c(I.err, sqrt(korrektor * sum(signal[ch.start[i]:ch.end[i]]^2)))
+        }
+      }
     } else {
 
       # Use poisson approach, add instrumental noise if defined
@@ -485,20 +511,23 @@ decompose_OSLcurve <- function(
     components$bin.error <- I.err
 
     ### Propagation of uncertainty ###
-    for (k in X) {
-      sum.err <- 0
+    if (error.estimation != "only.bin.error") {
+      for (k in X) {
+        sum.err <- 0
 
-      for (i in X) {
+        for (i in X) {
 
-        A.k <- A[[k]]
+          A.k <- A[[k]]
 
-        # Differentiate the determinant term after I[j]
-        A.k[i,] <- 0
-        A.k[,k] <- 0
-        A.k[i,k] <- 1
-        sum.err <- sum.err + (det(A.k) * I.err[i])^2}
+          # Differentiate the determinant term after I[j]
+          A.k[i,] <- 0
+          A.k[,k] <- 0
+          A.k[i,k] <- 1
+          sum.err <- sum.err + (det(A.k) * I.err[i])^2}
 
-      components$n.error[k] <- sqrt(sum.err) / det(D)}
+        components$n.error[k] <- sqrt(sum.err) / det(D)}
+    }
+
 
   } ############ end ERROR CALC ############
 
