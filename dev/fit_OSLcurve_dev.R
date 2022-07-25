@@ -172,6 +172,7 @@ fit_OSLcurve_dev <- function(
   F.threshold = 150,
   stimulation.intensity = 30,
   stimulation.wavelength = 470,
+  LM = TRUE,
   verbose = TRUE,
   output.complex = FALSE,
   parallel.computing = FALSE
@@ -201,7 +202,7 @@ fit_OSLcurve_dev <- function(
 
   # Internal parameter (for later use in fit_OSLcurve.control)
   silent <- TRUE # don't display warnings or not-fatal errors
-  LM <- TRUE
+  #LM <- TRUE
 
   ################### Prepare input data ###########################
 
@@ -252,11 +253,11 @@ fit_OSLcurve_dev <- function(
     RSScomponents <- decompose_OSLcurve_dev(RSScurve,
                                             lambda_vector,
                                             algorithm = "det",
-                                            error.estimation = "only.bin.error",
+                                            error.estimation = "only.bin.RSS",
                                             verbose = FALSE)
 
     # ... and calculate the residual sum of squares (RSS)
-    RSS <- sum(RSScomponents$bin.error^2)
+    RSS <- sum(RSScomponents$bin.RSS)
     if (is.na(RSS) || (RSS <= 0)) RSS <- Inf
     return(RSS)
   }

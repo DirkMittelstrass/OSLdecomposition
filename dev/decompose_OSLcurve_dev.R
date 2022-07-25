@@ -90,13 +90,21 @@
 #' value, which  represents the detector noise in *cts / s* and is assumed to be normal distributed.
 #' The detector noise will be added on top of the Poisson distributed shot noise.
 #'
-#' `error.estimation = "only.bin.error"`
+#' `error.estimation = "only.bin.RSS"`
 #'
-#' To save computing time
+#' The error estimation is omitted but the residual sum of squares (RSS) between input curve and combined
+#' signal component curves is calculated. However, the RSS value is divided into sections according to
+#' the signal bins (column `$bin.RSS`). The full RSS value can be calculated by summing over the complete column.
+#' The RSS value is usually used a minimization target in fitting algorithms, like done in [fit_OSLcurve].
+#' The values of the `$bin.RSS` column allows for weighted fitting by applying pre-factors to the bin RSS values.
+#' For further speed advance, the calculation of `$components$n.residual` and `$components$initial.signal` is
+#' also omitted.
 #'
 #' `error.estimation = "none"`
 #'
-#'
+#' The error estimation is omitted. This option saves significant computing time, if the error estimation is
+#' not of significance. For further speed advance, the calculation of `$components$n.residual` and
+#' `$components$initial.signal` is also omitted.
 #'
 #' *Systematic errors*
 #'
@@ -137,14 +145,14 @@
 #'
 #' @return
 #' The input table **components** [data.frame] will be returned with added or overwritten
-#' columns: *$n, $n.error, $n.residual, $I, $I.error*
+#' columns: `$n`, `$n.error`, `$n.residual`, `$bin`, `$bin.error`, `$bin.RSS`, `$initial.signal`.
+#' Which columns are written depends on the selected parameters. If an input data.frame contains already
+#' one of the above columns but parameters are selected which do not re-calculate the values, the values
+#' of the columns are set to `NA`.
 #'
 #' @section Last updates:
 #'
-#' 2020-08-27, DM: Replaced [nls] function in the `algorithm = "nls"` or `"det+nls"` cases
-#' with the more robust [minpack.lm::nlsLM] (**update may have changed analysis results**)
-#'
-#' 2020-08-30, DM: Renamed 'error.calculation' into 'error.estimation' and changed [numeric] value unit from cts/ch to cts/s  (*minor update*)
+#' 2022-07-25, DM: Extended algorithm for bin-wise RSS calculation and added error estimation option "only.bin.RSS"
 #'
 #' @author
 #' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
@@ -194,14 +202,14 @@ decompose_OSLcurve_dev <- function(
   components,
   background.fitting = FALSE,
   algorithm = "det", # "det", "nls", "det+nls"
-  error.estimation = "empiric",   # "poisson", "empiric", "only.bin.error", "nls", numeric value
+  error.estimation = "empiric",   # "poisson", "empiric", "only.bin.RSS", "nls", numeric value
   verbose = TRUE
 ){
 
   # Changelog:
   # * winter 2012/13: first basic version, used for Bachelor thesis DM
   # * autumn 2013   : added empiric error estimation, shown in germanLED Freiberg 2013
-  # * 2014-11-??, SK: formatted into Rluminecence package standard
+  # * 2014-11-??, SK: formatted into RLuminecence package standard
   # * 2014-11-07, DM: Binomial error propagation added
   # * 2018-05-04, DM: added residuals for n values (necessary for slow component dosimetry) and many little tweaks
   # * 2018-06-22, DM: added decomposition of data sets with just 1 or 2 components
@@ -216,6 +224,7 @@ decompose_OSLcurve_dev <- function(
   # * 2020-07-20, DM: Added algorithm for fast interval definition based on logarithmic means; More input data checks
   # * 2020-08-27, DM: Replaced [nls] function in the optional refinement fitting with the more robust [minpack.lm::nlsLM]
   # * 2020-08-30, DM: Renamed 'error.calculation' into 'error.estimation'; changed [numeric] value unit from cts/ch to cts/s
+  # * 2022-07-25, DM: Extended algorithm for bin-wise RSS calculation and added error estimation option "only.bin.RSS"
   #
   # ToDo:
   # * Enable the input of a list of curves
@@ -332,9 +341,15 @@ decompose_OSLcurve_dev <- function(
 
   # preset some basic objects
   signal <- curve$signal[1:components$ch.end[K]]
-  components$n <- rep(NA, K)
-  components$n.residual <- rep(NA, K)
   n <- NULL
+  components$n <- rep(NA, K)
+
+  # Set optional columns whose values rely on the decomposition outcome to NA
+  # Reason: Depending on the chosen error estimation, they may not be overwritten otherwise.
+  for (col_name in c("n.error", "bin.RSS", "bin.error", "initial.signal", "n.residual")) {
+    if(col_name %in% colnames(components)) components[col_name] <- rep(NA, K)
+  }
+
 
   ### calculate bin signal values ###
   I <- NULL
@@ -457,13 +472,14 @@ decompose_OSLcurve_dev <- function(
 
   if ((error.estimation == "empiric")
       || (error.estimation == "poisson")
-      || (error.estimation == "only.bin.error")
+      || (error.estimation == "only.bin.RSS")
       || is.numeric(error.estimation)) {
 
     ### Calculate signal bin variances  ###
     I.err <- NULL
+    bin.RSS <- NULL
     if ((error.estimation == "empiric")
-        || (error.estimation == "only.bin.error")) {
+        || (error.estimation == "only.bin.RSS")) {
 
         # Calc reconstructed noise-free curve
         #curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
@@ -480,24 +496,28 @@ decompose_OSLcurve_dev <- function(
       }
       # ToDo: Add special case lambda = NA
 
-
-        ######################
-
+      # Calculate RSS per segment for the calc_RSS algorithm in fit_OSLcurve()
+      for (i in X) {
+        bin.RSS <- c(bin.RSS, sum(signal[ch.start[i]:ch.end[i]]^2))
+      }
+      components$bin.RSS <- bin.RSS
 
       # Calc corrected sample variance
-      for (i in X) {
+      if (error.estimation == "empiric"){
+        for (i in X) {
 
 
-        if (ch.start[i] == ch.end[i]) {
+          if (ch.start[i] == ch.end[i]) {
+            # if signal bin consists just of one channel, assume Poisson statistics:
+            I.err <- sqrt(I[i])
+          } else {
 
-          # if signal bin consists just of one channel, assume Poisson statistics:
-          I.err <- sqrt(I[i])
-        } else {
-
-          # in all other cases: Use the corrected sample variance formula
-          korrektor <- length(ch.start[i]:ch.end[i]) / (length(ch.start[i]:ch.end[i]) - 1)
-          I.err <- c(I.err, sqrt(korrektor * sum(signal[ch.start[i]:ch.end[i]]^2)))
+            # in all other cases: Use the corrected sample variance formula
+            korrektor <- length(ch.start[i]:ch.end[i]) / (length(ch.start[i]:ch.end[i]) - 1)
+            I.err <- c(I.err, sqrt(korrektor * bin.RSS[i]))
+          }
         }
+        components$bin.error <- I.err
       }
     } else {
 
@@ -511,7 +531,7 @@ decompose_OSLcurve_dev <- function(
     components$bin.error <- I.err
 
     ### Propagation of uncertainty ###
-    if (error.estimation != "only.bin.error") {
+    if (error.estimation != "only.bin.RSS") {
       for (k in X) {
         sum.err <- 0
 
@@ -533,28 +553,33 @@ decompose_OSLcurve_dev <- function(
 
 
   ########## component residuals  ###########
+  if(error.estimation != "only.bin.RSS" && error.estimation != "none"){
 
-  # set the end of the record as the end of stimulation. Need not to be the same value as t.end
-  stim.end <- curve$time[length(curve$time)]
-  for (i in X) {
+    # set the end of the record as the end of stimulation. Need not to be the same value as t.end
+    stim.end <- curve$time[length(curve$time)]
+    for (i in X) {
 
-    components$n.residual[i] <- round(n[i] * exp(- stim.end * lambda[i]))}
-
-
-  # Calculate average share of each component at initial signal
-  first_signal <- X
-  for (i in X) {
-    if (is.na(lambda[i])) {
-
-      first_signal[i] <- n[i] * dt
-    } else {
-      first_signal[i] <- n[i] * (1 - exp(- lambda[i] * dt))}}
-
-  components$initial.signal <- round(first_signal / sum(first_signal), digits = 4)
+      components$n.residual[i] <- round(n[i] * exp(- stim.end * lambda[i]))}
 
 
+    # Calculate average share of each component at initial signal
+    first_signal <- X
+    for (i in X) {
+      if (is.na(lambda[i])) {
+
+        first_signal[i] <- n[i] * dt
+      } else {
+        first_signal[i] <- n[i] * (1 - exp(- lambda[i] * dt))}}
+
+    components$initial.signal <- round(first_signal / sum(first_signal), digits = 4)
+  }
+
+  # Printing the whole data.frame is too long, so we display just the important columns
   if (verbose) {
-    col_set <- c("name", "n", "n.error", "n.residual", "initial.signal")
+    col_set <- c("name", "n")
+    for (col_name in c("n.error", "bin.RSS", "bin.error", "initial.signal", "n.residual")) {
+      if(col_name %in% colnames(components)) col_set <- c(col_set, col_name)
+    }
     col_set <- col_set[col_set %in% colnames(components)]
     print.data.frame(subset(components, select = col_set), row.names = FALSE)}
 

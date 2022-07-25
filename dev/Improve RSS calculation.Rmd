@@ -60,7 +60,9 @@ calc_RSS <- function(lambda_vector, RSScurve = curve){
 A preliminary test showed that `simulate_OSLcomponents` function needs more computing
 time than the `decompose_OSLcurve`. A closer look and some quick research revealed
 that not the *calculation* is the bottle neck but the many memory allocation due to
-creating new data.frame and vector objects. So my idea
+creating new data.frame and vector objects. So my idea was to omit the 
+
+
 As consequence, I removed it and want to 
 
 ```{r new_RSS_function}
@@ -70,11 +72,11 @@ calc_RSS_dev <- function(lambda_vector, RSScurve = curve){
   RSScomponents <- decompose_OSLcurve_dev(RSScurve,
                                       lambda_vector,
                                       algorithm = "det",
-                                      error.estimation = "only.bin.error",
+                                      error.estimation = "only.bin.RSS",
                                       verbose = FALSE)
 
   # ... and calculate the residual sum of squares (RSS)
-  RSS <- sum(RSScomponents$bin.error^2)
+  RSS <- sum(RSScomponents$bin.RSS)
   if (is.na(RSS) || (RSS <= 0)) RSS <- Inf
   return(RSS)
 }
@@ -125,19 +127,42 @@ for (K in 1:5) {
 The revised algorithm is about 4 times faster. Now let's test it in `fit_OSLcurve`:
 
 ```{r}
+time.start <- Sys.time()
+comp_new <- fit_OSLcurve_dev(test_curve, stimulation.wavelength = 535, K.max = 3, LM = FALSE)
+cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+plot_OSLcurve(test_curve, comp_new)
 
 time.start <- Sys.time()
-fit_OSLcurve_dev(test_curve, stimulation.wavelength = 535)
+comp_new <- fit_OSLcurve_dev(test_curve, stimulation.wavelength = 535, K.max = 3, LM = TRUE)
 cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+plot_OSLcurve(test_curve, comp_new)
 
 time.start <- Sys.time()
-fit_OSLcurve(test_curve, stimulation.wavelength = 535)
+comp_old <- fit_OSLcurve(test_curve, stimulation.wavelength = 535, K.max = 3)
 cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-
+plot_OSLcurve(test_curve, comp_old)
 
 
 ```
 
+
+
+Test if the function still works as expected and try out all reasonable parameter combinations
+
+```{r}
+
+param_backg <- c(TRUE, FALSE)
+param_algor <- c("det", "det+nls", "nls")
+param_error <- c("poisson", "empiric", "only.bin.RSS", "nls", 13)
+
+
+  # The linear part of HELA (see Bluszcz & Adamiec 2006) is performed by decompose_OSLcurve()
+  RSScomponents <- decompose_OSLcurve_dev(RSScurve,
+                                      lambda_vector,
+                                      algorithm = "det",
+                                      error.estimation = "only.bin.RSS",
+                                      verbose = FALSE)
+```
 
 
 
