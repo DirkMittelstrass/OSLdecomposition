@@ -33,7 +33,8 @@ corrected. However, the additional component reduces the overall precision of th
 It can also cause implausible slow component results if the measurement duration is not sufficiently long (> 30 s).}
 
 \item{algorithm}{\link{character} string (\emph{with default}):
-Choice of curve decomposition approach. Either \code{"det"} or \code{"det+nls"} or \code{"nls"}, see section \strong{Details}.}
+Choice of curve decomposition approach. Either \code{"det"} or \code{"det+nls"} or \code{"nls"}, see section \strong{Details}.
+^^}
 
 \item{error.estimation}{\link{character} string (\emph{with default}):
 integral error estimation approach, either \code{"empiric"} or \code{"poisson"} or a \link{numeric} value or \code{"none"},
@@ -44,7 +45,10 @@ enables console text output}
 }
 \value{
 The input table \strong{components} \link{data.frame} will be returned with added or overwritten
-columns: \emph{$n, $n.error, $n.residual, $I, $I.error}
+columns: \verb{$n}, \verb{$n.error}, \verb{$n.residual}, \verb{$bin}, \verb{$bin.error}, \verb{$bin.RSS}, \verb{$initial.signal}.
+Which columns are written depends on the selected parameters. If an input data.frame contains already
+one of the above columns but parameters are selected which do not re-calculate the values, the values
+of the columns are set to \code{NA}.
 }
 \description{
 Function for determining the signal component amplitudes of a multi-exponential decay curve if
@@ -117,7 +121,7 @@ be investigated in measurements with uncorrected background.
 \strong{Error estimation}
 
 In case of \code{algorithm = "det"} or \code{"det+nls"} the Propagation of Uncertainty method is used to
-transform signal bin error values into component intensity error values. The signal bin error
+transform signal bin error values (column \verb{$bin.error}) into component intensity error values (column \verb{$n.error}). The signal bin error
 calculation depends on the argument \code{error.estimation}, see below.
 If \code{algorithm = "nls"} is used, the error values provided by \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} are returned.
 
@@ -128,7 +132,7 @@ calculated from the \emph{corrected sample variance} between the CW-OSL model an
 for that interval. Thus, statistical errors are monitored accurately without any prior knowledge required.
 However, potential systematic errors are monitored insufficiently. Also, at least two (better more) data points
 per signal bin are needed to estimate its standard deviation. If a signal bin consists just of one data point,
-its square root value is taken as standard deviation, in accordance to the Poisson distribution.#'
+its square root value is taken as standard deviation, in accordance to the Poisson distribution.
 
 \code{error.estimation = "poisson"} or \link{numeric} value
 
@@ -137,6 +141,22 @@ known as \emph{Shot noise}. This is suitable if the lack of data points on the x
 estimation, like with spatially or spectrally resolved CCD measurements. Also the parameter can be set to a \link{numeric}
 value, which  represents the detector noise in \emph{cts / s} and is assumed to be normal distributed.
 The detector noise will be added on top of the Poisson distributed shot noise.
+
+\code{error.estimation = "only.bin.RSS"}
+
+The error estimation is omitted but the residual sum of squares (RSS) between input curve and combined
+signal component curves is calculated. However, the RSS value is divided into sections according to
+the signal bins (column \verb{$bin.RSS}). The full RSS value can be calculated by summing over the complete column.
+The RSS value is usually used a minimization target in fitting algorithms, like done in \link{fit_OSLcurve}.
+The values of the \verb{$bin.RSS} column allows for weighted fitting by applying pre-factors to the bin RSS values.
+For further speed advance, the calculation of \verb{$components$n.residual} and \verb{$components$initial.signal} is
+also omitted.
+
+\code{error.estimation = "none"}
+
+The error estimation is omitted. This option saves significant computing time, if the error estimation is
+not of significance. For further speed advance, the calculation of \verb{$components$n.residual} and
+\verb{$components$initial.signal} is also omitted.
 
 \emph{Systematic errors}
 
@@ -148,10 +168,7 @@ signal bin should be about \eqn{empiric / poisson = 1}. In case of systematic er
 \section{Last updates}{
 
 
-2020-08-27, DM: Replaced \link{nls} function in the \code{algorithm = "nls"} or \code{"det+nls"} cases
-with the more robust \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} (\strong{update may have changed analysis results})
-
-2020-08-30, DM: Renamed 'error.calculation' into 'error.estimation' and changed \link{numeric} value unit from cts/ch to cts/s  (\emph{minor update})
+2022-07-25, DM: Extended algorithm for bin-wise RSS calculation and added error estimation option "only.bin.RSS"
 }
 
 \examples{

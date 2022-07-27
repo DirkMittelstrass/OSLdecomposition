@@ -95,11 +95,9 @@
 #' but may need administrator rights and/or a firewall exception.
 #' See [DEoptim::DEoptim.control] for further information.
 #'
-#' @section Last updates:
+#' @section Last update:
 #'
-#' 2020-08-05, Rewrote function to use [DEoptim::DEoptim] and [minpack.lm::nlsLM] (**update may have changed analysis results**)
-#'
-#' 2020-11-25, DM: Reworked console output (*minor update*)
+#' 2022-07-27, DM: Moved residual sum of squares (RSS) calculation during DE-optimization cycle to decompose_OSLcurve() to improve computing time by factor 3 to 4
 #'
 #' @author
 #' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
@@ -192,6 +190,7 @@ fit_OSLcurve <- function(
   # * 2020-08-10, DM: Optional parallel computing enabled
   # * 2020-10-26, DM: Roxygen documentation
   # * 2020-11-25, DM: Reworked console output
+  # * 2022-07-27, DM: Moved residual sum of squares (RSS) calculation during DE-optimization cycle to decompose_OSLcurve() to improve computing time by factor 3 to 4
   #
   # ToDo:
   # * Enhance documentation with more algorithm info and some F.threshold recommendation
@@ -252,18 +251,14 @@ fit_OSLcurve <- function(
     RSScomponents <- decompose_OSLcurve(RSScurve,
                                         lambda_vector,
                                         algorithm = "det",
-                                        error.estimation = "none",
+                                        error.estimation = "only.bin.RSS",
                                         verbose = FALSE)
 
-    # Now add the residual curve to the input curve ...
-    RSScurve <- simulate_OSLcomponents(RSScomponents,
-                                       curve = RSScurve,
-                                       simulate.curve = FALSE)
-
     # ... and calculate the residual sum of squares (RSS)
-    RSS <- sum(RSScurve$residual^2)
+    RSS <- sum(RSScomponents$bin.RSS)
     if (is.na(RSS) || (RSS <= 0)) RSS <- Inf
-    return(RSS)}
+    return(RSS)
+  }
 
   ###################### Reduced Chi² ###############################################################
   # calc_Chi2 <- function(components, CHIcurve = curve, N_curves = M, detec_noise = 0, K = K){

@@ -134,12 +134,10 @@ Slow3 \tab 1e-20 \tab 4.67e-20 \cr
 Slow4 \tab 1e-21 \tab 1e-20
 }
 }
-\section{Last updates}{
+\section{Last update}{
 
 
-2020-08-05, Rewrote function to use \link[DEoptim:DEoptim]{DEoptim::DEoptim} and \link[minpack.lm:nlsLM]{minpack.lm::nlsLM} (\strong{update may have changed analysis results})
-
-2020-11-25, DM: Reworked console output (\emph{minor update})
+2022-07-27, DM: Moved residual sum of squares (RSS) calculation during DE-optimization cycle to decompose_OSLcurve() to improve computing time by factor 3 to 4
 }
 
 \examples{
