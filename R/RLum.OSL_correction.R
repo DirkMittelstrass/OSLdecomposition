@@ -145,10 +145,10 @@
 #'
 #' # To correct for the background signal, subtracted the average curve from the
 #' # OSL curves of an empty aliquot (list item 11) from all other OSL records:
-#' data_set_corrected <- RLum.OSL_correction(data_set, background = 11)
+#' data_set_corrected <- RLum.OSL_correction(data_set, background = 11, remove_light_off = FALSE)
 #'
-#' # Plot background corrected global average CW-OSL curve
 #' \donttest{
+#' # Plot background corrected global average CW-OSL curve
 #' sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSL")
 #'
 #' # Plot background curve
