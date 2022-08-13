@@ -6,6 +6,11 @@
 Identify and Separate Continuous-Wave Optically Stimulated Luminescence
 (CW-OSL) Signal Components
 
+[![CRAN](https://www.r-pkg.org/badges/version/OSLdecomposition)](https://cran.r-project.org/package=OSLdecomposition)
+[![CRAN
+checks](https://cranchecks.info/badges/worst/OSLdecomposition)](https://cran.r-project.org/web/checks/check_results_OSLdecomposition.html)
+[![Downloads](https://cranlogs.r-pkg.org/badges/grand-total/Luminescence)](https://www.r-pkg.org/pkg/OSLdecomposition)
+
 [![Project Status: WIP – Initial development is in progress, but there
 has not yet been a stable, usable release suitable for the
 public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
