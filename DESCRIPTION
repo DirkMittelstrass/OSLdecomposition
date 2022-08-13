@@ -38,4 +38,5 @@ Imports:
     ggpubr,
     rmarkdown
 Suggests:
-    kableExtra
+    kableExtra,
+    knitr
