@@ -176,6 +176,7 @@ RLum.OSL_correction <- function(
   # * 2021-02-15, DM: Enabled `remove_light_off` and renamed `cut_records` into `limit_duration`. Removed `report` parameter
   # * 2021-11-23, DM: Added pulse-pair-resolution correction
   # * 2022-01-02, DM: Revised `PMT_pulse_pair_resolution` algorithm.
+  # * 2023-07-15, DM: Bugfix in remove_light_off
   #
   # ToDo:
   # * Check for Zero as first value at the time axis
@@ -350,19 +351,20 @@ RLum.OSL_correction <- function(
 
     # Where is the maximum in the first half?
     ref_curve_max <- max(ref_curve$signal[1:ceiling(ref_length / 2)])
-    light_on <- which(ref_curve$signal == ref_curve_max)
-
+    light_on <- which(ref_curve$signal == ref_curve_max)[1]
 
     # To get the light-off time, we calculate the second differential
-    # Its minimum ist that negative curvature data point which is caused by the light-off event
+    # Its minimum is that negative curvature data point which is caused by the light-off event
     ref_diff2 <-  c(diff(c(0, diff(ref_curve$signal))), 0)
     ref_diff2_min <- min(ref_diff2[floor(ref_length / 2):ref_length])
 
     light_off <- which(ref_diff2 == ref_diff2_min)
+    light_off <- light_off[length(light_off)]
 
     # be sure, the light-off event is not just a noise artifact ...
-    if ((ref_diff2_min >= 0) |
-        (ref_curve$signal[light_off] < 2 * ref_curve$signal[light_off + 1])) {
+    if ((light_off < ref_length) &&
+        ((ref_diff2_min >= 0) |
+        (ref_curve$signal[light_off] < 2 * ref_curve$signal[light_off + 1]))) {
 
       # ... or set end of stimulation equal to end of the measurement
       light_off <- ref_length}
