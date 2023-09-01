@@ -1,8 +1,8 @@
 Package: OSLdecomposition
 Type: Package
 Title: Signal Component Analysis for Optically Stimulated Luminescence
-Version: 1.0.1
-Date: 2022-07-29
+Version: 1.0.2
+Date: 2023-09-01
 Authors@R: c(
     person("Dirk", "Mittelstraß", email = "dirk.mittelstrass@luminescence.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9567-8791")),
     person("Sebastian", "Kreutzer", role = c("aut"), comment = c(ORCID = "0000-0002-0734-2199")),

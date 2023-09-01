@@ -77,7 +77,7 @@
 #'
 #' @section Last updates:
 #'
-#' 2022-05-02, DM: Added new parameter `open_report` to give control over automatic browser opening
+#' 2023-09-01, DM: Improved input checks to return more helpful messages
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -157,6 +157,7 @@ RLum.OSL_global_fitting <- function(object,
   # * 2020-11-23, SK: Moved report call into utils.R
   # * 2021-02-15, DM: Added new parameter `rmd_path`
   # * 2022-05-02, DM: Added new parameter `open_report` to give control over automatic browser opening
+  # * 2023-09-01, DM: Improved input checks to return more helpful messages
   #
   # ToDo:
   # * Get stimulation.intensity from @info[["LPOWER"]]
@@ -184,22 +185,31 @@ RLum.OSL_global_fitting <- function(object,
       } else {
 
         element_name <- names(object)[i]
+        if (is.null(element_name)){
 
-        if (element_name == "OSL_COMPONENTS") {
+          cat("List element no. ", i, " is not of type 'RLum.Analysis' and was removed from from the data set.\n")
 
-          warning("Input object already contains Step 1 results. Old results were overwritten")
-        }else{
+        } else if (element_name == "OSL_COMPONENTS") {
+
+          cat("Data set was already fitted by [RLum.OSL_global_fitting()]. Old results in $OSL_COMPONENTS were overwritten.\n")
+
+        } else {
 
           data_set_overhang[[element_name]] <- object[[i]]
           if (!((element_name == "DECOMPOSITION")  || (element_name=="CORRECTION"))) {
-            warning("Input object list element ", i, " is not of type 'RLum.Analysis' and was included in the fitting procedure, but was appended to the result list")}}}}
+            cat("List element ", element_name, " is not of type 'RLum.Analysis' and was not included in the procedure but remained in the data set.\n")}}}}
 
   } else {
 
-    data_set <- list(object)
-    warning("Input is not of type list, but output is of type list")}
+    if (inherits(object, "Risoe.BINfileData")) {
+      stop(paste("Data is of type 'Risoe.BINfileData' instead of type 'RLum.Analysis'.",
+                 "Please apply the Luminescence package function Risoe.BINfileData2RLum.Analysis()",
+                 "to the data or ensure that read_BIN2R() has 'fastForward = TRUE' set."))}
 
-  if (length(data_set) == 0) stop("Input object contains no RLum.Analysis data")
+    data_set <- list(object)
+    warning("Input was not of type list, but output is of type list.")}
+
+  if (length(data_set) == 0) stop("Input data contains no RLum.Analysis objects. Please check if the data import was done correctly.")
 
   # calc arithmetic mean curve
   if(verbose) cat("STEP 1.1 ----- Build global average curve from all CW-OSL curves -----\n")

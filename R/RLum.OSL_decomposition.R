@@ -77,7 +77,7 @@
 #'
 #' @section Last updates:
 #'
-#' 2022-05-02, DM: Added new parameter `open_report` to give control over automatic browser opening
+#' 2023-09-01, DM: Improved input checks to return more helpful messages
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -146,6 +146,7 @@ RLum.OSL_decomposition <- function(
   # * 2020-11-23, SK: Moved report call into utils.R
   # * 2021-02-15, DM: Added new parameter `rmd_path`
   # * 2022-05-02, DM: Added new parameter `open_report` to give control over automatic browser opening
+  # * 2023-09-01, DM: Improved input checks to return more helpful messages
   #
   ### ToDo's
   # * read 'lambda.error' if available and transfer it to decompose_OSLcurve for better error calculation
@@ -157,7 +158,6 @@ RLum.OSL_decomposition <- function(
   background_fitting <- FALSE
   error_calculation <- "empiric" # "poisson", "empiric", "nls", numeric value
 
-
   # get name of the input object
   object_name <- deparse(substitute(object))
 
@@ -165,7 +165,7 @@ RLum.OSL_decomposition <- function(
   data_set <- list()
   data_set_overhang <- list()
 
-  # Test if input object is a list
+  # Test if object is a list. If not, create a list
   if (is.list(object)) {
 
     for (i in 1:length(object)) {
@@ -173,29 +173,34 @@ RLum.OSL_decomposition <- function(
       if (inherits(object[[i]], "RLum.Analysis")) {
 
         data_set[[length(data_set) + 1]] <- object[[i]]
-
       } else {
 
         element_name <- names(object)[i]
-        if (element_name == "DECOMPOSITION") {
-          warning("Input object contained already Step 2 results (list element '$DECOMPOSITION'). Old results overwritten!")
+        if (is.null(element_name)){
+
+          cat("List element no. ", i, " is not of type 'RLum.Analysis' and was removed from from the data set.\n")
+
+        } else if (element_name == "DECOMPOSITION") {
+
+          cat("Data set was already decomposed by [RLum.OSL_global_fitting()]. Old results in $DECOMPOSITION were overwritten.\n")
+
         } else {
 
           data_set_overhang[[element_name]] <- object[[i]]
           if (!((element_name == "OSL_COMPONENTS")  || (element_name=="CORRECTION"))) {
-            warning("Input object list element ", i, " is not of type 'RLum.Analysis' and was included in the decomposition procedure, but was appended to the result list")}}}}
+            cat("List element ", element_name, " is not of type 'RLum.Analysis' and was not included in the procedure but remained in the data set.\n")}}}}
 
   } else {
 
-    if (inherits(object, "RLum.Analysis")) {
+    if (inherits(object, "Risoe.BINfileData")) {
+      stop(paste("Data is of type 'Risoe.BINfileData' instead of type 'RLum.Analysis'.",
+                 "Please apply the Luminescence package function Risoe.BINfileData2RLum.Analysis()",
+                 "to the data or ensure that read_BIN2R() has 'fastForward = TRUE' set."))}
 
-      data_set <- list(object)
-    } else {
-      stop("Input object is not a RLum.Analysis object nor a list of RLum.Analysis objects ")
-    }
-  }
+    data_set <- list(object)
+    warning("Input was not of type list, but output is of type list.")}
 
-  if (length(data_set) == 0) stop("Input object contains no RLum.Analysis data")
+  if (length(data_set) == 0) stop("Input data contains no RLum.Analysis objects. Please check if the data import was done correctly.")
 
   ################### Find out, which algorithm to use ###################
 
