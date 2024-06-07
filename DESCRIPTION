@@ -23,7 +23,7 @@ Depends: R (>= 4.0)
 License: GPL-3
 BugReports: https://github.com/DirkMittelstrass/OSLdecomposition/issues
 Encoding: UTF-8
-RoxygenNote: 7.2.1
+RoxygenNote: 7.3.1
 Imports: 
     Luminescence (>= 0.9.9),
     methods,
