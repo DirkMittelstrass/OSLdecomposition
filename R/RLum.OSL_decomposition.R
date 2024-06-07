@@ -9,11 +9,11 @@
 #' The workflow of this function is as follows:
 #'
 #' \enumerate{
-#'   \item [optimise_OSLintervals]: {Approximates the optimal integration intervals. Uses the global
-#'   average curve as time axis template. If none global average curve is given, one is automatically created using [sum_OSLcurves].}
-#'   \item [decompose_OSLcurve]: {Calculates component intensities for **all** `record_type` measurements.
+#'   \item [optimise_OSLintervals]: Approximates the optimal integration intervals. Uses the global
+#'   average curve as time axis template. If none global average curve is given, one is automatically created using [sum_OSLcurves].
+#'   \item [decompose_OSLcurve]: Calculates component intensities for **all** `record_type` measurements.
 #'   Uses the `"det"` algorithm if a background correction was performed with [RLum.OSL_correction] or the
-#'   `"det+nls"` algorithm if no background correction was performed. For error estimation, the `"empiric"` approach is used.}
+#'   `"det+nls"` algorithm if no background correction was performed. For error estimation, the `"empiric"` approach is used.
 #'   \item Creates a `html` report to summarize the results (*optional*).
 #'}
 #'

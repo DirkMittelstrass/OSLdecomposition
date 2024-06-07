@@ -21,7 +21,7 @@
 #'
 #' Bluszcz & Adamiec (2006) suggest the use of an F-test to determine the correct number of signal components.
 #' This function compares the residual square sum (*RSS_K*) value of each
-#' fitting with the *RSS_{K-1}* value of the previous fitting and calculates
+#' fitting with the \eqn{RSS_{K-1}} value of the previous fitting and calculates
 #' an *Improvement-in-fitting-quality* criterion:
 #'
 #' \deqn{F_K = {(RSS_{K-1} - RSS_K)/2} / {RSS_K(N - 2K)}}

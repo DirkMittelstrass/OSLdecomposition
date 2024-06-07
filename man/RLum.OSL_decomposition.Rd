@@ -87,11 +87,11 @@ the \link{Luminescence-package} (Kreutzer et al. 2012).
 The workflow of this function is as follows:
 
 \enumerate{
-\item \link{optimise_OSLintervals}: {Approximates the optimal integration intervals. Uses the global
-average curve as time axis template. If none global average curve is given, one is automatically created using \link{sum_OSLcurves}.}
-\item \link{decompose_OSLcurve}: {Calculates component intensities for \strong{all} \code{record_type} measurements.
+\item \link{optimise_OSLintervals}: Approximates the optimal integration intervals. Uses the global
+average curve as time axis template. If none global average curve is given, one is automatically created using \link{sum_OSLcurves}.
+\item \link{decompose_OSLcurve}: Calculates component intensities for \strong{all} \code{record_type} measurements.
 Uses the \code{"det"} algorithm if a background correction was performed with \link{RLum.OSL_correction} or the
-\code{"det+nls"} algorithm if no background correction was performed. For error estimation, the \code{"empiric"} approach is used.}
+\code{"det+nls"} algorithm if no background correction was performed. For error estimation, the \code{"empiric"} approach is used.
 \item Creates a \code{html} report to summarize the results (\emph{optional}).
 }
 
@@ -112,7 +112,7 @@ The \emph{Rmarkdown} source code of the report can be found with the following c
 \section{Last updates}{
 
 
-2022-05-02, DM: Added new parameter \code{open_report} to give control over automatic browser opening
+2023-09-01, DM: Improved input checks to return more helpful messages
 }
 
 \examples{
