@@ -50,4 +50,28 @@ Dirk Mittelstraß created this package as part of his master thesis and further 
 published it as private endeavour. He did not receive any specific grant from funding agencies
 in the public, commercial or not-for-profit sectors.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item Report bugs at \url{https://github.com/DirkMittelstrass/OSLdecomposition/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Dirk Mittelstraß \email{dirk.mittelstrass@luminescence.de} (\href{https://orcid.org/0000-0002-9567-8791}{ORCID})
+
+Authors:
+\itemize{
+  \item Sebastian Kreutzer (\href{https://orcid.org/0000-0002-0734-2199}{ORCID})
+  \item Christoph Schmidt (\href{https://orcid.org/0000-0002-2309-3209}{ORCID})
+}
+
+Other contributors:
+\itemize{
+  \item Jan Beyer (\href{https://orcid.org/0000-0002-1403-395X}{ORCID}) [thesis advisor]
+  \item Johannes Heitmann [thesis advisor]
+  \item Arno Straessner (\href{https://orcid.org/0000-0003-2460-6659}{ORCID}) [thesis advisor]
+}
+
+}
 \keyword{package}

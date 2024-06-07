@@ -129,7 +129,7 @@ that those PMTs have a better pulse-pair resolution than 18 \emph{ns}.
 \section{Last updates}{
 
 
-2022-01-02, DM: Revised \code{PMT_pulse_pair_resolution} algorithm.
+2023-09-01, DM: Improved input checks to return more helpful messages
 }
 
 \examples{

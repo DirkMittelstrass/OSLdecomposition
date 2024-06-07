@@ -114,7 +114,7 @@ The \emph{Rmarkdown} source code of the report can be found with the following c
 \section{Last updates}{
 
 
-2022-05-02, DM: Added new parameter \code{open_report} to give control over automatic browser opening
+2023-09-01, DM: Improved input checks to return more helpful messages
 }
 
 \examples{
