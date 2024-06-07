@@ -11,7 +11,6 @@
 #' @name OSLdecomposition-package
 #' @aliases OSLdecomposition
 #' @keywords package
-#' @docType package
 #'
 #' @details
 #'
@@ -47,4 +46,4 @@
 #' in the public, commercial or not-for-profit sectors.
 #'
 #' @md
-NULL
+"_PACKAGE"
