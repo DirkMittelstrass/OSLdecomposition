@@ -19,13 +19,13 @@ Description: Function library for the identification and separation of exponenti
     data sets imported and analysed with the R package 'Luminescence'.
     This includes the optional automatic creation of HTML reports. Further information and tutorials
     can be found at <https://luminescence.de>.
-Depends: R (>= 4.0)
+Depends: R (>= 4.3)
 License: GPL-3
 BugReports: https://github.com/DirkMittelstrass/OSLdecomposition/issues
 Encoding: UTF-8
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports: 
-    Luminescence (>= 0.9.9),
+    Luminescence (>= 0.9.24),
     methods,
     utils,
     stats,
