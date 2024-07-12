@@ -8,7 +8,7 @@ Identify and Separate Continuous-Wave Optically Stimulated Luminescence
 
 [![CRAN](https://www.r-pkg.org/badges/version/OSLdecomposition)](https://cran.r-project.org/package=OSLdecomposition)
 [![CRAN
-checks](https://cranchecks.info/badges/worst/OSLdecomposition)](https://cran.r-project.org/web/checks/check_results_OSLdecomposition.html)
+DOI](https://img.shields.io/badge/doi-10.32614/CRAN.package.OSLdecomposition-blue.svg)](https://doi.org/10.32614/CRAN.package.OSLdecomposition)
 [![Downloads](https://cranlogs.r-pkg.org/badges/grand-total/OSLdecomposition)](https://www.r-pkg.org/pkg/OSLdecomposition)
 
 [![Project Status: WIP – Initial development is in progress, but there
