@@ -1,9 +1,9 @@
-#' Identify CW-OSL signal components in RLum.Analysis data sets
+#' @title Identify CW-OSL signal components in RLum.Analysis data sets
 #'
-#' First, all CW-OSL records are combined to one global average CW-OSL curve,
+#' @description First, all CW-OSL records are combined to one global average CW-OSL curve,
 #' then the multi-exponential fitting approach of Bluszcz and Adamiec (2006) is applied.
-#' This function processes [RLum.Analysis-class] data sets created within
-#' the [Luminescence-package] (Kreutzer et al. 2012).
+#' This function processes [Luminescence::RLum.Analysis-class] data sets created within
+#' the [Luminescence::Luminescence-package] (Kreutzer et al. 2012).
 #'
 #' The workflow of this function is as follows:
 #'
@@ -13,12 +13,12 @@
 #'   \item Create a `html` report to summarize the results (*optional*).
 #'}
 #'
-#' Data sets must be formatted as [RLum.Analysis-class] objects and
+#' Data sets must be formatted as [Luminescence::RLum.Analysis-class] objects and
 #' should have been processed with [RLum.OSL_correction] beforehand.
-#' Output objects are also [RLum.Analysis-class] objects and are
+#' Output objects are also [Luminescence::RLum.Analysis-class] objects and are
 #' meant for further analysis with [RLum.OSL_decomposition].
 #'
-#' If `report = TRUE`, a `html` report of the results is rendered by the [rmarkdown-package]
+#' If `report = TRUE`, a `html` report of the results is rendered by the [rmarkdown::rmarkdown-package]
 #' and saved in the working directory, which is usually the directory of the data file.
 #' This report can be displayed, shared and published online without any requirements to
 #' the operation system or installed software. However, an internet connection is needed to display
@@ -29,11 +29,11 @@
 #'
 #'
 #'
-#' @param object [RLum.Analysis-class] or [list] of [RLum.Analysis-class] (**required**):
+#' @param object [Luminescence::RLum.Analysis-class] or [list] of [Luminescence::RLum.Analysis-class] (**required**):
 #' Data set of one or multiple CW-OSL measured aliquots.
 #'
 #' @param record_type [character] (*with default*):
-#' Type of records, selected by the [RLum.Analysis-class] attribute `@recordType`.
+#' Type of records, selected by the [Luminescence::RLum.Analysis-class] attribute `@recordType`.
 #' Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`.
 #'
 #' @param K_maximum [numeric] (*with default*):
@@ -68,7 +68,7 @@
 #' If set to `TRUE` a browser window displaying the report will be opened automatically.
 #'
 #' @param rmd_path [character] (*with default*):
-#' **For advanced users:** File path to the [rmarkdown] source code file of the report.
+#' **For advanced users:** File path to the [rmarkdown::rmarkdown-package] source code file of the report.
 #' This allows to execute manipulated versions of the report.
 #'
 #' @param verbose [logical] (*with default*):
@@ -99,7 +99,7 @@
 #'
 #' @return
 #'
-#' The input `object`, a [list] of [RLum.Analysis-class] objects is returned but with
+#' The input `object`, a [list] of [Luminescence::RLum.Analysis-class] objects is returned but with
 #' a new list element `object[["OSL_COMPONENTS"]]`, containing:
 #' \itemize{
 #'   \item `$decay.rates` [numeric] vector: Decay rates of F-test recommendation or last successful fitting.

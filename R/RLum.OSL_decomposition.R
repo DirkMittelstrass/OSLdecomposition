@@ -1,10 +1,9 @@
-#' Separate CW-OSL components in RLum.Analysis data sets
+#' @title Separate CW-OSL components in RLum.Analysis data sets
 #'
-#' Calculates the CW-OSL signal component intensities for each CW-OSL measurement
+#' @description Calculates the CW-OSL signal component intensities for each CW-OSL measurement
 #' under the requirement that the decay rates are already given. The signal decomposition
 #' process uses an analytical approach described in detail in Mittelstrass (2019) and
-#' Mittelstrass et al. (in preparation). This function processes [RLum.Analysis-class] data sets created within
-#' the [Luminescence-package] (Kreutzer et al. 2012).
+#' Mittelstrass et al. (in preparation). This function processes [Luminescence::RLum.Analysis-class] data sets created within the [Luminescence::Luminescence-package] (Kreutzer et al. 2012).
 #'
 #' The workflow of this function is as follows:
 #'
@@ -17,12 +16,12 @@
 #'   \item Creates a `html` report to summarize the results (*optional*).
 #'}
 #'
-#' Data sets must be formatted as [RLum.Analysis-class] objects and
+#' Data sets must be formatted as [Luminescence::RLum.Analysis-class] objects and
 #' should have been processed with [RLum.OSL_correction] and [RLum.OSL_global_fitting] beforehand.
-#' Output objects are also [RLum.Analysis-class] objects and are
+#' Output objects are also [Luminescence::RLum.Analysis-class] objects and are
 #' meant for equivalent dose determination with [Luminescence::analyse_SAR.CWOSL].
 #'
-#' If `report = TRUE`, a `html` report of the results is rendered by the [rmarkdown-package]
+#' If `report = TRUE`, a `html` report of the results is rendered by the [rmarkdown::rmarkdown-package]
 #' and saved in the working directory, which is usually the directory of the data file.
 #' This report can be displayed, shared and published online without any requirements regarding
 #' the operation system or installed software. However, an internet connection is needed to display
@@ -32,13 +31,14 @@
 #' `system.file("rmd", "report_Step2.Rmd", package = "OSLdecomposition")`
 #'
 #'
-#' @param object [RLum.Analysis-class] or [list] of [RLum.Analysis-class] (**required**):
+#' @param object [Luminescence::RLum.Analysis-class] or [list] of [Luminescence::RLum.Analysis-class]
+#' (**required**):
 #' Data set of one or multiple CW-OSL measured aliquots. The data set must either
 #' contain a list element `$OSL_COMPONENTS` or the parameter `decay_rates` must
 #' be defined.
 #'
 #' @param record_type [character] (*with default*):
-#' Type of records, selected by the [RLum.Analysis-class] attribute `@recordType`.
+#' Type of records, selected by the [Luminescence::RLum.Analysis-class] attribute `@recordType`.
 #' Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`.
 #'
 #' @param K [numeric] (*with default*):
@@ -68,7 +68,7 @@
 #' If set to `TRUE` a browser window displaying the report will be opened automatically.
 #'
 #' @param rmd_path [character] (*with default*):
-#' **For advanced users:** File path to the [rmarkdown] source code file of the report.
+#' **For advanced users:** File path to the [rmarkdown::rmarkdown-package] source code file of the report.
 #' This allows to execute a manipulated version of the report.
 #'
 #' @param verbose [logical] (*with default*):
@@ -99,7 +99,7 @@
 #'
 #' @return
 #'
-#' The input `object`, a [list] of [RLum.Analysis-class] objects is returned but with
+#' The input `object`, a [list] of [Luminescence::RLum.Analysis-class] objects is returned but with
 #' a new list element `object[["DECOMPOSITION"]]`, containing:
 #'
 #' \itemize{
@@ -108,7 +108,7 @@
 #'   \item `$parameters` [list]: Input and algorithm parameters
 #' }
 #'
-#' The [RLum.Data.Curve-class] attribute `@info` of each CW-OSL record contains the
+#' The [Luminescence::RLum.Data.Curve-class] attribute `@info` of each CW-OSL record contains the
 #' new entry `$COMPONENTS` with the curve-individual signal component parameters.
 #' It can be read for example by:
 #'

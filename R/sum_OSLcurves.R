@@ -1,13 +1,15 @@
-#' Combine RLum OSL records to one global average curve
+#' @title Combine RLum OSL records to one global average curve
 #'
-#' This function adds up all CW-OSL records of the same type saved in [RLum.Analysis-class] objects and
+#' @description This function adds up all CW-OSL records of the same type saved
+#' in [Luminescence::RLum.Analysis-class]
+#' objects and
 #' calculates the arithmetic mean signal from all records for each channel.
 #' This is useful to create global average curve with sufficient signal-to-noise ratio
 #' for OSL components identification with [fit_OSLcurve] or to create a signal background
 #' reference curve.
 #'
 #'
-#' @param object [RLum.Analysis-class] or [list] of [RLum.Analysis-class] (**required**):
+#' @param object [Luminescence::RLum.Analysis-class] or [list] of [Luminescence::RLum.Analysis-class] (**required**):
 #' Data set of one or multiple aliquots containing CW-OSL records.
 #'
 #' @param record_type [character] (*with default*):
@@ -15,7 +17,7 @@
 #' for example: `"OSL"`,`"SGOSL"` or `"IRSL"`.
 #'
 #' @param aliquot_selection [numeric] vector (*optional*):
-#' Vector specifying the indices of elements (aliquots) of a list of [RLum.Analysis-class] objects
+#' Vector specifying the indices of elements (aliquots) of a list of [Luminescence::RLum.Analysis-class] objects
 #' which shall be included.
 #'
 #' @param offset_value [numeric] (*with default*):
@@ -27,7 +29,7 @@
 #' @param output.plot [logical] (*with default*):
 #' returns a plot with all data points of all records and the average curve
 #'
-#' @param theme.set [ggplot2] object (*with default*):
+#' @param theme.set [ggplot2::ggplot2-package] object (*with default*):
 #' sets the graphical theme of the output plot.
 #' See [ggplot2::theme_bw] for available themes
 #'

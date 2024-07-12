@@ -18,7 +18,7 @@ sum_OSLcurves(
 )
 }
 \arguments{
-\item{object}{\linkS4class{RLum.Analysis} or \link{list} of \linkS4class{RLum.Analysis} (\strong{required}):
+\item{object}{\link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} or \link{list} of \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} (\strong{required}):
 Data set of one or multiple aliquots containing CW-OSL records.}
 
 \item{record_type}{\link{character} (\emph{with default}):
@@ -26,7 +26,7 @@ Type of records which are selected from the input \code{object},
 for example: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}.}
 
 \item{aliquot_selection}{\link{numeric} vector (\emph{optional}):
-Vector specifying the indices of elements (aliquots) of a list of \linkS4class{RLum.Analysis} objects
+Vector specifying the indices of elements (aliquots) of a list of \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} objects
 which shall be included.}
 
 \item{offset_value}{\link{numeric} (\emph{with default}):
@@ -38,7 +38,7 @@ Enables console text output.}
 \item{output.plot}{\link{logical} (\emph{with default}):
 returns a plot with all data points of all records and the average curve}
 
-\item{theme.set}{\link{ggplot2} object (\emph{with default}):
+\item{theme.set}{\link[ggplot2:ggplot2-package]{ggplot2::ggplot2-package} object (\emph{with default}):
 sets the graphical theme of the output plot.
 See \link[ggplot2:ggtheme]{ggplot2::theme_bw} for available themes}
 
@@ -59,7 +59,9 @@ as well as pixel images are possible. Allowed are \code{.pdf}, \code{.eps}, \cod
 A \link{data.frame} of the average CW-OSL curve is returned, containing two columns: \verb{$time} and \verb{$signal}.
 }
 \description{
-This function adds up all CW-OSL records of the same type saved in \linkS4class{RLum.Analysis} objects and
+This function adds up all CW-OSL records of the same type saved
+in \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis}
+objects and
 calculates the arithmetic mean signal from all records for each channel.
 This is useful to create global average curve with sufficient signal-to-noise ratio
 for OSL components identification with \link{fit_OSLcurve} or to create a signal background

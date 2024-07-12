@@ -1,6 +1,6 @@
-#' Multi-exponential CW-OSL curve fitting
+#' @title Multi-exponential CW-OSL curve fitting
 #'
-#' Fitting function for multi-exponentially decaying CW-OSL measurements,
+#' @description Fitting function for multi-exponentially decaying CW-OSL measurements,
 #' based on the algorithm described by Bluszcz & Adamiec (2006).
 #'
 #' The function assumes multiple exponentially decaying signal components with first-order kinetics:
@@ -13,7 +13,7 @@
 #'
 #' The fitting algorithm is an implementation of the *hybrid evolutionary-linear algorithm* (HELA)
 #' by Bluszcz & Adamiec (2006). See there or Mittelstraß et al. (in preparation) for details.
-#' The differential evolution part of HELA is performed by [DEoptim::DEoptim].
+#' differential evolution part of HELA is performed by [DEoptim::DEoptim].
 #' The linear regression part of HELA is performed by [decompose_OSLcurve].
 #' The parameter refinement by Levenberg-Marquardt fitting is performed by [minpack.lm::nlsLM].
 #'
@@ -62,7 +62,7 @@
 #'  Slow4 \tab 1e-21 \tab 1e-20
 #' }
 #'
-#' @param curve [RLum.Data.Curve-class] or [data.frame] or [matrix] (**required**):
+#' @param curve [Luminescence::RLum.Data.Curve-class] or [data.frame] or [matrix] (**required**):
 #' CW-OSL record or average CW-OSL curve created by [sum_OSLcurves]. If no column `$time` exists, the first column is defined
 #' as measurement time (x-axis). Time intervals must be constant. If no column `$signal` exists, the second column is defined
 #' as signal values (y-axis). Further columns will be ignored

@@ -1,6 +1,6 @@
-#' Advanced plot function for component resolved CW-OSL curves
+#' @title Advanced plot function for component resolved CW-OSL curves
 #'
-#' This function is used for plotting CW-OSL curves and its signal components. It can handle data returned
+#' @description This function is used for plotting CW-OSL curves and its signal components. It can handle data returned
 #' by [fit_OSLcurve] or [decompose_OSLcurve]. Besides CW-OSL curves, pseudoLM-OSL curves and
 #' residual plots can also be plotted.
 #'
@@ -24,7 +24,7 @@
 #' See Bos and Wallinga (2012) for a detailed explanation and discussion.
 #'
 #'
-#' @param curve [data.frame] or [matrix] or [RLum.Data.Curve-class] (*optional*):
+#' @param curve [data.frame] or [matrix] or [Luminescence::RLum.Data.Curve-class] (*optional*):
 #' CW-OSL curve x-Axis: `$time` or first column as measurement time (must have constant time intervals);
 #' y-Axis: `$signal` or second column as luminescence signal.
 #' Other columns will be plotted as component curves, in case no input object `components` is defined.
@@ -52,7 +52,7 @@
 #' @param show.initial [logical] (*with default*):
 #' Displays signal share at the first channel in the component table (if available).
 #'
-#' @param theme.set [ggplot2] object (*with default*):
+#' @param theme.set [ggplot2::ggplot2-package] object (*with default*):
 #' Graphical theme of the output plot. This argument is forwarded to [ggplot2::theme_set].
 #' Recommended themes are `ggplot2::theme_minimal()`, `ggplot2::theme_classic()` and `ggplot2::theme_bw()`,
 #' see [ggplot2::theme_bw] or [here](https://ggplot2.tidyverse.org/reference/ggtheme.html) for
@@ -76,12 +76,12 @@
 #' @return
 #' An invisible [ggplot2::ggplot] object containing the diagram will returned. "Invisible" means, the no value
 #' will be returned (e.g. no console printout) if the function is not assigned to a variable via `<-`.
-#' If the function is assigned, the returned object can be further manipulated by [ggplot2-package] methods
+#' If the function is assigned, the returned object can be further manipulated by [ggplot2::ggplot2-package] methods
 #' or manually drawn by various functions like for example [gridExtra::grid.arrange].
 #'
 #' @section Last update:
 #'
-#' 2021-03-29, DM: Hidden output objects are now [ggplot2] objects if the plot is not a composite diagram
+#' 2021-03-29, DM: Hidden output objects are now [ggplot2::ggplot2-package] objects if the plot is not a composite diagram
 #'
 #' @author
 #' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}

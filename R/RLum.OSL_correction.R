@@ -1,12 +1,13 @@
-#' Check and correct CW-OSL curves in RLum.Analysis data sets
+#' @title Check and correct CW-OSL curves in RLum.Analysis data sets
 #'
-#' CW-OSL measurements are often affected by background signals or might be measured under
+#' @description CW-OSL measurements are often affected by background signals or might be measured under
 #' inconsistent detection settings. This function provides tools
 #' to test and solve some common problems.
 #'
-#' This function processes data sets created within the [Luminescence-package] (Kreutzer et al. 2012).
-#' Those data sets must be formatted as [RLum.Analysis-class] objects. Output objects will also be
-#' [RLum.Analysis-class] objects and are meant for further analysis with [RLum.OSL_global_fitting].
+#' This function processes data sets created within the [Luminescence::Luminescence-package]
+#' (Kreutzer et al. 2012).
+#' Those data sets must be formatted as [Luminescence::RLum.Analysis-class] objects. Output objects will also be
+#' [Luminescence::RLum.Analysis-class] objects and are meant for further analysis with [RLum.OSL_global_fitting].
 #'
 #' The data preparation tools are executed in the following order:
 #' \enumerate{
@@ -56,7 +57,8 @@
 #' | 1000000 cts/s | 1018330 cts/s | 1.83 %
 #'
 #'
-#' @param object [RLum.Analysis-class] or [list] of [RLum.Analysis-class] (**required**):
+#' @param object [Luminescence::RLum.Analysis-class] or [list] of [Luminescence::RLum.Analysis-class]
+#' (**required**):
 #' Data set of one or multiple CW-OSL measured aliquots.
 #'
 #' @param record_type [character] (*with default*):
@@ -130,7 +132,7 @@
 #'
 #' @return
 #'
-#' The input `object`, a [list] of [RLum.Analysis-class] objects, is given back with eventual changes
+#' The input `object`, a [list] of [Luminescence::RLum.Analysis-class] objects, is given back with eventual changes
 #' in the elements `object[[]]@records[[]]@recordType` and `object[[]]@records[[]]@data`.
 #'
 #' The returned data set contains a new list element `object[["CORRECTION"]]` which provides

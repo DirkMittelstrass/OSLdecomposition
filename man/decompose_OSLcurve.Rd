@@ -14,7 +14,7 @@ decompose_OSLcurve(
 )
 }
 \arguments{
-\item{curve}{\link{data.frame} or \link{matrix} or \linkS4class{RLum.Data.Curve} (\strong{required}):
+\item{curve}{\link{data.frame} or \link{matrix} or \link[Luminescence:RLum.Data.Curve-class]{Luminescence::RLum.Data.Curve} (\strong{required}):
 CW-OSL curve x-Axis: \verb{$time} or first column as measurement time (must have constant time intervals);
 y-Axis: \verb{$signal} or second column as luminescence signal. Further columns will be ignored.}
 
@@ -54,8 +54,7 @@ of the columns are set to \code{NA}.
 Function for determining the signal component amplitudes of a multi-exponential decay curve if
 the signal component decay parameters are already given. Thus, this function decomposes CW-OSL
 curves with known components of unknown intensity.
-}
-\details{
+
 The function assumes multiple exponentially decaying signal components with first-order kinetics:
 
 \deqn{I(t) = n_1 \lambda_1 exp(-\lambda_1 t) + n_2 \lambda_2 exp(-\lambda_2 t) + ... + n_K \lambda_K exp(-\lambda_K t)}

@@ -22,7 +22,7 @@ Table or vector containing the decay constants of the signal components.
 A \link{data.frame} must contain a column \verb{$lambda}. Usually the \link{data.frame} is provided
 by \link{fit_OSLcurve}.}
 
-\item{curve}{\link{data.frame} or \link{matrix} or \linkS4class{RLum.Data.Curve} (\emph{optional}):
+\item{curve}{\link{data.frame} or \link{matrix} or \link[Luminescence:RLum.Data.Curve-class]{Luminescence::RLum.Data.Curve} (\emph{optional}):
 OSL signal curve which serves as time axis template.
 The input curve will be used to define \code{channel.width} and \code{channel.number}}
 
@@ -59,8 +59,7 @@ If a \link{numeric} vector is given as input, a new \link{data.frame} will be re
 \description{
 This function defines integration intervals for CW-OSL component separation with \link{decompose_OSLcurve}.
 The underlying iterative optimisation process aims for minimum cross-correlation between the signal components.
-}
-\details{
+
 The precision of the component separation with \link{decompose_OSLcurve} and the impact of
 systematic decay rate errors on the component separation depends on the integration interval definition.
 This function minimises the influence of an under/over-estimated decay rate to the

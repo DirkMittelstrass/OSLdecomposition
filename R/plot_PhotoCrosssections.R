@@ -1,6 +1,6 @@
-#' Plot comparison of CW-OSL component photoionisation cross sections of different models
+#' @title Plot comparison of CW-OSL component photoionisation cross sections of different models
 #'
-#' This function takes the `output.complex = TRUE` output of [fit_OSLcurve] and draws the
+#' @description This function takes the `output.complex = TRUE` output of [fit_OSLcurve] and draws the
 #' photoionisation cross sections of different models in relation to each other.
 #' If a stimulation wavelength between 465 and 480 nm was chosen,
 #' the photoionisation cross sections are also set in relation to literature values
@@ -50,8 +50,8 @@
 #' @return
 #' An invisible [ggplot2::ggplot] object containing the diagram will returned. "Invisible" means, the no value
 #' will be returned (e.g. no console printout) if the function is not assigned to a variable via `<-`.
-#' If the function is assigned, the returned object can be further manipulated by [ggplot2-package] methods
-#' or manually drawn by various functions like for example [gridExtra::grid.arrange].
+#' If the function is assigned, the returned object can be further manipulated with
+#' [ggplot2::ggplot2-package] methods or manually drawn by various functions like for example [gridExtra::grid.arrange].
 #'
 #' @section Last updates:
 #'

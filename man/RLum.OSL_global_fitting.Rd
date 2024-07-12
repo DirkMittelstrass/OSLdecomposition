@@ -20,11 +20,11 @@ RLum.OSL_global_fitting(
 )
 }
 \arguments{
-\item{object}{\linkS4class{RLum.Analysis} or \link{list} of \linkS4class{RLum.Analysis} (\strong{required}):
+\item{object}{\link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} or \link{list} of \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} (\strong{required}):
 Data set of one or multiple CW-OSL measured aliquots.}
 
 \item{record_type}{\link{character} (\emph{with default}):
-Type of records, selected by the \linkS4class{RLum.Analysis} attribute \verb{@recordType}.
+Type of records, selected by the \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} attribute \verb{@recordType}.
 Common are: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}.}
 
 \item{K_maximum}{\link{numeric} (\emph{with default}):
@@ -59,14 +59,14 @@ Set \code{image_format = NULL} if no images shall be saved.}
 If set to \code{TRUE} a browser window displaying the report will be opened automatically.}
 
 \item{rmd_path}{\link{character} (\emph{with default}):
-\strong{For advanced users:} File path to the \link{rmarkdown} source code file of the report.
+\strong{For advanced users:} File path to the \link[rmarkdown:rmarkdown-package]{rmarkdown::rmarkdown-package} source code file of the report.
 This allows to execute manipulated versions of the report.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
 Enables console text output.}
 }
 \value{
-The input \code{object}, a \link{list} of \linkS4class{RLum.Analysis} objects is returned but with
+The input \code{object}, a \link{list} of \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} objects is returned but with
 a new list element \code{object[["OSL_COMPONENTS"]]}, containing:
 \itemize{
 \item \verb{$decay.rates} \link{numeric} vector: Decay rates of F-test recommendation or last successful fitting.
@@ -85,10 +85,9 @@ a new list element \code{object[["OSL_COMPONENTS"]]}, containing:
 \description{
 First, all CW-OSL records are combined to one global average CW-OSL curve,
 then the multi-exponential fitting approach of Bluszcz and Adamiec (2006) is applied.
-This function processes \linkS4class{RLum.Analysis} data sets created within
-the \link{Luminescence-package} (Kreutzer et al. 2012).
-}
-\details{
+This function processes \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} data sets created within
+the \link[Luminescence:Luminescence-package]{Luminescence::Luminescence-package} (Kreutzer et al. 2012).
+
 The workflow of this function is as follows:
 
 \enumerate{
@@ -97,12 +96,12 @@ The workflow of this function is as follows:
 \item Create a \code{html} report to summarize the results (\emph{optional}).
 }
 
-Data sets must be formatted as \linkS4class{RLum.Analysis} objects and
+Data sets must be formatted as \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} objects and
 should have been processed with \link{RLum.OSL_correction} beforehand.
-Output objects are also \linkS4class{RLum.Analysis} objects and are
+Output objects are also \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} objects and are
 meant for further analysis with \link{RLum.OSL_decomposition}.
 
-If \code{report = TRUE}, a \code{html} report of the results is rendered by the \link{rmarkdown-package}
+If \code{report = TRUE}, a \code{html} report of the results is rendered by the \link[rmarkdown:rmarkdown-package]{rmarkdown::rmarkdown-package}
 and saved in the working directory, which is usually the directory of the data file.
 This report can be displayed, shared and published online without any requirements to
 the operation system or installed software. However, an internet connection is needed to display

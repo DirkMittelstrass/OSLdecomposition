@@ -19,7 +19,7 @@ plot_OSLcurve(
 )
 }
 \arguments{
-\item{curve}{\link{data.frame} or \link{matrix} or \linkS4class{RLum.Data.Curve} (\emph{optional}):
+\item{curve}{\link{data.frame} or \link{matrix} or \link[Luminescence:RLum.Data.Curve-class]{Luminescence::RLum.Data.Curve} (\emph{optional}):
 CW-OSL curve x-Axis: \verb{$time} or first column as measurement time (must have constant time intervals);
 y-Axis: \verb{$signal} or second column as luminescence signal.
 Other columns will be plotted as component curves, in case no input object \code{components} is defined.
@@ -47,7 +47,7 @@ Displays photoionisation cross section values in the component table (if availab
 \item{show.initial}{\link{logical} (\emph{with default}):
 Displays signal share at the first channel in the component table (if available).}
 
-\item{theme.set}{\link{ggplot2} object (\emph{with default}):
+\item{theme.set}{\link[ggplot2:ggplot2-package]{ggplot2::ggplot2-package} object (\emph{with default}):
 Graphical theme of the output plot. This argument is forwarded to \link[ggplot2:theme_get]{ggplot2::theme_set}.
 Recommended themes are \code{ggplot2::theme_minimal()}, \code{ggplot2::theme_classic()} and \code{ggplot2::theme_bw()},
 see \link[ggplot2:ggtheme]{ggplot2::theme_bw} or \href{https://ggplot2.tidyverse.org/reference/ggtheme.html}{here} for
@@ -71,15 +71,14 @@ and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}.}
 \value{
 An invisible \link[ggplot2:ggplot]{ggplot2::ggplot} object containing the diagram will returned. "Invisible" means, the no value
 will be returned (e.g. no console printout) if the function is not assigned to a variable via \verb{<-}.
-If the function is assigned, the returned object can be further manipulated by \link{ggplot2-package} methods
+If the function is assigned, the returned object can be further manipulated by \link[ggplot2:ggplot2-package]{ggplot2::ggplot2-package} methods
 or manually drawn by various functions like for example \link[gridExtra:arrangeGrob]{gridExtra::grid.arrange}.
 }
 \description{
 This function is used for plotting CW-OSL curves and its signal components. It can handle data returned
 by \link{fit_OSLcurve} or \link{decompose_OSLcurve}. Besides CW-OSL curves, pseudoLM-OSL curves and
 residual plots can also be plotted.
-}
-\details{
+
 \strong{Change graph types with parameter:} \code{display}
 
 \tabular{ll}{
@@ -102,7 +101,7 @@ See Bos and Wallinga (2012) for a detailed explanation and discussion.
 \section{Last update}{
 
 
-2021-03-29, DM: Hidden output objects are now \link{ggplot2} objects if the plot is not a composite diagram
+2021-03-29, DM: Hidden output objects are now \link[ggplot2:ggplot2-package]{ggplot2::ggplot2-package} objects if the plot is not a composite diagram
 }
 
 \examples{

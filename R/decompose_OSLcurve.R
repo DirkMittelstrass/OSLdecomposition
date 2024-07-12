@@ -1,6 +1,6 @@
-#' Multi-exponential CW-OSL decomposition
+#' @title Multi-exponential CW-OSL decomposition
 #'
-#' Function for determining the signal component amplitudes of a multi-exponential decay curve if
+#' @description Function for determining the signal component amplitudes of a multi-exponential decay curve if
 #' the signal component decay parameters are already given. Thus, this function decomposes CW-OSL
 #' curves with known components of unknown intensity.
 #'
@@ -115,7 +115,7 @@
 #'
 #'
 #'
-#' @param curve [data.frame] or [matrix] or [RLum.Data.Curve-class] (**required**):
+#' @param curve [data.frame] or [matrix] or [Luminescence::RLum.Data.Curve-class] (**required**):
 #' CW-OSL curve x-Axis: `$time` or first column as measurement time (must have constant time intervals);
 #' y-Axis: `$signal` or second column as luminescence signal. Further columns will be ignored.
 #'

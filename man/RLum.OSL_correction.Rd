@@ -17,7 +17,8 @@ RLum.OSL_correction(
 )
 }
 \arguments{
-\item{object}{\linkS4class{RLum.Analysis} or \link{list} of \linkS4class{RLum.Analysis} (\strong{required}):
+\item{object}{\link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} or \link{list} of \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis}
+(\strong{required}):
 Data set of one or multiple CW-OSL measured aliquots.}
 
 \item{record_type}{\link{character} (\emph{with default}):
@@ -64,7 +65,7 @@ Set \code{PMT_pulse_pair_resolution = NA} if algorithm shall be omitted.}
 Enables console text output.}
 }
 \value{
-The input \code{object}, a \link{list} of \linkS4class{RLum.Analysis} objects, is given back with eventual changes
+The input \code{object}, a \link{list} of \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} objects, is given back with eventual changes
 in the elements \code{object[[]]@records[[]]@recordType} and \code{object[[]]@records[[]]@data}.
 
 The returned data set contains a new list element \code{object[["CORRECTION"]]} which provides
@@ -74,11 +75,11 @@ a \link{list} of the input parameters and additional data depending on the appli
 CW-OSL measurements are often affected by background signals or might be measured under
 inconsistent detection settings. This function provides tools
 to test and solve some common problems.
-}
-\details{
-This function processes data sets created within the \link{Luminescence-package} (Kreutzer et al. 2012).
-Those data sets must be formatted as \linkS4class{RLum.Analysis} objects. Output objects will also be
-\linkS4class{RLum.Analysis} objects and are meant for further analysis with \link{RLum.OSL_global_fitting}.
+
+This function processes data sets created within the \link[Luminescence:Luminescence-package]{Luminescence::Luminescence-package}
+(Kreutzer et al. 2012).
+Those data sets must be formatted as \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} objects. Output objects will also be
+\link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} objects and are meant for further analysis with \link{RLum.OSL_global_fitting}.
 
 The data preparation tools are executed in the following order:
 \enumerate{

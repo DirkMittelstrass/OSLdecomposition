@@ -1,6 +1,6 @@
-#' Find adequate integration intervals for CW-OSL decomposition
+#' @title Find adequate integration intervals for CW-OSL decomposition
 #'
-#' This function defines integration intervals for CW-OSL component separation with [decompose_OSLcurve].
+#' @description This function defines integration intervals for CW-OSL component separation with [decompose_OSLcurve].
 #' The underlying iterative optimisation process aims for minimum cross-correlation between the signal components.
 #'
 #' The precision of the component separation with [decompose_OSLcurve] and the impact of
@@ -18,7 +18,7 @@
 #' A [data.frame] must contain a column `$lambda`. Usually the [data.frame] is provided
 #' by [fit_OSLcurve].
 #'
-#' @param curve [data.frame] or [matrix] or [RLum.Data.Curve-class] (*optional*):
+#' @param curve [data.frame] or [matrix] or [Luminescence::RLum.Data.Curve-class] (*optional*):
 #' OSL signal curve which serves as time axis template.
 #' The input curve will be used to define `channel.width` and `channel.number`
 #'

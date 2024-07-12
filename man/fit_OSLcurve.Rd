@@ -16,7 +16,7 @@ fit_OSLcurve(
 )
 }
 \arguments{
-\item{curve}{\linkS4class{RLum.Data.Curve} or \link{data.frame} or \link{matrix} (\strong{required}):
+\item{curve}{\link[Luminescence:RLum.Data.Curve-class]{Luminescence::RLum.Data.Curve} or \link{data.frame} or \link{matrix} (\strong{required}):
 CW-OSL record or average CW-OSL curve created by \link{sum_OSLcurves}. If no column \verb{$time} exists, the first column is defined
 as measurement time (x-axis). Time intervals must be constant. If no column \verb{$signal} exists, the second column is defined
 as signal values (y-axis). Further columns will be ignored}
@@ -74,8 +74,7 @@ If \code{output.complex = TRUE}, a \link{list} of objects is returned:
 \description{
 Fitting function for multi-exponentially decaying CW-OSL measurements,
 based on the algorithm described by Bluszcz & Adamiec (2006).
-}
-\details{
+
 The function assumes multiple exponentially decaying signal components with first-order kinetics:
 
 \deqn{I(t) = n_1 \lambda_1 exp(-\lambda_1 t) + n_2 \lambda_2 exp(-\lambda_2 t) + ... + n_K \lambda_K exp(-\lambda_K t)}
@@ -86,7 +85,7 @@ For actual fitting, the integrated version of this formula is used, see Mittelst
 
 The fitting algorithm is an implementation of the \emph{hybrid evolutionary-linear algorithm} (HELA)
 by Bluszcz & Adamiec (2006). See there or Mittelstraß et al. (in preparation) for details.
-The differential evolution part of HELA is performed by \link[DEoptim:DEoptim]{DEoptim::DEoptim}.
+differential evolution part of HELA is performed by \link[DEoptim:DEoptim]{DEoptim::DEoptim}.
 The linear regression part of HELA is performed by \link{decompose_OSLcurve}.
 The parameter refinement by Levenberg-Marquardt fitting is performed by \link[minpack.lm:nlsLM]{minpack.lm::nlsLM}.
 
