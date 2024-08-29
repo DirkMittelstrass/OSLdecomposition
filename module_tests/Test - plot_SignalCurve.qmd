@@ -1,0 +1,53 @@
+---
+title: "Module tests for plot_SignalCurve"
+author: "Dirk Mittelstraß"
+date: "2024-08-29"
+format:
+  html:
+    toc: true
+    toc-location: right
+    toc-expand: true
+    self-contained: true
+editor: visual
+execute:
+  output: true
+  warning: true
+---
+
+This document collects scripts for developing, bug-fixing and pre-release validating a specific function.
+
+## Sourcing
+
+Is the function successfully sourced?
+
+```{r sourcing}
+
+library(OSLdecomposition)
+source("../R/plot_SignalCurve.R")
+
+```
+
+## Define signal curves
+
+```{r}
+ # ToDo: Create a couple of test curves with wild varity of signal shapes
+
+
+# Set some arbitrary decay parameter for a dim CW-OSL measurement of quartz
+components <- data.frame(name = c("fast", "medium", "slow"),
+                         lambda = c(2, 0.5, 0.02),
+                         n = c(1000, 1000, 10000))
+
+# Simulate the CW-OSL curve and add some signal noise
+curve <- simulate_OSLcomponents(components, simulate.curve = TRUE, 
+                                add.poisson.noise = TRUE)
+
+```
+
+## Test raw plot
+
+```{r}
+
+plot_SignalCurve(curve)
+plot_SignalCurve(curve, scaling.type = "log")
+```
