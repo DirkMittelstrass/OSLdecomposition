@@ -28,6 +28,7 @@ plot_SignalCurve <- function(curve = NULL,
                              show.legend = TRUE,
                              show.residuals = TRUE,
                              colors = NULL,
+                             font.size = 10,
                              main = NULL,
                              xlab = NULL,
                              ylab = NULL,
@@ -51,11 +52,11 @@ plot_SignalCurve <- function(curve = NULL,
   # Create curve from component table if not given
   if (is.null(curve) && !is.null(components)) {
 
-    channel.width <- 1 / (2*max(components$lambda))
-    channel.number <- ceiling(1 / (min(components$lambda) * channel.width))
+    channel_width <- 1 / (2*max(components$lambda))
+    channel_number <- ceiling(1 / (min(components$lambda) * channel_width))
     curve <- simulate_OSLcomponents(components,
-                                    channel.width = channel.width,
-                                    channel.number = channel.number,
+                                    channel.width = channel_width,
+                                    channel.number = channel_number,
                                     simulate.curve = TRUE,
                                     add.poisson.noise = FALSE)
   } else {
@@ -78,28 +79,123 @@ plot_SignalCurve <- function(curve = NULL,
       curve <- data.frame(time = curve[,1], signal = curve[,2])}
   }
 
+  #### ADD COMPONENT SIGNALS #### ----------------------------------------------
+
+  if (!is.null(components)) {
+    curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
+  } else {
+    warning("[plot_SignalCurve()] When setting argument 'component.type' to 'fill', the argument 'components' must also be set. Thus, changed  'component.type' to 'line' ")
+    component.type <- "line"
+  }
+
+
   # channel.width <- curve$time[2] - curve$time[1]
 
-  #### PLOT DESIGN #### --------------------------------------------------------
+  curve_params <- colnames(curve)
+
+  # Stacked plots need special treatment to be displayed properly
+  positive_comps <- negative_comps <- data.frame(NULL)
+  if (component.type == "fill" && length(curve_params) > 4) {
+
+    # Separate components into two types: Increasing and decreasing
+    comps_only <- curve[,5:ncol(curve)]
+    positive_comps <- comps_only[, components$n >= 0]
+    negative_comps <- comps_only[, components$n < 0]
+
+    # Now stack up the components
+    if (ncol(positive_comps) > 1) {
+      for (i in ncol(positive_comps):2) {
+        positive_comps[,i - 1] <- positive_comps[,i - 1] + positive_comps[,i]
+      }
+
+      # Add zero line which is needed by ggplot_ribbon()
+      positive_comps$zero <- 0
+    }
+
+    #return(positive_comps)
+
+    # Doe the same for the components below zero
+    if (ncol(negative_comps) > 1) {
+      for (i in ncol(negative_comps):2) {
+        negative_comps[,i - 1] <- negative_comps[,i - 1] + negative_comps[,i]
+      }
+      negative_comps$zero <- 0
+    }
+  }
+
+
+
+  #### DESIGN CHOICES #### -----------------------------------------------------
 
   library(ggplot2)
 
   # Set color and line themes
   ggplot2::theme_set(theme.set)
-  comp_col <- c("royalblue3","green3","red3","gold","orchid","orange","pink2","brown2")
+  comp_col <- c("orchid","royalblue2","red2","orange","green3","pink2","gold","brown2")
   if (length(colors) > 0) comp_col[1:length(colors)] <- colors
 
   # Reduce font size of titles; also set the legend design
-  text_format <- ggplot2::theme(axis.title = ggplot2::element_text(size = 8),
-                                plot.subtitle = ggplot2::element_text(size = 9, face = "bold"),
+  text_format <- ggplot2::theme(axis.title = ggplot2::element_text(size = font.size),
+                                plot.subtitle = ggplot2::element_text(size = font.size + 1, face = "bold"),
                                 legend.position.inside = c(1, 1), legend.justification = c("right", "top"),
                                 legend.title = ggplot2::element_blank(),
-                                legend.text = ggplot2::element_text(size = 8))
+                                legend.text = ggplot2::element_text(size = font.size))
+
+
+
+
+
+  #### ADD COMPONENT PLOTS #### ------------------------------------------------
+
+  p <- ggplot(curve)
+
+  # Are there any columns besides Signal, Time, Sum and Residual?
+  # Then these are the components. Draw them first!
+  if (length(curve_params) > 4) {
+
+    col_index <- length(curve_params) - 4
+
+    if (component.type == "fill") {
+
+      # QUESTION: Must  ymin/ymax be part of the input data?
+      if (ncol(positive_comps) > 1) {
+        for (i in ncol(positive_comps):2) {
+          p <- p + geom_ribbon(aes(x = time,
+                                   ymin = positive_comps[, i],
+                                   ymax = positive_comps[, i - 1]),
+                               color = comp_col[col_index], fill = comp_col[col_index])
+          col_index <- col_index - 1
+        }
+      }
+
+      if (ncol(negative_comps) > 1) {
+        for (i in ncol(negative_comps):2) {
+          p <- p + geom_ribbon(aes(x = time,
+                                   ymax = negative_comps[, i],
+                                   ymin = negative_comps[, i - 1]),
+                               color = comp_col[col_index], fill = comp_col[col_index])
+          col_index <- col_index - 1
+        }
+      }
+
+
+
+
+
+    } else {
+
+      for (i in 5:length(curve_params)) {
+        p <- p + geom_line(aes(x = time, y = curve[, i]), color = comp_col[col_index], linewidth = 0.5)
+        col_index <- col_index - 1
+      }
+    }
+  }
+
 
   #### BASIC PLOT #### ---------------------------------------------------------
 
-  p <- ggplot(curve, aes(x = time, y = signal)) +
-    geom_line(color = "darkgrey", linewidth = 0.5)
+  p <- p + geom_line(aes(x = time, y = signal), color = "grey40", linewidth = 0.5)
+
 
   #### SET SCALES #### ---------------------------------------------------------
 
@@ -111,6 +207,10 @@ plot_SignalCurve <- function(curve = NULL,
   #### APPLY DESIGN SETTINGS #### ----------------------------------------------
 
   p <- p + text_format
+
+  # Ensure that all titles begin with a upper case character
+  for (i in 1:length(curve_params)) {
+    substr(curve_params[i], 1, 1) <- toupper(substr(curve_params[i] , 1, 1))}
 
   #### RETURN OBJECTS #### -----------------------------------------------------
 

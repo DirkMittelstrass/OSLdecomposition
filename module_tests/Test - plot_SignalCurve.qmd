@@ -48,6 +48,6 @@ curve <- simulate_OSLcomponents(components, simulate.curve = TRUE,
 
 ```{r}
 
-plot_SignalCurve(curve)
+plot_SignalCurve(curve, components, component.type = "fill")
 plot_SignalCurve(curve, scaling.type = "log")
 ```
