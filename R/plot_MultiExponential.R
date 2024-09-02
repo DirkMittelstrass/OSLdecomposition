@@ -21,7 +21,7 @@
 #' @md
 #' @export
 
-plot_SignalCurve <- function(curve = NULL,
+plot_MultiExponential <- function(curve = NULL,
                              components = NULL,
                              scaling.type = "linear", #" log", "loglog", "LM"
                              component.type = "fill", # "line", "pattern"
@@ -47,7 +47,7 @@ plot_SignalCurve <- function(curve = NULL,
 
   #### INPUT CHECKS #### -------------------------------------------------------
 
-  if (is.null(curve) && is.null(components)) stop("[plot_SignalCurve()]: Either 'curve' or 'components' must be defined")
+  if (is.null(curve) && is.null(components)) stop("[plot_MultiExponential()]: Either 'curve' or 'components' must be defined")
 
   # Create curve from component table if not given
   if (is.null(curve) && !is.null(components)) {
@@ -63,7 +63,7 @@ plot_SignalCurve <- function(curve = NULL,
 
     # Check input curve
     if(!inherits(curve, c("RLum.Data.Curve", "data.frame", "matrix"))){
-      stop("[plot_SignalCurve()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
+      stop("[plot_MultiExponential()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
 
     if(inherits(curve, "RLum.Data.Curve")) {
 
@@ -84,42 +84,54 @@ plot_SignalCurve <- function(curve = NULL,
   if (!is.null(components)) {
     curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
   } else {
-    warning("[plot_SignalCurve()] When setting argument 'component.type' to 'fill', the argument 'components' must also be set. Thus, changed  'component.type' to 'line' ")
+    warning("[plot_MultiExponential()] When setting argument 'component.type' to 'fill', the argument 'components' must also be set. Thus, changed  'component.type' to 'line' ")
     component.type <- "line"
   }
 
 
   # channel.width <- curve$time[2] - curve$time[1]
-
   curve_params <- colnames(curve)
+  K <- 0
+  if (ncol(curve) > 4) K <- ncol(curve) - 4
 
   # Stacked plots need special treatment to be displayed properly
-  positive_comps <- negative_comps <- data.frame(NULL)
-  if (component.type == "fill" && length(curve_params) > 4) {
+  c_plots <- data.frame(time = curve$time)
+  if (component.type == "fill" && K > 0) {
 
     # Separate components into two types: Increasing and decreasing
     comps_only <- curve[,5:ncol(curve)]
-    positive_comps <- comps_only[, components$n >= 0]
-    negative_comps <- comps_only[, components$n < 0]
+    positive_comps <- as.data.frame(comps_only[, components$n >= 0])
+    negative_comps <- as.data.frame(comps_only[, components$n < 0])
 
     # Now stack up the components
-    if (ncol(positive_comps) > 1) {
-      for (i in ncol(positive_comps):2) {
-        positive_comps[,i - 1] <- positive_comps[,i - 1] + positive_comps[,i]
-      }
+    if (ncol(positive_comps) > 0) {
 
-      # Add zero line which is needed by ggplot_ribbon()
-      positive_comps$zero <- 0
+      added_signal <- rep(0, nrow(curve))
+      for (i in ncol(positive_comps):1) {
+
+        # ymin boundary
+        c_plots <- cbind(c_plots, added_signal)
+
+        # ymax boundary
+        added_signal <- added_signal + positive_comps[,i]
+        c_plots <- cbind(c_plots, added_signal)
+      }
     }
 
-    #return(positive_comps)
+    # Do the same for the components below zero
+    if (ncol(negative_comps) > 0) {
 
-    # Doe the same for the components below zero
-    if (ncol(negative_comps) > 1) {
-      for (i in ncol(negative_comps):2) {
-        negative_comps[,i - 1] <- negative_comps[,i - 1] + negative_comps[,i]
+      previous_signal <- rep(0, nrow(curve))
+      for (i in ncol(negative_comps):1) {
+
+        # ymin boundary
+        added_signal <- previous_signal + negative_comps[, i]
+        c_plots <- cbind(c_plots, added_signal)
+
+        # ymax boundary
+        c_plots <- cbind(c_plots, previous_signal)
+        previous_signal <- added_signal
       }
-      negative_comps$zero <- 0
     }
   }
 
@@ -131,7 +143,7 @@ plot_SignalCurve <- function(curve = NULL,
 
   # Set color and line themes
   ggplot2::theme_set(theme.set)
-  comp_col <- c("orchid","royalblue2","red2","orange","green3","pink2","gold","brown2")
+  comp_col <- c("skyblue2","orchid","cyan2","orange","red2","pink3","brown2")
   if (length(colors) > 0) comp_col[1:length(colors)] <- colors
 
   # Reduce font size of titles; also set the legend design
@@ -147,42 +159,67 @@ plot_SignalCurve <- function(curve = NULL,
 
   #### ADD COMPONENT PLOTS #### ------------------------------------------------
 
-  p <- ggplot(curve)
+  p <- ggplot()
 
   # Are there any columns besides Signal, Time, Sum and Residual?
   # Then these are the components. Draw them first!
-  if (length(curve_params) > 4) {
+  if (K > 0) {
+
+    if (K >= 8) warning("[plot_MultiExponential()] Graphs with more than 7 components are not supported. Only the first 7 are displayed.")
 
     col_index <- length(curve_params) - 4
 
-    if (component.type == "fill") {
+    if (component.type == "fill" && ncol(c_plots) > 1) {
 
-      # QUESTION: Must  ymin/ymax be part of the input data?
-      if (ncol(positive_comps) > 1) {
-        for (i in ncol(positive_comps):2) {
-          p <- p + geom_ribbon(aes(x = time,
-                                   ymin = positive_comps[, i],
-                                   ymax = positive_comps[, i - 1]),
-                               color = comp_col[col_index], fill = comp_col[col_index])
-          col_index <- col_index - 1
-        }
-      }
+      # Yes, the code looks weird. However, it seems like ggplot does not create memory copies
+      # of the input data. Instead it works address pointer. Thus, dynamical approaches like increasing
+      # indices won't work.
 
-      if (ncol(negative_comps) > 1) {
-        for (i in ncol(negative_comps):2) {
-          p <- p + geom_ribbon(aes(x = time,
-                                   ymax = negative_comps[, i],
-                                   ymin = negative_comps[, i - 1]),
-                               color = comp_col[col_index], fill = comp_col[col_index])
-          col_index <- col_index - 1
-        }
-      }
+      if (K >= 1) p <- p +
+          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,2],  ymax = c_plots[,3]), colour = comp_col[1], fill = comp_col[1])
 
+      if (K >= 2) p <- p +
+          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,4],  ymax = c_plots[,5]), colour = comp_col[2], fill = comp_col[2])
 
+      if (K >= 3) p <- p +
+          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,6],  ymax = c_plots[,7]), colour = comp_col[3], fill = comp_col[3])
 
+      if (K >= 4) p <- p +
+          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,8],  ymax = c_plots[,9]), colour = comp_col[4], fill = comp_col[4])
 
+      if (K >= 5) p <- p +
+          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,10],  ymax = c_plots[,11]), colour = comp_col[5], fill = comp_col[5])
+
+      if (K >= 6) p <- p +
+          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,12],  ymax = c_plots[,13]), colour = comp_col[6], fill = comp_col[6])
+
+      if (K >= 7) p <- p +
+          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,14],  ymax = c_plots[,15]), colour = comp_col[7], fill = comp_col[7])
 
     } else {
+
+      if (K >= 1) p <- p +
+          geom_line(aes(x = c_plots[,1], y = c_plots[,2]), color = comp_col[1], linewidth = 0.75)
+      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,2],  ymax = c_plots[,3]), colour = comp_col[1], fill = comp_col[1])
+      #
+      # if (K >= 2) p <- p +
+      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,4],  ymax = c_plots[,5]), colour = comp_col[2], fill = comp_col[2])
+      #
+      # if (K >= 3) p <- p +
+      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,6],  ymax = c_plots[,7]), colour = comp_col[3], fill = comp_col[3])
+      #
+      # if (K >= 4) p <- p +
+      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,8],  ymax = c_plots[,9]), colour = comp_col[4], fill = comp_col[4])
+      #
+      # if (K >= 5) p <- p +
+      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,10],  ymax = c_plots[,11]), colour = comp_col[5], fill = comp_col[5])
+      #
+      # if (K >= 6) p <- p +
+      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,12],  ymax = c_plots[,13]), colour = comp_col[6], fill = comp_col[6])
+      #
+      # if (K >= 7) p <- p +
+      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,14],  ymax = c_plots[,15]), colour = comp_col[7], fill = comp_col[7])
+
 
       for (i in 5:length(curve_params)) {
         p <- p + geom_line(aes(x = time, y = curve[, i]), color = comp_col[col_index], linewidth = 0.5)
@@ -194,7 +231,13 @@ plot_SignalCurve <- function(curve = NULL,
 
   #### BASIC PLOT #### ---------------------------------------------------------
 
-  p <- p + geom_line(aes(x = time, y = signal), color = "grey40", linewidth = 0.5)
+  # Signal curve
+  p <- p + geom_point(aes(x = curve[, 1], y = curve[, 2]), color = "grey35", size = 1)
+
+  # Summed up components
+  if (ncol(curve) > 2) {
+    p <- p + geom_line(aes(x = curve[, 1], y = curve[, 3]), color = "black", linewidth = 0.75)
+  }
 
 
   #### SET SCALES #### ---------------------------------------------------------
