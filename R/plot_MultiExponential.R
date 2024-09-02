@@ -79,13 +79,13 @@ plot_MultiExponential <- function(curve = NULL,
       curve <- data.frame(time = curve[,1], signal = curve[,2])}
   }
 
-  #### ADD COMPONENT SIGNALS #### ----------------------------------------------
+  #### CREATE COMPONENT GRAPHS #### ----------------------------------------------
 
   if (!is.null(components)) {
     curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
   } else {
-    warning("[plot_MultiExponential()] When setting argument 'component.type' to 'fill', the argument 'components' must also be set. Thus, changed  'component.type' to 'line' ")
-    component.type <- "line"
+    # warning("[plot_MultiExponential()] When setting argument 'component.type' to 'fill', the argument 'components' must also be set. Thus, changed  'component.type' to 'line' ")
+    # component.type <- "line"
   }
 
 
@@ -96,41 +96,54 @@ plot_MultiExponential <- function(curve = NULL,
 
   # Stacked plots need special treatment to be displayed properly
   c_plots <- data.frame(time = curve$time)
-  if (component.type == "fill" && K > 0) {
+  are_there_negative_ns <- FALSE
+  if (K > 0) {
 
     # Separate components into two types: Increasing and decreasing
     comps_only <- curve[,5:ncol(curve)]
     positive_comps <- as.data.frame(comps_only[, components$n >= 0])
     negative_comps <- as.data.frame(comps_only[, components$n < 0])
 
-    # Now stack up the components
+    # Now stack up the components with positive n (decreasing graphs)
+    # but put the SLOWEST component first. This way, it will always have
+    # the same color, no matter if later fittings add some new
+    # component or not
     if (ncol(positive_comps) > 0) {
 
-      added_signal <- rep(0, nrow(curve))
-      for (i in ncol(positive_comps):1) {
+      if (component.type == "fill") {
+        added_signal <- rep(0, nrow(curve))
+        for (i in ncol(positive_comps):1) {
 
-        # ymin boundary
-        c_plots <- cbind(c_plots, added_signal)
+          # ymin boundary
+          c_plots <- cbind(c_plots, added_signal)
 
-        # ymax boundary
-        added_signal <- added_signal + positive_comps[,i]
-        c_plots <- cbind(c_plots, added_signal)
+          # ymax boundary
+          added_signal <- added_signal + positive_comps[,i]
+          c_plots <- cbind(c_plots, added_signal)
+        }
+      } else { # for "line" plots
+        # rev() will revert the column order
+        c_plots <- cbind(c_plots, rev(positive_comps))
       }
     }
 
-    # Do the same for the components below zero
+    # Do the same for components with n below zero (increasing graphs)
     if (ncol(negative_comps) > 0) {
+      are_there_negative_ns <- TRUE
+      if (component.type == "fill") {
+        previous_signal <- rep(0, nrow(curve))
+        for (i in ncol(negative_comps):1) {
 
-      previous_signal <- rep(0, nrow(curve))
-      for (i in ncol(negative_comps):1) {
+          # ymin boundary
+          added_signal <- previous_signal + negative_comps[, i]
+          c_plots <- cbind(c_plots, added_signal)
 
-        # ymin boundary
-        added_signal <- previous_signal + negative_comps[, i]
-        c_plots <- cbind(c_plots, added_signal)
-
-        # ymax boundary
-        c_plots <- cbind(c_plots, previous_signal)
-        previous_signal <- added_signal
+          # ymax boundary
+          c_plots <- cbind(c_plots, previous_signal)
+          previous_signal <- added_signal
+        }
+      } else {
+        c_plots <- cbind(c_plots, rev(negative_comps))
       }
     }
   }
@@ -159,6 +172,7 @@ plot_MultiExponential <- function(curve = NULL,
 
   #### ADD COMPONENT PLOTS #### ------------------------------------------------
 
+  # We start with an empty plot to keep full control over everything
   p <- ggplot()
 
   # Are there any columns besides Signal, Time, Sum and Residual?
@@ -169,7 +183,7 @@ plot_MultiExponential <- function(curve = NULL,
 
     col_index <- length(curve_params) - 4
 
-    if (component.type == "fill" && ncol(c_plots) > 1) {
+    if (component.type == "fill") {
 
       # Yes, the code looks weird. However, it seems like ggplot does not create memory copies
       # of the input data. Instead it works address pointer. Thus, dynamical approaches like increasing
@@ -196,43 +210,41 @@ plot_MultiExponential <- function(curve = NULL,
       if (K >= 7) p <- p +
           geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,14],  ymax = c_plots[,15]), colour = comp_col[7], fill = comp_col[7])
 
-    } else {
+    } else { # line graphs
 
       if (K >= 1) p <- p +
           geom_line(aes(x = c_plots[,1], y = c_plots[,2]), color = comp_col[1], linewidth = 0.75)
-      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,2],  ymax = c_plots[,3]), colour = comp_col[1], fill = comp_col[1])
-      #
-      # if (K >= 2) p <- p +
-      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,4],  ymax = c_plots[,5]), colour = comp_col[2], fill = comp_col[2])
-      #
-      # if (K >= 3) p <- p +
-      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,6],  ymax = c_plots[,7]), colour = comp_col[3], fill = comp_col[3])
-      #
-      # if (K >= 4) p <- p +
-      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,8],  ymax = c_plots[,9]), colour = comp_col[4], fill = comp_col[4])
-      #
-      # if (K >= 5) p <- p +
-      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,10],  ymax = c_plots[,11]), colour = comp_col[5], fill = comp_col[5])
-      #
-      # if (K >= 6) p <- p +
-      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,12],  ymax = c_plots[,13]), colour = comp_col[6], fill = comp_col[6])
-      #
-      # if (K >= 7) p <- p +
-      #     geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,14],  ymax = c_plots[,15]), colour = comp_col[7], fill = comp_col[7])
 
+      if (K >= 2) p <- p +
+          geom_line(aes(x = c_plots[,1], y = c_plots[,3]), color = comp_col[2], linewidth = 0.75)
 
-      for (i in 5:length(curve_params)) {
-        p <- p + geom_line(aes(x = time, y = curve[, i]), color = comp_col[col_index], linewidth = 0.5)
-        col_index <- col_index - 1
-      }
+      if (K >= 3) p <- p +
+          geom_line(aes(x = c_plots[,1], y = c_plots[,4]), color = comp_col[3], linewidth = 0.75)
+
+      if (K >= 4) p <- p +
+          geom_line(aes(x = c_plots[,1], y = c_plots[,5]), color = comp_col[4], linewidth = 0.75)
+
+      if (K >= 5) p <- p +
+          geom_line(aes(x = c_plots[,1], y = c_plots[,6]), color = comp_col[5], linewidth = 0.75)
+
+      if (K >= 6) p <- p +
+          geom_line(aes(x = c_plots[,1], y = c_plots[,7]), color = comp_col[6], linewidth = 0.75)
+
+      if (K >= 7) p <- p +
+          geom_line(aes(x = c_plots[,1], y = c_plots[,8]), color = comp_col[7], linewidth = 0.75)
     }
   }
 
 
   #### BASIC PLOT #### ---------------------------------------------------------
 
+  if (are_there_negative_ns) {
+   # p <- p + geom_hline(yintercept = 0, color = "white", linewidth = 0.5)
+    p <- p + geom_hline(yintercept = 0, linetype = "dashed", color = "black", linewidth = 0.5)
+  }
+
   # Signal curve
-  p <- p + geom_point(aes(x = curve[, 1], y = curve[, 2]), color = "grey35", size = 1)
+  p <- p + geom_point(aes(x = curve[, 1], y = curve[, 2]), color = "grey40", size = 1)
 
   # Summed up components
   if (ncol(curve) > 2) {
@@ -249,11 +261,17 @@ plot_MultiExponential <- function(curve = NULL,
 
   #### APPLY DESIGN SETTINGS #### ----------------------------------------------
 
-  p <- p + text_format
 
   # Ensure that all titles begin with a upper case character
   for (i in 1:length(curve_params)) {
     substr(curve_params[i], 1, 1) <- toupper(substr(curve_params[i] , 1, 1))}
+
+  if (is.null(xlab)) xlab <- curve_params[1]
+  if (is.null(ylab)) ylab <- curve_params[2]
+
+  p <- p +
+    labs(subtitle = main, x = xlab, y = ylab) +
+    text_format
 
   #### RETURN OBJECTS #### -----------------------------------------------------
 

@@ -39,7 +39,7 @@ add_component_case <-
            channel_number = 400, 
            noise = 0, 
            background = 0,
-           title){
+           title = "Unspecified test case"){
     
     components <- data.frame(name = paste("Component", 1:length(n)),
                              lambda = lambda, 
@@ -53,7 +53,8 @@ add_component_case <-
                                     add.background = background)
   
     case <- list(components = components,
-                 curve = curve)
+                 curve = curve,
+                 title = title)
     
     cases <- c(cases, list(case))
     return(cases)
@@ -84,20 +85,33 @@ cases <- add_component_case(cases,
                    n = c(-10e4, 10e5),
                    channel_width = 0.2,
                    channel_number = 200,
-                   title = "Increasing signal.")
+                   title = "Increasing signal")
+
+cases <- add_component_case(cases,
+                   lambda = c(1, 0.01),
+                   n = c(10, 100),
+                   noise = 10,
+                   title = "Just noise")
 
 
 
 ```
 
-## Stacked plots with linear axes
+## Stacked areas with linear axes
 
 ```{r}
 
 for (case in cases) {
-  plot_MultiExponential(case$curve, case$components, component.type = "fill")
+  plot_MultiExponential(case$curve, case$components, 
+                        component.type = "fill", main = case$title)
 }
+```
 
-#plot_MultiExponential(curve, components, component.type = "fill")
-#plot_MultiExponential(curve, components, component.type = "fill", scaling.type = "log")
+## Graphs with linear axes
+
+```{r}
+for (case in cases) {
+  plot_MultiExponential(case$curve, case$components, 
+                        component.type = "line", main = case$title)
+}
 ```
