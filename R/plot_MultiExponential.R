@@ -25,6 +25,8 @@ plot_MultiExponential <- function(curve = NULL,
                              components = NULL,
                              scaling.type = "linear", #" log", "loglog", "LM"
                              component.type = "fill", # "line", "pattern"
+                             fill.components = TRUE,
+                             linear.modulation = FALSE,
                              show.legend = TRUE,
                              show.residuals = TRUE,
                              colors = NULL,
@@ -34,12 +36,14 @@ plot_MultiExponential <- function(curve = NULL,
                              ylab = NULL,
                              xlim = NULL,
                              ylim = NULL,
+                             xlog = FALSE,
+                             ylog = FALSE,
                              hide.plot = FALSE,
                              filename = NULL,
                              theme.set = ggplot2::theme_classic()){
 
   # Changelog:
-  # * 2024-08-29, DM: Created function
+  # * 2024-08-29, DM: First version of the new function
 
   # Hidden parameters, might be removed
   show.intervals <- FALSE
@@ -79,7 +83,7 @@ plot_MultiExponential <- function(curve = NULL,
       curve <- data.frame(time = curve[,1], signal = curve[,2])}
   }
 
-  #### CREATE COMPONENT GRAPHS #### ----------------------------------------------
+  #### CREATE COMPONENT GRAPHS #### --------------------------------------------
 
   if (!is.null(components)) {
     curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
@@ -88,11 +92,21 @@ plot_MultiExponential <- function(curve = NULL,
     # component.type <- "line"
   }
 
-
   # channel.width <- curve$time[2] - curve$time[1]
   curve_params <- colnames(curve)
   K <- 0
   if (ncol(curve) > 4) K <- ncol(curve) - 4
+
+  # Transform to linearly modulated curves here in accordance to Bulur (2000)
+  if (linear.modulation) {
+    # transform data
+    P = 2*max(curve$time)
+    for (i in 2:ncol(curve)) {
+      curve[,i] <- curve[,i] * sqrt(2 * curve$time / P)
+    }
+    curve$time <- sqrt(2 * P * curve$time)
+  }
+
 
   # Stacked plots need special treatment to be displayed properly
   c_plots <- data.frame(time = curve$time)
@@ -110,7 +124,7 @@ plot_MultiExponential <- function(curve = NULL,
     # component or not
     if (ncol(positive_comps) > 0) {
 
-      if (component.type == "fill") {
+      if (fill.components) {
         added_signal <- rep(0, nrow(curve))
         for (i in ncol(positive_comps):1) {
 
@@ -130,7 +144,8 @@ plot_MultiExponential <- function(curve = NULL,
     # Do the same for components with n below zero (increasing graphs)
     if (ncol(negative_comps) > 0) {
       are_there_negative_ns <- TRUE
-      if (component.type == "fill") {
+
+      if (fill.components) {
         previous_signal <- rep(0, nrow(curve))
         for (i in ncol(negative_comps):1) {
 
@@ -146,6 +161,25 @@ plot_MultiExponential <- function(curve = NULL,
         c_plots <- cbind(c_plots, rev(negative_comps))
       }
     }
+  }
+
+
+  #### CHECK AND SET AXES LIMITS #### ------------------------------------------
+
+  if (!is.null(xlim)) {
+    if (xlim[2] <= xlim[1]) stop("X-axis minimum is larger then X-axis maximum ")
+    if (scaling.type == "loglog" &&
+        (xlim[1] <= 0 || xlim[2] <= 0)) stop("Negative X-axis limits are not allowed when using logarithmic axis")
+
+    # Remove too small values
+    curve <- curve[curve$time >= xlim[1] ,]
+    c_plots <- c_plots[c_plots$time >= xlim[1] ,]
+
+    # Remove too large values
+    curve <- curve[curve$time <= xlim[2] ,]
+    c_plots <- c_plots[c_plots$time <= xlim[2] ,]
+
+    if (nrow(curve) < 1) stop("X-axis limits are too small for this data")
   }
 
 
@@ -183,9 +217,9 @@ plot_MultiExponential <- function(curve = NULL,
 
     col_index <- length(curve_params) - 4
 
-    if (component.type == "fill") {
+    if (fill.components) {
 
-      # Yes, the code looks weird. However, it seems like ggplot does not create memory copies
+      # Yes, the code looks weird. However, it seems like ggplot does not copy object, instead it
       # of the input data. Instead it works address pointer. Thus, dynamical approaches like increasing
       # indices won't work.
 
@@ -251,6 +285,14 @@ plot_MultiExponential <- function(curve = NULL,
     p <- p + geom_line(aes(x = curve[, 1], y = curve[, 3]), color = "black", linewidth = 0.75)
   }
 
+  #### RESIDUAL PLOT #### ------------------------------------------------------
+
+  if (show.residuals && ncol(curve) >= 4) {
+
+
+
+
+  }
 
   #### SET SCALES #### ---------------------------------------------------------
 

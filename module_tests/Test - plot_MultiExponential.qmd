@@ -103,7 +103,7 @@ cases <- add_component_case(cases,
 
 for (case in cases) {
   plot_MultiExponential(case$curve, case$components, 
-                        component.type = "fill", main = case$title)
+                        fill.components = TRUE, main = case$title)
 }
 ```
 
@@ -112,6 +112,19 @@ for (case in cases) {
 ```{r}
 for (case in cases) {
   plot_MultiExponential(case$curve, case$components, 
-                        component.type = "line", main = case$title)
+                        fill.components = FALSE, main = case$title)
+}
+```
+
+## Using linear modulation
+
+After Bulur (2000)
+
+```{r}
+for (case in cases) {
+  plot_MultiExponential(case$curve, case$components, 
+                        fill.components = sample(c(FALSE,TRUE), size = 1), 
+                        linear.modulation = TRUE,
+                        main = case$title)
 }
 ```
