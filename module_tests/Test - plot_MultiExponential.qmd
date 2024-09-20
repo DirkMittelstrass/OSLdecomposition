@@ -1,7 +1,7 @@
 ---
 title: "Module tests for plot_MultiExponential()"
 author: "Dirk Mittelstraß"
-date: "2024-09-02"
+date: "2024-09-20"
 format:
   html:
     toc: true
@@ -73,8 +73,8 @@ cases <- add_component_case(cases,
                    title = "Atypical low-res measurement with stretched medium component")
 
 cases <- add_component_case(cases,
-                   lambda = c(0.05, 0.01, 0.003, 0.0005, 0.00001),
-                   n = c(-10e5, 10e5, 10e6, 10e7, 5e9),
+                   lambda = c(0.1, 0.005, 0.002, 0.0005, 0.00001),
+                   n = c(-20e5, 10e5, 10e6, 10e7, 5e9),
                    channel_width = 2,
                    channel_number = 5000,
                    noise = 2000,
@@ -92,6 +92,13 @@ cases <- add_component_case(cases,
                    n = c(10, 100),
                    noise = 10,
                    title = "Just noise")
+
+cases <- add_component_case(cases,
+                   lambda = c(2, 0.03, 0.0001),
+                   n = c(20e5, -10e6, 10e9),
+                   channel_number = 500,
+                   title = "Sharp drop then slowly increasing")
+
 
 
 
@@ -122,9 +129,43 @@ After Bulur (2000)
 
 ```{r}
 for (case in cases) {
+  
+  cat("CASE:", case$title, "\n")
+  
+    # Randomizer
+  fill.components <- sample(c(FALSE,TRUE), size = 1)
+  cat("fill.components =", fill.components, "\n")
+
   plot_MultiExponential(case$curve, case$components, 
-                        fill.components = sample(c(FALSE,TRUE), size = 1), 
+                        fill.components = fill.components, 
                         linear.modulation = TRUE,
                         main = case$title)
+  cat("\n\n")
 }
+```
+
+## Using logarithmic axes
+
+```{r}
+
+for (case in cases) {
+  
+  cat("CASE:", case$title, "\n")
+  
+  # Randomizer
+  fill.components <- sample(c(FALSE,TRUE), size = 1)
+  linear.modulation <- sample(c(FALSE,FALSE,TRUE), size = 1)
+  xlog <- sample(c(FALSE,TRUE), size = 1)
+  cat("fill.components =", fill.components, "|",
+      "linear.modulation =", linear.modulation, "|",
+      "xlog =", xlog, "\n")
+  
+  plot_MultiExponential(case$curve, case$components, 
+                        fill.components = fill.components, 
+                        linear.modulation = linear.modulation,
+                        xlog = xlog, 
+                        ylog = TRUE,
+                        main = case$title)
+}
+
 ```

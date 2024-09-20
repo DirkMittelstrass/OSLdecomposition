@@ -23,12 +23,9 @@
 
 plot_MultiExponential <- function(curve = NULL,
                              components = NULL,
-                             scaling.type = "linear", #" log", "loglog", "LM"
-                             component.type = "fill", # "line", "pattern"
                              fill.components = TRUE,
                              linear.modulation = FALSE,
                              show.legend = TRUE,
-                             show.residuals = TRUE,
                              colors = NULL,
                              font.size = 10,
                              main = NULL,
@@ -45,13 +42,9 @@ plot_MultiExponential <- function(curve = NULL,
   # Changelog:
   # * 2024-08-29, DM: First version of the new function
 
-  # Hidden parameters, might be removed
-  show.intervals <- FALSE
-  show.crosssec <- FALSE
-
   #### INPUT CHECKS #### -------------------------------------------------------
 
-  if (is.null(curve) && is.null(components)) stop("[plot_MultiExponential()]: Either 'curve' or 'components' must be defined")
+  if (is.null(curve) && is.null(components)) stop("Either 'curve' or 'components' must be defined")
 
   # Create curve from component table if not given
   if (is.null(curve) && !is.null(components)) {
@@ -67,7 +60,7 @@ plot_MultiExponential <- function(curve = NULL,
 
     # Check input curve
     if(!inherits(curve, c("RLum.Data.Curve", "data.frame", "matrix"))){
-      stop("[plot_MultiExponential()] Error: Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
+      stop("Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
 
     if(inherits(curve, "RLum.Data.Curve")) {
 
@@ -78,21 +71,15 @@ plot_MultiExponential <- function(curve = NULL,
       # now transform the RLum object into a simple table. There is no need to keep all the extra info
       curve <- as.data.frame(Luminescence::get_RLum(curve))
     }
-
-    if (!("time" %in% colnames(curve)) | !("signal" %in% colnames(curve))) {
-      curve <- data.frame(time = curve[,1], signal = curve[,2])}
   }
 
   #### CREATE COMPONENT GRAPHS #### --------------------------------------------
 
   if (!is.null(components)) {
     curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
-  } else {
-    # warning("[plot_MultiExponential()] When setting argument 'component.type' to 'fill', the argument 'components' must also be set. Thus, changed  'component.type' to 'line' ")
-    # component.type <- "line"
   }
 
-  # channel.width <- curve$time[2] - curve$time[1]
+  # channel.width <- curve[2,1][2] - curve[1,1]
   curve_params <- colnames(curve)
   K <- 0
   if (ncol(curve) > 4) K <- ncol(curve) - 4
@@ -100,16 +87,16 @@ plot_MultiExponential <- function(curve = NULL,
   # Transform to linearly modulated curves here in accordance to Bulur (2000)
   if (linear.modulation) {
     # transform data
-    P = 2*max(curve$time)
+    P = 2*max(curve[,1])
     for (i in 2:ncol(curve)) {
-      curve[,i] <- curve[,i] * sqrt(2 * curve$time / P)
+      curve[,i] <- curve[,i] * sqrt(2 * curve[,1] / P)
     }
-    curve$time <- sqrt(2 * P * curve$time)
+    curve[,1] <- sqrt(2 * P * curve[,1])
   }
 
 
   # Stacked plots need special treatment to be displayed properly
-  c_plots <- data.frame(time = curve$time)
+  c_plots <- data.frame(time = curve[,1])
   are_there_negative_ns <- FALSE
   if (K > 0) {
 
@@ -118,10 +105,14 @@ plot_MultiExponential <- function(curve = NULL,
     positive_comps <- as.data.frame(comps_only[, components$n >= 0])
     negative_comps <- as.data.frame(comps_only[, components$n < 0])
 
+    # Re-iterate K to account for components which cannot be displayed
+    K <- ncol(positive_comps)
+
     # Now stack up the components with positive n (decreasing graphs)
     # but put the SLOWEST component first. This way, it will always have
     # the same color, no matter if later fittings add some new
     # component or not
+
     if (ncol(positive_comps) > 0) {
 
       if (fill.components) {
@@ -142,8 +133,10 @@ plot_MultiExponential <- function(curve = NULL,
     }
 
     # Do the same for components with n below zero (increasing graphs)
-    if (ncol(negative_comps) > 0) {
+    if (ncol(negative_comps) > 0 && !ylog) {
+
       are_there_negative_ns <- TRUE
+      K <- K + ncol(negative_comps)
 
       if (fill.components) {
         previous_signal <- rep(0, nrow(curve))
@@ -160,6 +153,9 @@ plot_MultiExponential <- function(curve = NULL,
       } else {
         c_plots <- cbind(c_plots, rev(negative_comps))
       }
+    } else if(ncol(negative_comps) > 0 && ylog){
+      message(paste("Input data contains signal components with negative intensity (increasing signals).",
+                    "These can not be displayed with logarithmic y-axis and are therefore omitted."))
     }
   }
 
@@ -167,22 +163,59 @@ plot_MultiExponential <- function(curve = NULL,
   #### CHECK AND SET AXES LIMITS #### ------------------------------------------
 
   if (!is.null(xlim)) {
-    if (xlim[2] <= xlim[1]) stop("X-axis minimum is larger then X-axis maximum ")
-    if (scaling.type == "loglog" &&
-        (xlim[1] <= 0 || xlim[2] <= 0)) stop("Negative X-axis limits are not allowed when using logarithmic axis")
+
+    if (xlim[2] <= xlim[1])
+      stop("X-axis minimum is larger then X-axis maximum.")
+
+    if (xlog && (xlim[1] <= 0 || xlim[2] <= 0))
+      stop("X-axis limits must be larger than zero when using logarithmic axis.")
 
     # Remove too small values
-    curve <- curve[curve$time >= xlim[1] ,]
+    curve <- curve[curve[,1] >= xlim[1] ,]
     c_plots <- c_plots[c_plots$time >= xlim[1] ,]
 
     # Remove too large values
-    curve <- curve[curve$time <= xlim[2] ,]
+    curve <- curve[curve[,1] <= xlim[2] ,]
     c_plots <- c_plots[c_plots$time <= xlim[2] ,]
 
-    if (nrow(curve) < 1) stop("X-axis limits are too small for this data")
+    if (nrow(curve) < 1) stop("X-axis limits are too small for this data.")
+  } else if(is.null(xlim) && xlog){
+
+    # Check if there are values which won't work on logarithmic axis and remove them
+    invalid_x <- curve[,1] <= 0
+    if (sum(invalid_x) > 0) {
+      message("X-axis contains values below/equal zero. Those are removed to enable logaritmic X-axis.")
+      curve <- curve[!invalid_x,]
+      c_plots <- c_plots[!invalid_x,]
+    }
   }
 
+  if (!is.null(ylim)) {
+    if (ylim[2] <= ylim[1])
+      stop("Y-axis minimum is larger then Y-axis maximum.")
 
+    if (ylog && (ylim[1] <= 0 || ylim[2] <= 0))
+      stop("Y-axis limits must be larger than zero when using logarithmic axis.")
+
+  } else if (is.null(ylim) && ylog){
+
+    # The auto-limits extend too far to lower values to fully show all components.
+    # Thus, we set some reasonable limits manually
+
+    # Take also the sum curve into account, if one is defined
+    signal_min <- min(c(curve[,2], curve$sum), na.rm = TRUE)
+    signal_max <- max(c(curve[,2], curve$sum), na.rm = TRUE)
+
+    if (signal_max <= 0)
+      stop("Signal curve with just negative values can not be displayed with logarithmic Y-axis.")
+
+    if (signal_min <= 0) {
+      message("Signal curve contains value equal/lower zero. Values below 0.1 will not be displayed.")
+      signal_min <- 0.1
+    }
+
+    ylim <- c(signal_min * 0.2, signal_max * 1.5)
+  }
 
   #### DESIGN CHOICES #### -----------------------------------------------------
 
@@ -213,7 +246,8 @@ plot_MultiExponential <- function(curve = NULL,
   # Then these are the components. Draw them first!
   if (K > 0) {
 
-    if (K >= 8) warning("[plot_MultiExponential()] Graphs with more than 7 components are not supported. Only the first 7 are displayed.")
+    if (K >= 8)
+      warning("Graphs with more than 7 components are not supported. Only the first 7 are displayed.")
 
     col_index <- length(curve_params) - 4
 
@@ -273,7 +307,6 @@ plot_MultiExponential <- function(curve = NULL,
   #### BASIC PLOT #### ---------------------------------------------------------
 
   if (are_there_negative_ns) {
-   # p <- p + geom_hline(yintercept = 0, color = "white", linewidth = 0.5)
     p <- p + geom_hline(yintercept = 0, linetype = "dashed", color = "black", linewidth = 0.5)
   }
 
@@ -285,21 +318,20 @@ plot_MultiExponential <- function(curve = NULL,
     p <- p + geom_line(aes(x = curve[, 1], y = curve[, 3]), color = "black", linewidth = 0.75)
   }
 
-  #### RESIDUAL PLOT #### ------------------------------------------------------
-
-  if (show.residuals && ncol(curve) >= 4) {
-
-
-
-
-  }
 
   #### SET SCALES #### ---------------------------------------------------------
 
-  if (scaling.type == "log") {
-    p <- p + scale_y_log10()
+  if (ylog) {
+    p <- p + scale_y_log10(limits = ylim)
+  } else {
+    p <- p + scale_y_continuous(limits = ylim)
   }
 
+  if (xlog) {
+    p <- p + scale_x_log10(limits = xlim)
+  } else {
+    p <- p + scale_x_continuous(limits = xlim)
+  }
 
   #### APPLY DESIGN SETTINGS #### ----------------------------------------------
 
@@ -324,7 +356,13 @@ plot_MultiExponential <- function(curve = NULL,
         silent = FALSE)}
 
   # show plot
-  if (!hide.plot) print(p)
+  if (!hide.plot){
+
+    # ggplot will throw a lot of annoying warnings when data points are outside
+    # of the limits, thus we suppress them.
+    # However, better would be to set them NA
+    suppressWarnings(print(p))
+  }
 
   # return plot object
   invisible(p)
