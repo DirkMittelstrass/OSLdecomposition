@@ -1,7 +1,7 @@
 ---
 title: "Module tests for plot_MultiExponential()"
 author: "Dirk Mittelstraß"
-date: "2024-09-20"
+date: "2024-09-24"
 format:
   html:
     toc: true
@@ -25,6 +25,8 @@ Is the function successfully sourced?
 library(OSLdecomposition)
 source("../R/plot_MultiExponential.R")
 
+
+
 ```
 
 ## Define signal curves
@@ -39,6 +41,7 @@ add_component_case <-
            channel_number = 400, 
            noise = 0, 
            background = 0,
+           reiterate = FALSE,
            title = "Unspecified test case"){
     
     components <- data.frame(name = paste("Component", 1:length(n)),
@@ -51,6 +54,15 @@ add_component_case <-
                                     add.poisson.noise = TRUE,
                                     add.gaussian.noise = noise,
                                     add.background = background)
+    
+    # Re-iterate components to add some uncertainty
+    if (reiterate) {
+          components <- decompose_OSLcurve(curve, 
+                                     components, 
+                                     verbose = FALSE)
+      
+    }
+
   
     case <- list(components = components,
                  curve = curve,
@@ -63,6 +75,7 @@ add_component_case <-
 cases <- add_component_case(cases,
                    lambda = c(1, 0.2, 0.02),
                    n = c(1000, 1000, 10000),
+                   reiterate = TRUE,
                    title = "Typical quartz OSL curve")
 
 cases <- add_component_case(cases,
@@ -73,8 +86,8 @@ cases <- add_component_case(cases,
                    title = "Atypical low-res measurement with stretched medium component")
 
 cases <- add_component_case(cases,
-                   lambda = c(0.1, 0.005, 0.002, 0.0005, 0.00001),
-                   n = c(-20e5, 10e5, 10e6, 10e7, 5e9),
+                   lambda = c(0.02, 0.005, 0.002, 0.0005, 0.00001),
+                   n = c(-10e5, 10e5, 10e6, 10e7, 5e9),
                    channel_width = 2,
                    channel_number = 5000,
                    noise = 2000,
@@ -91,6 +104,7 @@ cases <- add_component_case(cases,
                    lambda = c(1, 0.01),
                    n = c(10, 100),
                    noise = 10,
+                   reiterate = TRUE,
                    title = "Just noise")
 
 cases <- add_component_case(cases,
@@ -99,6 +113,13 @@ cases <- add_component_case(cases,
                    channel_number = 500,
                    title = "Sharp drop then slowly increasing")
 
+
+cases <- add_component_case(cases,
+                   lambda = c(0.3),
+                   background = 20,
+                   n = c(3000),
+                   reiterate = TRUE,
+                   title = "Single component with some background")
 
 
 
@@ -117,6 +138,7 @@ for (case in cases) {
 ## Graphs with linear axes
 
 ```{r}
+
 for (case in cases) {
   plot_MultiExponential(case$curve, case$components, 
                         fill.components = FALSE, main = case$title)
@@ -169,3 +191,40 @@ for (case in cases) {
 }
 
 ```
+
+## Manual plot design
+
+```{r}
+
+# Put legend inside plot and add units
+case <- cases[[1]]
+plot_MultiExponential(case$curve, case$components,
+                      fill.components = FALSE,
+                      xlab = "Stimulation time [sec]",
+                      ylab = "PMT signal [cts]",
+                      font.size = 12,
+                      legend.position = c(1, 1),
+                      legend.justification = c(1, 1))
+
+# IR-RF example with some individual colors
+case <- cases[[3]]
+plot_MultiExponential(case$curve, case$components,
+                      main = "Infrared radiofluorescence of abritrary mineral",
+                      xlab = "Accumulated dose [GY]",
+                      ylab = "IR-RF signal [cts]",
+                      component.colors = hcl.colors(5),
+                      xlim = c(0, 2500),
+                      ylim = c(1e5, 3e5))
+
+#theme.set = ggplot2::theme_bw()
+
+
+```
+
+## Measurement only
+
+ToDo:
+
+-   Curve without components
+
+-   When components\$lambda = NA

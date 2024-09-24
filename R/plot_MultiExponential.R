@@ -25,18 +25,19 @@ plot_MultiExponential <- function(curve = NULL,
                              components = NULL,
                              fill.components = TRUE,
                              linear.modulation = FALSE,
-                             show.legend = TRUE,
-                             colors = NULL,
-                             font.size = 10,
+                             xlog = FALSE,
+                             ylog = FALSE,
                              main = NULL,
                              xlab = NULL,
                              ylab = NULL,
                              xlim = NULL,
                              ylim = NULL,
-                             xlog = FALSE,
-                             ylog = FALSE,
+                             font.size = 10,
+                             component.colors = NULL,
+                             component.names = NULL,
+                             legend.position = "right",
+                             legend.justification = NULL,
                              hide.plot = FALSE,
-                             filename = NULL,
                              theme.set = ggplot2::theme_classic()){
 
   # Changelog:
@@ -45,6 +46,11 @@ plot_MultiExponential <- function(curve = NULL,
   #### INPUT CHECKS #### -------------------------------------------------------
 
   if (is.null(curve) && is.null(components)) stop("Either 'curve' or 'components' must be defined")
+
+  if (!is.null(components)) {
+
+    # Add decay rate input here
+  }
 
   # Create curve from component table if not given
   if (is.null(curve) && !is.null(components)) {
@@ -75,12 +81,9 @@ plot_MultiExponential <- function(curve = NULL,
 
   #### CREATE COMPONENT GRAPHS #### --------------------------------------------
 
-  if (!is.null(components)) {
+  if (!is.null(components))
     curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
-  }
 
-  # channel.width <- curve[2,1][2] - curve[1,1]
-  curve_params <- colnames(curve)
   K <- 0
   if (ncol(curve) > 4) K <- ncol(curve) - 4
 
@@ -95,15 +98,58 @@ plot_MultiExponential <- function(curve = NULL,
   }
 
 
+
+
+  # Build a new well defined object which will contain all graphs
+  graphs <- data.frame(time = curve[,1],
+                       signal = curve[,2])
+
+  # Is there a "sum" curve?
+  if (ncol(curve) > 2) {
+    graphs <- cbind(graphs, curve[,3])
+  }  else {
+    graphs <- cbind(graphs, NA)
+  }
+
+  # Is there a "residual" curve?
+  if (ncol(curve) > 3) {
+    graphs <- cbind(graphs, curve[,4])
+  }  else {
+    graphs <- cbind(graphs, NA)
+  }
+
+  # We will need these for the legend later
+  graph_names <- c("Measurement", "Model", "Residual")
+
   # Stacked plots need special treatment to be displayed properly
-  c_plots <- data.frame(time = curve[,1])
-  are_there_negative_ns <- FALSE
   if (K > 0) {
 
-    # Separate components into two types: Increasing and decreasing
-    comps_only <- curve[,5:ncol(curve)]
-    positive_comps <- as.data.frame(comps_only[, components$n >= 0])
-    negative_comps <- as.data.frame(comps_only[, components$n < 0])
+    positive_comps <- negative_comps <- data.frame(NULL)
+    if (K == 1) {
+
+      if (components$n >= 0) {
+        positive_comps <- as.data.frame(curve[,5])
+        colnames(positive_comps) <- colnames(curve)[5]
+      } else {
+        negative_comps <- as.data.frame(curve[,5])
+        colnames(negative_comps) <- colnames(curve)[5]
+      }
+
+    } else {
+
+      # Separate components into two types: Increasing and decreasing
+      #positive_comps <- curve[,-1:-4][, components$n >= 0]
+      #negative_comps <- curve[,-1:-4][, components$n < 0]
+      positve_ns <- components$n >= 0
+      comps <- curve[,-1:-4]
+
+      positive_comps <- as.data.frame(comps[, positve_ns])
+      colnames(positive_comps) <- colnames(comps)[positve_ns]
+
+      negative_comps <- as.data.frame(comps[, !positve_ns])
+      colnames(negative_comps) <- colnames(comps)[!positve_ns]
+
+    }
 
     # Re-iterate K to account for components which cannot be displayed
     K <- ncol(positive_comps)
@@ -120,22 +166,23 @@ plot_MultiExponential <- function(curve = NULL,
         for (i in ncol(positive_comps):1) {
 
           # ymin boundary
-          c_plots <- cbind(c_plots, added_signal)
+          graphs <- cbind(graphs, added_signal)
 
           # ymax boundary
           added_signal <- added_signal + positive_comps[,i]
-          c_plots <- cbind(c_plots, added_signal)
+          graphs <- cbind(graphs, added_signal)
         }
       } else { # for "line" plots
         # rev() will revert the column order
-        c_plots <- cbind(c_plots, rev(positive_comps))
+        graphs <- cbind(graphs, rev(positive_comps))
       }
+      graph_names <- c(graph_names, rev(colnames(positive_comps)))
     }
 
     # Do the same for components with n below zero (increasing graphs)
     if (ncol(negative_comps) > 0 && !ylog) {
 
-      are_there_negative_ns <- TRUE
+    #  are_there_negative_values <- TRUE
       K <- K + ncol(negative_comps)
 
       if (fill.components) {
@@ -144,15 +191,16 @@ plot_MultiExponential <- function(curve = NULL,
 
           # ymin boundary
           added_signal <- previous_signal + negative_comps[, i]
-          c_plots <- cbind(c_plots, added_signal)
+          graphs <- cbind(graphs, added_signal)
 
           # ymax boundary
-          c_plots <- cbind(c_plots, previous_signal)
+          graphs <- cbind(graphs, previous_signal)
           previous_signal <- added_signal
         }
       } else {
-        c_plots <- cbind(c_plots, rev(negative_comps))
+        graphs <- cbind(graphs, rev(negative_comps))
       }
+      graph_names <- c(graph_names, rev(colnames(negative_comps)))
     } else if(ncol(negative_comps) > 0 && ylog){
       message(paste("Input data contains signal components with negative intensity (increasing signals).",
                     "These can not be displayed with logarithmic y-axis and are therefore omitted."))
@@ -171,12 +219,12 @@ plot_MultiExponential <- function(curve = NULL,
       stop("X-axis limits must be larger than zero when using logarithmic axis.")
 
     # Remove too small values
-    curve <- curve[curve[,1] >= xlim[1] ,]
-    c_plots <- c_plots[c_plots$time >= xlim[1] ,]
+  #  curve <- curve[curve[,1] >= xlim[1] ,]
+    graphs <- graphs[graphs$time >= xlim[1] ,]
 
     # Remove too large values
-    curve <- curve[curve[,1] <= xlim[2] ,]
-    c_plots <- c_plots[c_plots$time <= xlim[2] ,]
+  #  curve <- curve[curve[,1] <= xlim[2] ,]
+    graphs <- graphs[graphs$time <= xlim[2] ,]
 
     if (nrow(curve) < 1) stop("X-axis limits are too small for this data.")
   } else if(is.null(xlim) && xlog){
@@ -185,8 +233,8 @@ plot_MultiExponential <- function(curve = NULL,
     invalid_x <- curve[,1] <= 0
     if (sum(invalid_x) > 0) {
       message("X-axis contains values below/equal zero. Those are removed to enable logaritmic X-axis.")
-      curve <- curve[!invalid_x,]
-      c_plots <- c_plots[!invalid_x,]
+  #    curve <- curve[!invalid_x,]
+      graphs <- graphs[!invalid_x,]
     }
   }
 
@@ -223,24 +271,33 @@ plot_MultiExponential <- function(curve = NULL,
 
   # Set color and line themes
   ggplot2::theme_set(theme.set)
-  comp_col <- c("skyblue2","orchid","cyan2","orange","red2","pink3","brown2")
-  if (length(colors) > 0) comp_col[1:length(colors)] <- colors
 
-  # Reduce font size of titles; also set the legend design
-  text_format <- ggplot2::theme(axis.title = ggplot2::element_text(size = font.size),
-                                plot.subtitle = ggplot2::element_text(size = font.size + 1, face = "bold"),
-                                legend.position.inside = c(1, 1), legend.justification = c("right", "top"),
-                                legend.title = ggplot2::element_blank(),
-                                legend.text = ggplot2::element_text(size = font.size))
+  # Set colors and legend names
+  if (length(component.names) > 0)
+    graph_names[4:(3 + length(component.names))] <- component.names
+
+  #graph_names <- c("Measurement", "Model", "Residual", "C1", "C2", "C3", "C4", "C5", "C6", "C7")
+  graph_colors <- c("grey40", "black", "grey40", "skyblue2","orchid","cyan2","orange","red2","pink3","brown2")
+
+  if (length(component.colors) > 0)
+    graph_colors[4:length(component.colors)] <- component.colors
+
+  graph_colors <- graph_colors[1:length(graph_names)]
+  names(graph_colors) <- graph_names
+
+  # Do this to prevent generic col names which might throw an exception in ggplot2
+  colnames(graphs)[3:length(graphs)] <- letters[1:(length(graphs)-2)]
 
 
-
+  # Ensure that all titles begin with a upper case character
+  #for (i in 1:length(curve_params)) {
+  #  substr(curve_params[i], 1, 1) <- toupper(substr(curve_params[i] , 1, 1))}
 
 
   #### ADD COMPONENT PLOTS #### ------------------------------------------------
 
   # We start with an empty plot to keep full control over everything
-  p <- ggplot()
+  p <- ggplot(graphs, aes(x = time))
 
   # Are there any columns besides Signal, Time, Sum and Residual?
   # Then these are the components. Draw them first!
@@ -249,73 +306,74 @@ plot_MultiExponential <- function(curve = NULL,
     if (K >= 8)
       warning("Graphs with more than 7 components are not supported. Only the first 7 are displayed.")
 
-    col_index <- length(curve_params) - 4
-
     if (fill.components) {
+
+      #return(graphs)
 
       # Yes, the code looks weird. However, it seems like ggplot does not copy object, instead it
       # of the input data. Instead it works address pointer. Thus, dynamical approaches like increasing
       # indices won't work.
 
       if (K >= 1) p <- p +
-          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,2],  ymax = c_plots[,3]), colour = comp_col[1], fill = comp_col[1])
+          geom_ribbon(aes(ymin = graphs[,5],  ymax = graphs[,6], fill = graph_names[4]))
 
       if (K >= 2) p <- p +
-          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,4],  ymax = c_plots[,5]), colour = comp_col[2], fill = comp_col[2])
+          geom_ribbon(aes(ymin = graphs[,7],  ymax = graphs[,8], fill = graph_names[5]))
 
       if (K >= 3) p <- p +
-          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,6],  ymax = c_plots[,7]), colour = comp_col[3], fill = comp_col[3])
+          geom_ribbon(aes(ymin = graphs[,9],  ymax = graphs[,10], fill = graph_names[6]))
 
       if (K >= 4) p <- p +
-          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,8],  ymax = c_plots[,9]), colour = comp_col[4], fill = comp_col[4])
+          geom_ribbon(aes(ymin = graphs[,11],  ymax = graphs[,12], fill = graph_names[7]))
 
       if (K >= 5) p <- p +
-          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,10],  ymax = c_plots[,11]), colour = comp_col[5], fill = comp_col[5])
+          geom_ribbon(aes(ymin = graphs[,13],  ymax = graphs[,14], fill = graph_names[8]))
 
       if (K >= 6) p <- p +
-          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,12],  ymax = c_plots[,13]), colour = comp_col[6], fill = comp_col[6])
+          geom_ribbon(aes(ymin = graphs[,15],  ymax = graphs[,16], fill = graph_names[9]))
 
       if (K >= 7) p <- p +
-          geom_ribbon(aes(x = c_plots[,1], ymin = c_plots[,14],  ymax = c_plots[,15]), colour = comp_col[7], fill = comp_col[7])
+          geom_ribbon(aes(ymin = graphs[,17],  ymax = graphs[,18], fill = graph_names[10]))
 
     } else { # line graphs
 
       if (K >= 1) p <- p +
-          geom_line(aes(x = c_plots[,1], y = c_plots[,2]), color = comp_col[1], linewidth = 0.75)
+          geom_line(aes(y = graphs[,5], color = graph_names[4]), size = 0.75)
 
       if (K >= 2) p <- p +
-          geom_line(aes(x = c_plots[,1], y = c_plots[,3]), color = comp_col[2], linewidth = 0.75)
+          geom_line(aes(y = graphs[,6], color = graph_names[5]), size = 0.75)
 
       if (K >= 3) p <- p +
-          geom_line(aes(x = c_plots[,1], y = c_plots[,4]), color = comp_col[3], linewidth = 0.75)
+          geom_line(aes(y = graphs[,7], color = graph_names[6]), size = 0.75)
 
       if (K >= 4) p <- p +
-          geom_line(aes(x = c_plots[,1], y = c_plots[,5]), color = comp_col[4], linewidth = 0.75)
+          geom_line(aes(y = graphs[,8], color = graph_names[7]), size = 0.75)
 
       if (K >= 5) p <- p +
-          geom_line(aes(x = c_plots[,1], y = c_plots[,6]), color = comp_col[5], linewidth = 0.75)
+          geom_line(aes(y = graphs[,9], color = graph_names[8]), size = 0.75)
 
       if (K >= 6) p <- p +
-          geom_line(aes(x = c_plots[,1], y = c_plots[,7]), color = comp_col[6], linewidth = 0.75)
+          geom_line(aes(y = graphs[,10], color = graph_names[9]), size = 0.75)
 
       if (K >= 7) p <- p +
-          geom_line(aes(x = c_plots[,1], y = c_plots[,8]), color = comp_col[7], linewidth = 0.75)
+          geom_line(aes(y = graphs[,11], color = graph_names[10]), size = 0.75)
     }
   }
 
 
   #### BASIC PLOT #### ---------------------------------------------------------
 
-  if (are_there_negative_ns) {
+  # If there is any value with negative sign, draw a zero line. Time and residual does not count
+  if (any(graphs[,c(-1, -4)] < 0, na.rm = TRUE)) {
     p <- p + geom_hline(yintercept = 0, linetype = "dashed", color = "black", linewidth = 0.5)
   }
 
   # Signal curve
-  p <- p + geom_point(aes(x = curve[, 1], y = curve[, 2]), color = "grey40", size = 1)
+  p <- p + geom_point(aes(y = graphs[, 2], color = "Measurement"), size = 1)
 
   # Summed up components
-  if (ncol(curve) > 2) {
-    p <- p + geom_line(aes(x = curve[, 1], y = curve[, 3]), color = "black", linewidth = 0.75)
+  if (ncol(graphs) > 2) {
+    p <- p + geom_line(aes(y = graphs[, 3], color = "Model"), size = 0.75)
   }
 
 
@@ -335,25 +393,24 @@ plot_MultiExponential <- function(curve = NULL,
 
   #### APPLY DESIGN SETTINGS #### ----------------------------------------------
 
+  # Apply axis labels and design choices
+  if (is.null(xlab)) xlab <- graph_names[1]
+  if (is.null(ylab)) ylab <- graph_names[2]
 
-  # Ensure that all titles begin with a upper case character
-  for (i in 1:length(curve_params)) {
-    substr(curve_params[i], 1, 1) <- toupper(substr(curve_params[i] , 1, 1))}
-
-  if (is.null(xlab)) xlab <- curve_params[1]
-  if (is.null(ylab)) ylab <- curve_params[2]
-
+  # Set legend, axis labels and design choices
   p <- p +
-    labs(subtitle = main, x = xlab, y = ylab) +
-    text_format
+    scale_color_manual(values = graph_colors) +
+    scale_fill_manual(values = graph_colors) +
+    labs(color = NULL, #"Multi-exponential curve",
+         fill = "Signal components",
+         subtitle = main, x = xlab, y = ylab) +
+    theme(axis.title = element_text(size = font.size),
+          element_text(size = font.size + 1, face = "bold"),
+          legend.position = legend.position,
+          legend.justification = legend.justification,
+          legend.text = element_text(size = font.size))
 
   #### RETURN OBJECTS #### -----------------------------------------------------
-
-  # save plot as file
-  if (!is.null(filename)) {
-
-    try(suppressMessages(ggplot2::ggsave(filename, plot = p, units = "cm")),
-        silent = FALSE)}
 
   # show plot
   if (!hide.plot){
