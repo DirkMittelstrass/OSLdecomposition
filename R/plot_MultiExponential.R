@@ -1,7 +1,8 @@
 #' Advanced plot function for displaying component resolved signal curves
 #'
 #'
-#'
+#' This function was extensively tested with black-box test, see
+#' https://github.com/DirkMittelstrass/OSLdecomposition/module_tests/Test_plot_MultiExponential.html
 #'
 #' @return
 #' An invisible [ggplot2::ggplot] object containing the diagram will returned. "Invisible" means, the no value
@@ -47,57 +48,84 @@ plot_MultiExponential <- function(curve = NULL,
 
   if (is.null(curve) && is.null(components)) stop("Either 'curve' or 'components' must be defined")
 
+  # Check input components
   if (!is.null(components)) {
 
-    # Add decay rate input here
-  }
+    if (inherits(components, "numeric")) {
 
-  # Create curve from component table if not given
-  if (is.null(curve) && !is.null(components)) {
+      if (is.null(curve))
+        stop("An input 'curve' is needed if 'components' input is just a numeric vector")
 
-    channel_width <- 1 / (2*max(components$lambda))
-    channel_number <- ceiling(1 / (min(components$lambda) * channel_width))
-    curve <- simulate_OSLcomponents(components,
-                                    channel.width = channel_width,
-                                    channel.number = channel_number,
-                                    simulate.curve = TRUE,
-                                    add.poisson.noise = FALSE)
-  } else {
+      components <- decompose_OSLcurve(curve,
+                                       components,
+                                       algorithm = "det+nls",
+                                       error.estimation = "none",
+                                       verbose = FALSE)
 
-    # Check input curve
-    if(!inherits(curve, c("RLum.Data.Curve", "data.frame", "matrix"))){
-      stop("Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
+    } else if (inherits(components, "data.frame")) {
 
-    if(inherits(curve, "RLum.Data.Curve")) {
+      if(!("name" %in% colnames(components)) ||
+         !("lambda" %in% colnames(components)) ||
+         !("n" %in% colnames(components)))
+        stop("Input data.frame for 'components' needs at least the columns 'name', 'lambda' and 'n'")
 
-      # if no component table is given, check if the data set was already decomposed by RLum.OSL_decomposition
-      if (is.null(components)) {
-        if ("COMPONENTS" %in% names(curve@info)) components <- curve@info$COMPONENTS}
+      # Create curve from component table if not given
+      if (is.null(curve)) {
+        channel_width <- 1 / (2*max(components$lambda))
+        channel_number <- ceiling(1 / (min(components$lambda) * channel_width))
+        curve <- simulate_OSLcomponents(components,
+                                        channel.width = channel_width,
+                                        channel.number = channel_number,
+                                        simulate.curve = TRUE,
+                                        add.poisson.noise = FALSE)
+      }
 
-      # now transform the RLum object into a simple table. There is no need to keep all the extra info
-      curve <- as.data.frame(Luminescence::get_RLum(curve))
+    } else {
+      stop("Argument 'components' is not of type numeric or data.frame")
     }
   }
 
+  # Check input curve
+  if(!inherits(curve, c("RLum.Data.Curve", "data.frame", "matrix"))){
+    stop("Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
+
+  if(inherits(curve, "RLum.Data.Curve")) {
+
+    # if no component table is given, check if the data set was already decomposed by RLum.OSL_decomposition
+    if (is.null(components)) {
+      if ("COMPONENTS" %in% names(curve@info)) components <- curve@info$COMPONENTS}
+
+    # now transform the RLum object into a simple table. There is no need to keep all the extra info
+    curve <- as.data.frame(Luminescence::get_RLum(curve))
+  }
+
+  if(inherits(curve, "matrix"))
+    curve <- data.frame(time = curve[,1], signal = curve[,2])
+
   #### CREATE COMPONENT GRAPHS #### --------------------------------------------
 
-  if (!is.null(components))
+  # Calculate components data points (signal values will not be overwritten)
+  if (!is.null(components)){
     curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
+  } else {
+    if (ncol(curve) > 2) {
+      message("Input object 'curve' has more than two columns. Just the first two are used to define time and signal")
+      curve <- curve[,1:2]
+    }
+  }
 
   K <- 0
   if (ncol(curve) > 4) K <- ncol(curve) - 4
 
   # Transform to linearly modulated curves here in accordance to Bulur (2000)
   if (linear.modulation) {
-    # transform data
+
     P = 2*max(curve[,1])
-    for (i in 2:ncol(curve)) {
+    for (i in 2:ncol(curve))
       curve[,i] <- curve[,i] * sqrt(2 * curve[,1] / P)
-    }
+
     curve[,1] <- sqrt(2 * P * curve[,1])
   }
-
-
 
 
   # Build a new well defined object which will contain all graphs
@@ -108,14 +136,14 @@ plot_MultiExponential <- function(curve = NULL,
   if (ncol(curve) > 2) {
     graphs <- cbind(graphs, curve[,3])
   }  else {
-    graphs <- cbind(graphs, NA)
+   # graphs <- cbind(graphs, NA)
   }
 
   # Is there a "residual" curve?
   if (ncol(curve) > 3) {
     graphs <- cbind(graphs, curve[,4])
   }  else {
-    graphs <- cbind(graphs, NA)
+  #  graphs <- cbind(graphs, NA)
   }
 
   # We will need these for the legend later
@@ -219,11 +247,9 @@ plot_MultiExponential <- function(curve = NULL,
       stop("X-axis limits must be larger than zero when using logarithmic axis.")
 
     # Remove too small values
-  #  curve <- curve[curve[,1] >= xlim[1] ,]
     graphs <- graphs[graphs$time >= xlim[1] ,]
 
     # Remove too large values
-  #  curve <- curve[curve[,1] <= xlim[2] ,]
     graphs <- graphs[graphs$time <= xlim[2] ,]
 
     if (nrow(curve) < 1) stop("X-axis limits are too small for this data.")
@@ -233,7 +259,6 @@ plot_MultiExponential <- function(curve = NULL,
     invalid_x <- curve[,1] <= 0
     if (sum(invalid_x) > 0) {
       message("X-axis contains values below/equal zero. Those are removed to enable logaritmic X-axis.")
-  #    curve <- curve[!invalid_x,]
       graphs <- graphs[!invalid_x,]
     }
   }
@@ -277,7 +302,7 @@ plot_MultiExponential <- function(curve = NULL,
     graph_names[4:(3 + length(component.names))] <- component.names
 
   #graph_names <- c("Measurement", "Model", "Residual", "C1", "C2", "C3", "C4", "C5", "C6", "C7")
-  graph_colors <- c("grey40", "black", "grey40", "skyblue2","orchid","cyan2","orange","red2","pink3","brown2")
+  graph_colors <- c("grey25", "black", "grey25", "skyblue2","orchid","cyan2","orange","red2","pink3","brown2")
 
   if (length(component.colors) > 0)
     graph_colors[4:length(component.colors)] <- component.colors
@@ -286,7 +311,8 @@ plot_MultiExponential <- function(curve = NULL,
   names(graph_colors) <- graph_names
 
   # Do this to prevent generic col names which might throw an exception in ggplot2
-  colnames(graphs)[3:length(graphs)] <- letters[1:(length(graphs)-2)]
+  if(ncol(graphs) > 3)
+    colnames(graphs)[3:ncol(graphs)] <- letters[1:(ncol(graphs) - 2)]
 
 
   # Ensure that all titles begin with a upper case character
@@ -307,8 +333,6 @@ plot_MultiExponential <- function(curve = NULL,
       warning("Graphs with more than 7 components are not supported. Only the first 7 are displayed.")
 
     if (fill.components) {
-
-      #return(graphs)
 
       # Yes, the code looks weird. However, it seems like ggplot does not copy object, instead it
       # of the input data. Instead it works address pointer. Thus, dynamical approaches like increasing
@@ -369,11 +393,12 @@ plot_MultiExponential <- function(curve = NULL,
   }
 
   # Signal curve
-  p <- p + geom_point(aes(y = graphs[, 2], color = "Measurement"), size = 1)
+ # p <- p + geom_point(aes(y = graphs[, 2], color = "Measurement"), size = 1)
 
+  p <- p + geom_line(aes(y = graphs[, 2], color = "Measurement"), size = 0.25)
   # Summed up components
   if (ncol(graphs) > 2) {
-    p <- p + geom_line(aes(y = graphs[, 3], color = "Model"), size = 0.75)
+    p <- p + geom_line(aes(y = graphs[, 3], color = "Model"), size = 0.5)
   }
 
 
@@ -394,8 +419,8 @@ plot_MultiExponential <- function(curve = NULL,
   #### APPLY DESIGN SETTINGS #### ----------------------------------------------
 
   # Apply axis labels and design choices
-  if (is.null(xlab)) xlab <- graph_names[1]
-  if (is.null(ylab)) ylab <- graph_names[2]
+  if (is.null(xlab)) xlab <- "Time"
+  if (is.null(ylab)) ylab <- "Signal"
 
   # Set legend, axis labels and design choices
   p <- p +

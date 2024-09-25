@@ -43,7 +43,7 @@
 #'
 #' `algorithm = "det+nls"`
 #'
-#' Both algorithms can be combined. Then, `"det"` provides the startings values and the error estimations for
+#' Both algorithms can be combined. Then, `"det"` provides the starting values and the error estimations for
 #' `"nls"` and returns replacement results, in case `"nls"` fails. `"nls"` compensates for potential systematic
 #' errors in the fast and medium components intensity values due to uncorrected signal background. However, the
 #' background signal will still affect slow component results. The slowest component will be overestimated while
@@ -113,7 +113,8 @@
 #' If the detector noise is known and taken into account, the relation between both values for a given
 #' signal bin should be about \eqn{empiric / poisson = 1}. In case of systematic errors, this ratio increases.
 #'
-#'
+#' This function was extensively tested with black-box test, see
+#' https://github.com/DirkMittelstrass/OSLdecomposition/module_tests/Test_decompose_OSLcurve.html
 #'
 #' @param curve [data.frame] or [matrix] or [Luminescence::RLum.Data.Curve-class] (**required**):
 #' CW-OSL curve x-Axis: `$time` or first column as measurement time (must have constant time intervals);
@@ -121,7 +122,8 @@
 #'
 #' @param components [data.frame] or [numeric] vector (**required**):
 #' Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by [fit_OSLcurve].
-#' In case of a vector: It is recommended to use less than 7 parameters. The parameters will be sorted in decreasing order.
+#' In case of a vector: It is recommended to use less than 7 parameters. If the vector elements are named, the names will be used as component
+#' names, otherwise the signal components will be named Component 1, Component 2, etc.
 #' In case of a data.frame, one column must be named `$lambda`.
 #' It is recommended to provide also integration interval parameters (columns `$t.start`, `$t.end`, `$ch.start`, `$ch.end`),
 #' which can be found by applying [optimise_OSLintervals] to the global mean curve, calculated by [sum_OSLcurves].
@@ -130,8 +132,9 @@
 #' @param background.fitting [logical] (*with default*):
 #' if `TRUE`, an additional signal component with a decay rate of \eqn{\lambda = 0} is included.
 #' This allows for an accurate estimation of slow component intensities if the data is not background
-#' corrected. However, the additional component reduces the overall precision of the algorithm.
-#' It can also cause implausible slow component results if the measurement duration is not sufficiently long (> 30 s).
+#' corrected. *Warning:* Background fitting decreases the algorithm stability. In case of significant signal noise
+#' or rather short measurements (< 30s in case of quartz OSL measurements), results become *less* accurate. Thus,
+#' for most applications it is recommended to not activate this option, even if significant signal background is present.
 #'
 #' @param algorithm [character] string (*with default*):
 #' Choice of curve decomposition approach. Either `"det"` or `"det+nls"` or `"nls"`, see section **Details**.
@@ -152,7 +155,7 @@
 #'
 #' @section Last updates:
 #'
-#' 2022-07-25, DM: Extended algorithm for bin-wise RSS calculation and added error estimation option "only.bin.RSS"
+#' 2024-09-25, DM: If a numeric vector is uses as 'components', element names are now used as component names.
 #'
 #' @author
 #' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
@@ -168,6 +171,7 @@
 #'
 #' Mittelstraß, D., 2019. Decomposition of weak optically stimulated luminescence signals and
 #' its application in retrospective dosimetry at quartz (Master thesis). TU Dresden, Dresden.
+#'
 #'
 #' @examples
 #'
@@ -225,6 +229,7 @@ decompose_OSLcurve <- function(
   # * 2020-08-27, DM: Replaced [nls] function in the optional refinement fitting with the more robust [minpack.lm::nlsLM]
   # * 2020-08-30, DM: Renamed 'error.calculation' into 'error.estimation'; changed [numeric] value unit from cts/ch to cts/s
   # * 2022-07-25, DM: Extended algorithm for bin-wise RSS calculation and added error estimation option "only.bin.RSS"
+  # * 2024-09-25, DM: If a numeric vector is uses as 'components', element names are now used as component names
   #
   # ToDo:
   # * Enable the input of a list of curves
@@ -255,8 +260,6 @@ decompose_OSLcurve <- function(
     error.estimation <- "none"
   }
 
-
-
   # What is the channel width?
   dt <- curve$time[2] - curve$time[1]
 
@@ -265,8 +268,13 @@ decompose_OSLcurve <- function(
 
   # Check if 'components' is of valid type
   if (inherits(components, "numeric")) {
-    components <- data.frame(name = paste0("Component ", 1:length(components)),
-                             lambda = sort(components, decreasing = TRUE))
+
+    # Use vector names if given
+    if (is.null(names(components)))
+      names(components) <- paste("Component", 1:length(components))
+
+    components <- data.frame(name = names(components), lambda = components)
+    components <- components[order(components$lambda, decreasing = TRUE),]
 
   }else if(inherits(components, "data.frame")){
     if (!("lambda" %in% colnames(components)) | !("name" %in% colnames(components))) {

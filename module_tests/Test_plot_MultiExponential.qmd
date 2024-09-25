@@ -1,7 +1,7 @@
 ---
 title: "Module tests for plot_MultiExponential()"
 author: "Dirk Mittelstraß"
-date: "2024-09-24"
+date: "2024-09-25"
 format:
   html:
     toc: true
@@ -24,8 +24,6 @@ Is the function successfully sourced?
 
 library(OSLdecomposition)
 source("../R/plot_MultiExponential.R")
-
-
 
 ```
 
@@ -125,7 +123,9 @@ cases <- add_component_case(cases,
 
 ```
 
-## Stacked areas with linear axes
+## Plotting modes
+
+### Components as stacked areas
 
 ```{r}
 
@@ -135,7 +135,7 @@ for (case in cases) {
 }
 ```
 
-## Graphs with linear axes
+### Line graphs
 
 ```{r}
 
@@ -145,7 +145,9 @@ for (case in cases) {
 }
 ```
 
-## Using linear modulation
+## Axis transformation
+
+### Linear modulation
 
 After Bulur (2000)
 
@@ -166,7 +168,7 @@ for (case in cases) {
 }
 ```
 
-## Using logarithmic axes
+### Logarithmic axes
 
 ```{r}
 
@@ -210,7 +212,7 @@ plot_MultiExponential(case$curve, case$components,
 case <- cases[[3]]
 plot_MultiExponential(case$curve, case$components,
                       main = "Infrared radiofluorescence of abritrary mineral",
-                      xlab = "Accumulated dose [GY]",
+                      xlab = "Accumulated dose [Gy]",
                       ylab = "IR-RF signal [cts]",
                       component.colors = hcl.colors(5),
                       xlim = c(0, 2500),
@@ -221,10 +223,58 @@ plot_MultiExponential(case$curve, case$components,
 
 ```
 
-## Measurement only
+## Not-standard inputs
+
+### User-set decay rates
+
+```{r}
+
+# Use common quartz CW-OSL as example
+case <- cases[[1]]
+
+# Define test cases
+component_inputs <- list("Decay rates only" = case$components$lambda,
+                        "Named vector as input" = c(Schnell = 1,
+                                         Mittel = 0.1,
+                                         Langsam = 0.01),
+                        "Only a single decay rate" = 0.3,
+                        "Too many decay rates" = c(2,1,0.5,0.2,0.1,0.05, 0.01))
+
+
+
+for (i in 1:length(component_inputs)) {
+  
+  plot_MultiExponential(case$curve,
+                        component_inputs[[i]],
+                        main = names(component_inputs)[i])
+}
+
+```
+
+### Components without curve
+
+```{r}
+
+  plot_MultiExponential(components = case$components,
+                        main = "No curve, just component table given")
+
+```
+
+### Curve without components
+
+```{r}
+
+source("../R/plot_MultiExponential.R")  
+
+plot_MultiExponential(curve = case$curve,
+                        main = "No components, just curve given")
+  
+
+plot_MultiExponential(curve = cbind(case$curve$time, case$curve$signal),
+                      main = "Just curve as matrix with time and signal column")
+
+```
 
 ToDo:
 
--   Curve without components
-
--   When components\$lambda = NA
+-   When components\$lambda = NA (decomposition or fit failed)
