@@ -1,11 +1,73 @@
 #' Advanced plot function for displaying component resolved signal curves
 #'
+#' @description This function plots multi-exponentially decaying measurements and its signal components.
+#' [plot_OSLcurve] is a wrapper for this function.
 #'
-#' This function was extensively tested with black-box test, see
-#' https://github.com/DirkMittelstrass/OSLdecomposition/module_tests/Test_plot_MultiExponential.html
+#' This function was black-box tested prior release.
+#' These tests as well as many code examples are available at:
+#' https://luminescence.de/OSLdecomposition/module_tests/Test_decompose_OSLcurve.html
+#'
+#'
+#' @param curve [data.frame] or [matrix] or [Luminescence::RLum.Data.Curve-class] (*optional*):
+#' Measured signal curve. First column is used as x-axis, second column is used as y-axis.
+#' Further columns are ignored. If this argument is `NULL` but a component table is given,
+#' signal components and a modeled multi-exponential signal curve will be displayed nonetheless.
+#'
+#' @param components [data.frame] or [numeric] vector (**optional**)
+#' Either table with the signal component parameters or numeric vector with decay rates.
+#' The component parameter table is usually given by [fit_OSLcurve] or [decompose_OSLcurve].
+#' If handmade, it needs the columns `$names`, `$lambda` and `$n`.T
+#' This argument also accepts numeric vectors, the component intensity will be calculated automatically
+#' using [decompose_OSLcurve]. If the vector elements are named, these names will be used as component names.
+#'
+#' @param fill.components [logical] (*with default*):
+#' If `TRUE`, signal components are displayed ad stacked areas. Otherwise they are displayed as line graphs.
+#'
+#' @param linear.modulation [logical] (*with default*):
+#' If `TRUE`, all graphs are transformed to linear modulated curves, a peak-like representation for decay curves.
+#' See Bulur (2000) and Bos and Wallinga (2012) for details.
+#'
+#' @param xlog [logical] (*with default*):
+#' If `TRUE`, x-axis is transformed to logarithmic scale.
+#'
+#' @param ylog [logical] (*with default*):
+#' If `TRUE`, y-axis is transformed to logarithmic scale.
+#'
+#' @param main [character] (*optional*):
+#' Plot title, drawn at the top left of the diagram.
+#'
+#' @param xlab [character] (*optional*):
+#' Axis title of the x-axis.
+#'
+#' @param ylab [character] (*optional*):
+#' Axis title of the y-axis.
+#'
+#' @param xlim [numeric] vector (*optional*):
+#' Minimum and maximum `c(min, max)` of the x-scale.
+#'
+#' @param ylim [numeric] vector (*optional*):
+#' Minimum and maximum `c(min, max)` of the y-scale.
+#'
+#' @param font.size [numeric] (*with default*):
+#' Scale factor for all text elements. Legend title and main title are one bigger
+#'
+#' @param graph.colors [color] vector (*optional*):
+#' Color for the graphs/stacked areas are defined in the following order: 1. Measurement,
+#' 2. Model, 3. Component 1, 4. Component 2, etc. The color vector is allowed to
+#' be shorter than the needed colors. For missing colors, the default colors will be used
+#'
+#' @param graph.names [character] vector (*optional*):
+#' Alternative graph names which shall be displayed in the legend. The names are defined
+#' in the following order: 1. Measurement, 2. Model, 3. Residual, 4. Component 1, 5. Component 2, etc..
+#' For missing names, the default names will be used.
+#'
+#'
+#'
+#'
+#'
 #'
 #' @return
-#' An invisible [ggplot2::ggplot] object containing the diagram will returned. "Invisible" means, the no value
+#' Returns an invisible [ggplot2::ggplot] object containing the plot "Invisible" means, the no value
 #' will be returned (e.g. no console printout) if the function is not assigned to a variable via `<-`.
 #' If the function is assigned, the returned object can be further manipulated by [ggplot2-package] methods
 #' or manually drawn by various functions like for example [gridExtra::grid.arrange].
@@ -17,7 +79,23 @@
 #' @author
 #' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
 #'
+#' Please add the following references to your publication: Your currently used package version, obtained by
+#' `citation("OSLdecomposition")`
 #'
+#' Mittelstraß, D., Schmidt, C., Kreutzer, S., Beyer, J., Straessner, A. and Heitmann, J.:
+#' R package OSLdecomposition: Automated signal component analysis of multi-exponential decays for optically stimulated luminescence applications., *in preparation*.
+#'
+#' @seealso [fit_OSLcurve], [RLum.OSL_decomposition], [RLum.OSL_global_fitting], [simulate_OSLcomponents]
+#'
+#' @references
+#' Bos, A. J. J. and Wallinga, J., 2012. How to visualize quartz OSL signal components,
+#' Radiation Measurements, 47(9)
+#'
+#' Bulur, E., 2000. A simple transformation for converting CW-OSL curves to LM-OSL curves,
+#' Radiation Measurements, 32(2)
+#'
+#'
+#' @examples
 #'
 #' @md
 #' @export
@@ -29,17 +107,17 @@ plot_MultiExponential <- function(curve = NULL,
                              xlog = FALSE,
                              ylog = FALSE,
                              main = NULL,
-                             xlab = NULL,
-                             ylab = NULL,
+                             xlab = "Time",
+                             ylab = "Signal",
                              xlim = NULL,
                              ylim = NULL,
                              font.size = 10,
-                             component.colors = NULL,
-                             component.names = NULL,
+                             graph.colors = NULL,
+                             graph.names = NULL,
                              legend.position = "right",
                              legend.justification = NULL,
-                             hide.plot = FALSE,
-                             theme.set = ggplot2::theme_classic()){
+                             theme.set = ggplot2::theme_classic(),
+                             hide.plot = FALSE){
 
   # Changelog:
   # * 2024-08-29, DM: First version of the new function
@@ -176,7 +254,6 @@ plot_MultiExponential <- function(curve = NULL,
 
       negative_comps <- as.data.frame(comps[, !positve_ns])
       colnames(negative_comps) <- colnames(comps)[!positve_ns]
-
     }
 
     # Re-iterate K to account for components which cannot be displayed
@@ -298,14 +375,16 @@ plot_MultiExponential <- function(curve = NULL,
   ggplot2::theme_set(theme.set)
 
   # Set colors and legend names
-  if (length(component.names) > 0)
-    graph_names[4:(3 + length(component.names))] <- component.names
+  if (length(graph.names) > 0)
+    graph_names[1:length(graph.names)] <- graph.names
 
-  #graph_names <- c("Measurement", "Model", "Residual", "C1", "C2", "C3", "C4", "C5", "C6", "C7")
-  graph_colors <- c("grey25", "black", "grey25", "skyblue2","orchid","cyan2","orange","red2","pink3","brown2")
+  graph_colors <- c("grey30", "darkblue", "skyblue2","orchid","cyan2","orange","red2","pink3","brown2")
 
-  if (length(component.colors) > 0)
-    graph_colors[4:length(component.colors)] <- component.colors
+  if (length(graph.colors) > 0)
+    graph_colors[1:length(graph.colors)] <- graph.colors
+
+  # Use signal color also for residual graph
+  graph_colors <- append(graph_colors, graph_colors[1], after = 2)
 
   graph_colors <- graph_colors[1:length(graph_names)]
   names(graph_colors) <- graph_names
@@ -362,25 +441,25 @@ plot_MultiExponential <- function(curve = NULL,
     } else { # line graphs
 
       if (K >= 1) p <- p +
-          geom_line(aes(y = graphs[,5], color = graph_names[4]), size = 0.75)
+          geom_line(aes(y = graphs[,5], color = graph_names[4]), linewidth = 0.75)
 
       if (K >= 2) p <- p +
-          geom_line(aes(y = graphs[,6], color = graph_names[5]), size = 0.75)
+          geom_line(aes(y = graphs[,6], color = graph_names[5]), linewidth = 0.75)
 
       if (K >= 3) p <- p +
-          geom_line(aes(y = graphs[,7], color = graph_names[6]), size = 0.75)
+          geom_line(aes(y = graphs[,7], color = graph_names[6]), linewidth = 0.75)
 
       if (K >= 4) p <- p +
-          geom_line(aes(y = graphs[,8], color = graph_names[7]), size = 0.75)
+          geom_line(aes(y = graphs[,8], color = graph_names[7]), linewidth = 0.75)
 
       if (K >= 5) p <- p +
-          geom_line(aes(y = graphs[,9], color = graph_names[8]), size = 0.75)
+          geom_line(aes(y = graphs[,9], color = graph_names[8]), linewidth = 0.75)
 
       if (K >= 6) p <- p +
-          geom_line(aes(y = graphs[,10], color = graph_names[9]), size = 0.75)
+          geom_line(aes(y = graphs[,10], color = graph_names[9]), linewidth = 0.75)
 
       if (K >= 7) p <- p +
-          geom_line(aes(y = graphs[,11], color = graph_names[10]), size = 0.75)
+          geom_line(aes(y = graphs[,11], color = graph_names[10]), linewidth = 0.75)
     }
   }
 
@@ -395,10 +474,10 @@ plot_MultiExponential <- function(curve = NULL,
   # Signal curve
  # p <- p + geom_point(aes(y = graphs[, 2], color = "Measurement"), size = 1)
 
-  p <- p + geom_line(aes(y = graphs[, 2], color = "Measurement"), size = 0.25)
+  p <- p + geom_line(aes(y = graphs[, 2], color = graph_names[1]), linewidth = 0.5)
   # Summed up components
   if (ncol(graphs) > 2) {
-    p <- p + geom_line(aes(y = graphs[, 3], color = "Model"), size = 0.5)
+    p <- p + geom_line(aes(y = graphs[, 3], color = graph_names[2]), linewidth = 0.75)
   }
 
 

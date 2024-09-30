@@ -74,7 +74,7 @@
 #' and more, see [ggplot2::ggsave].
 #'
 #' @return
-#' An invisible [ggplot2::ggplot] object containing the diagram will returned. "Invisible" means, the no value
+#' An invisible [ggplot2::ggplot] object containing the diagram will be returned. "Invisible" means, the no value
 #' will be returned (e.g. no console printout) if the function is not assigned to a variable via `<-`.
 #' If the function is assigned, the returned object can be further manipulated by [ggplot2::ggplot2-package] methods
 #' or manually drawn by various functions like for example [gridExtra::grid.arrange].
@@ -91,7 +91,7 @@
 #' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
 #' R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, *in preparation*.
 #'
-#' @seealso [fit_OSLcurve], [RLum.OSL_decomposition, [RLum.OSL_global_fitting], [simulate_OSLcomponents]
+#' @seealso [fit_OSLcurve], [RLum.OSL_decomposition], [RLum.OSL_global_fitting], [simulate_OSLcomponents]
 #'
 #' @references
 #' Bos, A. J. J. and Wallinga, J., 2012. How to visualize quartz OSL signal components,

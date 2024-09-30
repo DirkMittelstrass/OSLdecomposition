@@ -1,7 +1,7 @@
 ---
 title: "Module tests for plot_MultiExponential()"
 author: "Dirk Mittelstraß"
-date: "2024-09-25"
+date: "2024-09-27"
 format:
   html:
     toc: true
@@ -103,7 +103,7 @@ cases <- add_component_case(cases,
                    n = c(10, 100),
                    noise = 10,
                    reiterate = TRUE,
-                   title = "Just noise")
+                   title = "Background-corrected noise")
 
 cases <- add_component_case(cases,
                    lambda = c(2, 0.03, 0.0001),
@@ -198,15 +198,16 @@ for (case in cases) {
 
 ```{r}
 
-# Put legend inside plot and add units
-case <- cases[[1]]
+# Rescale y-axis, put legend inside plot and add units
+case <- cases[[5]]
 plot_MultiExponential(case$curve, case$components,
                       fill.components = FALSE,
                       xlab = "Stimulation time [sec]",
                       ylab = "PMT signal [cts]",
                       font.size = 12,
                       legend.position = c(1, 1),
-                      legend.justification = c(1, 1))
+                      legend.justification = c(1, 1),
+                      ylim = c(-20, 50))
 
 # IR-RF example with some individual colors
 case <- cases[[3]]
@@ -214,12 +215,23 @@ plot_MultiExponential(case$curve, case$components,
                       main = "Infrared radiofluorescence of abritrary mineral",
                       xlab = "Accumulated dose [Gy]",
                       ylab = "IR-RF signal [cts]",
-                      component.colors = hcl.colors(5),
-                      xlim = c(0, 2500),
-                      ylim = c(1e5, 3e5))
+                      graph.colors = c("black", "red", rev(heat.colors(5))),
+                      xlim = c(0, 3000),
+                      theme.set = ggplot2::theme_bw())
 
-#theme.set = ggplot2::theme_bw()
 
+# User-set graph names
+case <- cases[[1]]
+plot_MultiExponential(case$curve, case$components,
+                      main = "Quartz CW-OSL measurement",
+                      xlab = "Time (s)",
+                      ylab = "Signal (counts)",
+                      graph.colors = c("black", "blue", grey.colors(3)),
+                      graph.names = c("OSL decay", "Component sum", "Res",
+                                      "Fast comp.", "Medium comp.", "Slow comp."),
+                      legend.position = "bottom",
+                      font.size = 8,
+                      theme.set = ggplot2::theme_minimal())
 
 ```
 

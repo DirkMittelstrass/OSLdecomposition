@@ -113,8 +113,9 @@
 #' If the detector noise is known and taken into account, the relation between both values for a given
 #' signal bin should be about \eqn{empiric / poisson = 1}. In case of systematic errors, this ratio increases.
 #'
-#' This function was extensively tested with black-box test, see
-#' https://github.com/DirkMittelstrass/OSLdecomposition/module_tests/Test_decompose_OSLcurve.html
+#' This function was black-box tested prior release.
+#' These tests as well as many code examples are available at:
+#' https://luminescence.de/OSLdecomposition/module_tests/Test_decompose_OSLcurve.html
 #'
 #' @param curve [data.frame] or [matrix] or [Luminescence::RLum.Data.Curve-class] (**required**):
 #' CW-OSL curve x-Axis: `$time` or first column as measurement time (must have constant time intervals);
