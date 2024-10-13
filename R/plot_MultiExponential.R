@@ -61,10 +61,24 @@
 #' in the following order: 1. Measurement, 2. Model, 3. Residual, 4. Component 1, 5. Component 2, etc..
 #' For missing names, the default names will be used.
 #'
+#' @param legend.position [character] two-point [numeric] vector (*with default*):
+#' Position of the plot legend  (for example `"bottom"` or `c(1,1)`).
+#' Set to "none" for not drawing a legend. This argument is forwarded to [ggplot2::theme].
 #'
+#' @param legend.justification [character] two-point [numeric] vector (*with default*):
+#' Anchor point for positioning the legend (for example `"right"` or `c(1,1)`).
+#' This argument is forwarded to [ggplot2::theme].
 #'
+#' @param theme.set [ggplot2::ggplot2-package] object (*with default*):
+#' Graphical theme of the output plot. This argument is forwarded to [ggplot2::theme_set].
+#' Recommended themes are `ggplot2::theme_minimal()`, `ggplot2::theme_classic()` and `ggplot2::theme_bw()`,
+#' see [ggplot2::theme_bw] or [here](https://ggplot2.tidyverse.org/reference/ggtheme.html) for
+#' a full list.
 #'
-#'
+#' @param hide.plot [logical] (*with default*):
+#' If true, plot is not drawn but can still be saved as file or caught by `A <- plot_OSLcurve(...)`.
+#' If caught, the plot can be drawn manually for example by using [gridExtra::grid.arrange].
+#'#'
 #'
 #' @return
 #' Returns an invisible [ggplot2::ggplot] object containing the plot "Invisible" means, the no value
@@ -85,7 +99,7 @@
 #' Mittelstraß, D., Schmidt, C., Kreutzer, S., Beyer, J., Straessner, A. and Heitmann, J.:
 #' R package OSLdecomposition: Automated signal component analysis of multi-exponential decays for optically stimulated luminescence applications., *in preparation*.
 #'
-#' @seealso [fit_OSLcurve], [RLum.OSL_decomposition], [RLum.OSL_global_fitting], [simulate_OSLcomponents]
+#' @seealso [plot_OSLcurve], [fit_OSLcurve], [simulate_OSLcomponents]
 #'
 #' @references
 #' Bos, A. J. J. and Wallinga, J., 2012. How to visualize quartz OSL signal components,
@@ -96,6 +110,21 @@
 #'
 #'
 #' @examples
+#'
+#' # Set some arbitrary decay parameters
+#' decay_rates <- c(Fast = 1.2, Medium = 0.2, Slow = 0.02)
+#'
+#' # Simulate a CW-OSL curve including some signal noise and signal background
+#' curve <- simulate_OSLcomponents(data.frame(lambda = decay_rates,
+#'                                            n = c(1000, 2000, 10000)),
+#'                                 simulate.curve = TRUE,
+#'                                 add.poisson.noise = TRUE,
+#'                                 add.background = 10)
+#'
+#' # Plot the simulated curve and its signal components
+#' plot_MultiExponential(curve, decay_rates)
+#'
+#' # For more examples, follow the link to the module tests given in the description section.
 #'
 #' @md
 #' @export
