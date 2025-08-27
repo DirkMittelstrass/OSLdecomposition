@@ -4,6 +4,8 @@ author: "Dirk Mittelstraß"
 date: "2024-09-27"
 format:
   html:
+    code-fold: true 
+    code-summary: "Show code"
     toc: true
     toc-location: right
     toc-expand: true
