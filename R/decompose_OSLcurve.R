@@ -154,9 +154,9 @@
 #' one of the above columns but parameters are selected which do not re-calculate the values, the values
 #' of the columns are set to `NA`.
 #'
-#' @section Last updates:
+#' @section Last updated:
 #'
-#' 2024-09-25, DM: If a numeric vector is uses as 'components', element names are now used as component names.
+#' 2024-09-25, DM: If 'components' is a numeric vector, element names are now used as component names.
 #'
 #' @author
 #' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}

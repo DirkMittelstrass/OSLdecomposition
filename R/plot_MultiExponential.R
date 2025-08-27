@@ -51,7 +51,7 @@
 #' @param font.size [numeric] (*with default*):
 #' Scale factor for all text elements. Legend title and main title are one bigger
 #'
-#' @param graph.colors [color] vector (*optional*):
+#' @param graph.colors [character] vector (*optional*):
 #' Color for the graphs/stacked areas are defined in the following order: 1. Measurement,
 #' 2. Model, 3. Component 1, 4. Component 2, etc. The color vector is allowed to
 #' be shorter than the needed colors. For missing colors, the default colors will be used
@@ -78,7 +78,6 @@
 #' @param hide.plot [logical] (*with default*):
 #' If true, plot is not drawn but can still be saved as file or caught by `A <- plot_OSLcurve(...)`.
 #' If caught, the plot can be drawn manually for example by using [gridExtra::grid.arrange].
-#'#'
 #'
 #' @return
 #' Returns an invisible [ggplot2::ggplot] object containing the plot "Invisible" means, the no value
@@ -110,6 +109,8 @@
 #'
 #'
 #' @examples
+#'
+#' library(ggplot2)
 #'
 #' # Set some arbitrary decay parameters
 #' decay_rates <- c(Fast = 1.2, Medium = 0.2, Slow = 0.02)
@@ -150,6 +151,7 @@ plot_MultiExponential <- function(curve = NULL,
 
   # Changelog:
   # * 2024-08-29, DM: First version of the new function
+  # * 2024-09-25, DM: Debugged function and added module test
 
   #### INPUT CHECKS #### -------------------------------------------------------
 
@@ -398,8 +400,6 @@ plot_MultiExponential <- function(curve = NULL,
 
   #### DESIGN CHOICES #### -----------------------------------------------------
 
-  library(ggplot2)
-
   # Set color and line themes
   ggplot2::theme_set(theme.set)
 
@@ -431,7 +431,7 @@ plot_MultiExponential <- function(curve = NULL,
   #### ADD COMPONENT PLOTS #### ------------------------------------------------
 
   # We start with an empty plot to keep full control over everything
-  p <- ggplot(graphs, aes(x = time))
+  p <- ggplot2::ggplot(graphs, ggplot2::aes(x = graphs$time))
 
   # Are there any columns besides Signal, Time, Sum and Residual?
   # Then these are the components. Draw them first!
@@ -442,53 +442,53 @@ plot_MultiExponential <- function(curve = NULL,
 
     if (fill.components) {
 
-      # Yes, the code looks weird. However, it seems like ggplot does not copy object, instead it
-      # of the input data. Instead it works address pointer. Thus, dynamical approaches like increasing
-      # indices won't work.
+      # Yes, the code looks weird. However, it seems like ggplot does not copy object.
+      # Instead it works with address pointer to the input data. Thus, dynamical approaches
+      # like increasing indices won't work.
 
       if (K >= 1) p <- p +
-          geom_ribbon(aes(ymin = graphs[,5],  ymax = graphs[,6], fill = graph_names[4]))
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = graphs[,5],  ymax = graphs[,6], fill = graph_names[4]))
 
       if (K >= 2) p <- p +
-          geom_ribbon(aes(ymin = graphs[,7],  ymax = graphs[,8], fill = graph_names[5]))
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = graphs[,7],  ymax = graphs[,8], fill = graph_names[5]))
 
       if (K >= 3) p <- p +
-          geom_ribbon(aes(ymin = graphs[,9],  ymax = graphs[,10], fill = graph_names[6]))
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = graphs[,9],  ymax = graphs[,10], fill = graph_names[6]))
 
       if (K >= 4) p <- p +
-          geom_ribbon(aes(ymin = graphs[,11],  ymax = graphs[,12], fill = graph_names[7]))
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = graphs[,11],  ymax = graphs[,12], fill = graph_names[7]))
 
       if (K >= 5) p <- p +
-          geom_ribbon(aes(ymin = graphs[,13],  ymax = graphs[,14], fill = graph_names[8]))
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = graphs[,13],  ymax = graphs[,14], fill = graph_names[8]))
 
       if (K >= 6) p <- p +
-          geom_ribbon(aes(ymin = graphs[,15],  ymax = graphs[,16], fill = graph_names[9]))
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = graphs[,15],  ymax = graphs[,16], fill = graph_names[9]))
 
       if (K >= 7) p <- p +
-          geom_ribbon(aes(ymin = graphs[,17],  ymax = graphs[,18], fill = graph_names[10]))
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = graphs[,17],  ymax = graphs[,18], fill = graph_names[10]))
 
     } else { # line graphs
 
       if (K >= 1) p <- p +
-          geom_line(aes(y = graphs[,5], color = graph_names[4]), linewidth = 0.75)
+          ggplot2::geom_line(ggplot2::aes(y = graphs[,5], color = graph_names[4]), linewidth = 0.75)
 
       if (K >= 2) p <- p +
-          geom_line(aes(y = graphs[,6], color = graph_names[5]), linewidth = 0.75)
+          ggplot2::geom_line(ggplot2::aes(y = graphs[,6], color = graph_names[5]), linewidth = 0.75)
 
       if (K >= 3) p <- p +
-          geom_line(aes(y = graphs[,7], color = graph_names[6]), linewidth = 0.75)
+          ggplot2::geom_line(ggplot2::aes(y = graphs[,7], color = graph_names[6]), linewidth = 0.75)
 
       if (K >= 4) p <- p +
-          geom_line(aes(y = graphs[,8], color = graph_names[7]), linewidth = 0.75)
+          ggplot2::geom_line(ggplot2::aes(y = graphs[,8], color = graph_names[7]), linewidth = 0.75)
 
       if (K >= 5) p <- p +
-          geom_line(aes(y = graphs[,9], color = graph_names[8]), linewidth = 0.75)
+          ggplot2::geom_line(ggplot2::aes(y = graphs[,9], color = graph_names[8]), linewidth = 0.75)
 
       if (K >= 6) p <- p +
-          geom_line(aes(y = graphs[,10], color = graph_names[9]), linewidth = 0.75)
+          ggplot2::geom_line(ggplot2::aes(y = graphs[,10], color = graph_names[9]), linewidth = 0.75)
 
       if (K >= 7) p <- p +
-          geom_line(aes(y = graphs[,11], color = graph_names[10]), linewidth = 0.75)
+          ggplot2::geom_line(ggplot2::aes(y = graphs[,11], color = graph_names[10]), linewidth = 0.75)
     }
   }
 
@@ -497,31 +497,31 @@ plot_MultiExponential <- function(curve = NULL,
 
   # If there is any value with negative sign, draw a zero line. Time and residual does not count
   if (any(graphs[,c(-1, -4)] < 0, na.rm = TRUE)) {
-    p <- p + geom_hline(yintercept = 0, linetype = "dashed", color = "black", linewidth = 0.5)
+    p <- p + ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "black", linewidth = 0.5)
   }
 
   # Signal curve
  # p <- p + geom_point(aes(y = graphs[, 2], color = "Measurement"), size = 1)
 
-  p <- p + geom_line(aes(y = graphs[, 2], color = graph_names[1]), linewidth = 0.5)
+  p <- p + ggplot2::geom_line(ggplot2::aes(y = graphs[, 2], color = graph_names[1]), linewidth = 0.5)
   # Summed up components
   if (ncol(graphs) > 2) {
-    p <- p + geom_line(aes(y = graphs[, 3], color = graph_names[2]), linewidth = 0.75)
+    p <- p + ggplot2::geom_line(ggplot2::aes(y = graphs[, 3], color = graph_names[2]), linewidth = 0.75)
   }
 
 
   #### SET SCALES #### ---------------------------------------------------------
 
   if (ylog) {
-    p <- p + scale_y_log10(limits = ylim)
+    p <- p + ggplot2::scale_y_log10(limits = ylim)
   } else {
-    p <- p + scale_y_continuous(limits = ylim)
+    p <- p + ggplot2::scale_y_continuous(limits = ylim)
   }
 
   if (xlog) {
-    p <- p + scale_x_log10(limits = xlim)
+    p <- p + ggplot2::scale_x_log10(limits = xlim)
   } else {
-    p <- p + scale_x_continuous(limits = xlim)
+    p <- p + ggplot2::scale_x_continuous(limits = xlim)
   }
 
   #### APPLY DESIGN SETTINGS #### ----------------------------------------------
@@ -532,16 +532,16 @@ plot_MultiExponential <- function(curve = NULL,
 
   # Set legend, axis labels and design choices
   p <- p +
-    scale_color_manual(values = graph_colors) +
-    scale_fill_manual(values = graph_colors) +
-    labs(color = NULL, #"Multi-exponential curve",
+    ggplot2::scale_color_manual(values = graph_colors) +
+    ggplot2::scale_fill_manual(values = graph_colors) +
+    ggplot2::labs(color = NULL, #"Multi-exponential curve",
          fill = "Signal components",
          subtitle = main, x = xlab, y = ylab) +
-    theme(axis.title = element_text(size = font.size),
-          element_text(size = font.size + 1, face = "bold"),
+    ggplot2::theme(axis.title = ggplot2::element_text(size = font.size),
+          ggplot2::element_text(size = font.size + 1, face = "bold"),
           legend.position = legend.position,
           legend.justification = legend.justification,
-          legend.text = element_text(size = font.size))
+          legend.text = ggplot2::element_text(size = font.size))
 
   #### RETURN OBJECTS #### -----------------------------------------------------
 

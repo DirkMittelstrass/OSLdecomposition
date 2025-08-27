@@ -69,7 +69,7 @@ as well as pixel images are possible. Allowed are \code{.pdf}, \code{.eps}, \cod
 and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}.}
 }
 \value{
-An invisible \link[ggplot2:ggplot]{ggplot2::ggplot} object containing the diagram will returned. "Invisible" means, the no value
+An invisible \link[ggplot2:ggplot]{ggplot2::ggplot} object containing the diagram will be returned. "Invisible" means, the no value
 will be returned (e.g. no console printout) if the function is not assigned to a variable via \verb{<-}.
 If the function is assigned, the returned object can be further manipulated by \link[ggplot2:ggplot2-package]{ggplot2::ggplot2-package} methods
 or manually drawn by various functions like for example \link[gridExtra:arrangeGrob]{gridExtra::grid.arrange}.
@@ -126,7 +126,7 @@ Bulur, E., 2000. A simple transformation for converting CW-OSL curves to LM-OSL 
 Radiation Measurements, 32(2)
 }
 \seealso{
-\link{fit_OSLcurve}, [RLum.OSL_decomposition, \link{RLum.OSL_global_fitting}, \link{simulate_OSLcomponents}
+\link{fit_OSLcurve}, \link{RLum.OSL_decomposition}, \link{RLum.OSL_global_fitting}, \link{simulate_OSLcomponents}
 }
 \author{
 Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
