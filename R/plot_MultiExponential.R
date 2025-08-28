@@ -539,7 +539,7 @@ plot_MultiExponential <- function(curve = NULL,
          subtitle = main, x = xlab, y = ylab) +
     ggplot2::theme(axis.title = ggplot2::element_text(size = font.size),
           ggplot2::element_text(size = font.size + 1, face = "bold"),
-          legend.position = legend.position,
+          legend.position.inside = legend.position,
           legend.justification = legend.justification,
           legend.text = ggplot2::element_text(size = font.size))
 
