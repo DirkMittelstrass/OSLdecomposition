@@ -18,6 +18,9 @@ execute:
 
 This document collects scripts for developing, bug-fixing and pre-release validating a specific function.
 
+ToDo:
+- Test if function works with background component
+
 ## Sourcing
 
 Is the function successfully sourced?
@@ -60,7 +63,7 @@ add_component_case <-
     if (reiterate) {
           components <- decompose_OSLcurve(curve, 
                                      components, 
-                                     verbose = TRUE)
+                                     verbose = FALSE)
     }
   
     case <- list(components = components,
@@ -115,8 +118,8 @@ cases <- add_component_case(cases,
 ```{r default}
 
 for (case in cases) {
-  plot_OSLcurve(case$curve, case$components, 
-                        title = case$title)
+  plot_OSLcurve(case$curve, case$components,
+                       title = case$title)
   cat("\n")
 }
 ```
@@ -131,8 +134,7 @@ for (case in cases) {
                 show.legend = FALSE,
                 show.intervals = TRUE,
                 show.crosssec = TRUE,
-                show.initial = TRUE,
-                title = case$title)
+                show.initial = TRUE)
   cat("\n")
 }
 
