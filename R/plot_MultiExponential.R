@@ -1,0 +1,555 @@
+#' Advanced plot function for displaying component resolved signal curves
+#'
+#' @description This function plots multi-exponentially decaying measurements and its signal components.
+#' [plot_OSLcurve] is a wrapper for this function.
+#'
+#' This function was black-box tested prior release.
+#' These tests as well as many code examples are available at:
+#' https://luminescence.de/OSLdecomposition/module_tests/Test_decompose_OSLcurve.html
+#'
+#'
+#' @param curve [data.frame] or [matrix] or [Luminescence::RLum.Data.Curve-class] (*optional*):
+#' Measured signal curve. First column is used as x-axis, second column is used as y-axis.
+#' Further columns are ignored. If this argument is `NULL` but a component table is given,
+#' signal components and a modeled multi-exponential signal curve will be displayed nonetheless.
+#'
+#' @param components [data.frame] or [numeric] vector (**optional**)
+#' Either table with the signal component parameters or numeric vector with decay rates.
+#' The component parameter table is usually given by [fit_OSLcurve] or [decompose_OSLcurve].
+#' If handmade, it needs the columns `$names`, `$lambda` and `$n`.T
+#' This argument also accepts numeric vectors, the component intensity will be calculated automatically
+#' using [decompose_OSLcurve]. If the vector elements are named, these names will be used as component names.
+#'
+#' @param fill.components [logical] (*with default*):
+#' If `TRUE`, signal components are displayed ad stacked areas. Otherwise they are displayed as line graphs.
+#'
+#' @param linear.modulation [logical] (*with default*):
+#' If `TRUE`, all graphs are transformed to linear modulated curves, a peak-like representation for decay curves.
+#' See Bulur (2000) and Bos and Wallinga (2012) for details.
+#'
+#' @param xlog [logical] (*with default*):
+#' If `TRUE`, x-axis is transformed to logarithmic scale.
+#'
+#' @param ylog [logical] (*with default*):
+#' If `TRUE`, y-axis is transformed to logarithmic scale.
+#'
+#' @param main [character] (*optional*):
+#' Plot title, drawn at the top left of the diagram.
+#'
+#' @param xlab [character] (*optional*):
+#' Axis title of the x-axis.
+#'
+#' @param ylab [character] (*optional*):
+#' Axis title of the y-axis.
+#'
+#' @param xlim [numeric] vector (*optional*):
+#' Minimum and maximum `c(min, max)` of the x-scale.
+#'
+#' @param ylim [numeric] vector (*optional*):
+#' Minimum and maximum `c(min, max)` of the y-scale.
+#'
+#' @param font.size [numeric] (*with default*):
+#' Scale factor for all text elements. Legend title and main title are one bigger
+#'
+#' @param graph.colors [character] vector (*optional*):
+#' Color for the graphs/stacked areas are defined in the following order: 1. Measurement,
+#' 2. Model, 3. Component 1, 4. Component 2, etc. The color vector is allowed to
+#' be shorter than the needed colors. For missing colors, the default colors will be used
+#'
+#' @param graph.names [character] vector (*optional*):
+#' Alternative graph names which shall be displayed in the legend. The names are defined
+#' in the following order: 1. Measurement, 2. Model, 3. Residual, 4. Component 1, 5. Component 2, etc..
+#' For missing names, the default names will be used.
+#'
+#' @param legend.position [character] two-point [numeric] vector (*with default*):
+#' Position of the plot legend  (for example `"bottom"` or `c(1,1)`).
+#' Set to "none" for not drawing a legend. This argument is forwarded to [ggplot2::theme].
+#'
+#' @param legend.justification [character] two-point [numeric] vector (*with default*):
+#' Anchor point for positioning the legend (for example `"right"` or `c(1,1)`).
+#' This argument is forwarded to [ggplot2::theme].
+#'
+#' @param theme.set [ggplot2::ggplot2-package] object (*with default*):
+#' Graphical theme of the output plot. This argument is forwarded to [ggplot2::theme_set].
+#' Recommended themes are `ggplot2::theme_minimal()`, `ggplot2::theme_classic()` and `ggplot2::theme_bw()`,
+#' see [ggplot2::theme_bw] or [here](https://ggplot2.tidyverse.org/reference/ggtheme.html) for
+#' a full list.
+#'
+#' @param hide.plot [logical] (*with default*):
+#' If true, plot is not drawn but can still be saved as file or caught by `A <- plot_OSLcurve(...)`.
+#' If caught, the plot can be drawn manually for example by using [gridExtra::grid.arrange].
+#'
+#' @return
+#' Returns an invisible [ggplot2::ggplot] object containing the plot "Invisible" means, the no value
+#' will be returned (e.g. no console printout) if the function is not assigned to a variable via `<-`.
+#' If the function is assigned, the returned object can be further manipulated by [ggplot2-package] methods
+#' or manually drawn by various functions like for example [gridExtra::grid.arrange].
+#'
+#' @section Last update:
+#'
+#' 2024-08-29, DM: Forked this function from plot_OSLcurve
+#'
+#' @author
+#' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
+#'
+#' Please add the following references to your publication: Your currently used package version, obtained by
+#' `citation("OSLdecomposition")`
+#'
+#' Mittelstraß, D., Schmidt, C., Kreutzer, S., Beyer, J., Straessner, A. and Heitmann, J.:
+#' R package OSLdecomposition: Automated signal component analysis of multi-exponential decays for optically stimulated luminescence applications., *in preparation*.
+#'
+#' @seealso [plot_OSLcurve], [fit_OSLcurve], [simulate_OSLcomponents]
+#'
+#' @references
+#' Bos, A. J. J. and Wallinga, J., 2012. How to visualize quartz OSL signal components,
+#' Radiation Measurements, 47(9)
+#'
+#' Bulur, E., 2000. A simple transformation for converting CW-OSL curves to LM-OSL curves,
+#' Radiation Measurements, 32(2)
+#'
+#'
+#' @examples
+#'
+#' library(ggplot2)
+#'
+#' # Set some arbitrary decay parameters
+#' decay_rates <- c(Fast = 1.2, Medium = 0.2, Slow = 0.02)
+#'
+#' # Simulate a CW-OSL curve including some signal noise and signal background
+#' curve <- simulate_OSLcomponents(data.frame(lambda = decay_rates,
+#'                                            n = c(1000, 2000, 10000)),
+#'                                 simulate.curve = TRUE,
+#'                                 add.poisson.noise = TRUE,
+#'                                 add.background = 10)
+#'
+#' # Plot the simulated curve and its signal components
+#' plot_MultiExponential(curve, decay_rates)
+#'
+#' # For more examples, follow the link to the module tests given in the description section.
+#'
+#' @md
+#' @export
+
+plot_MultiExponential <- function(curve = NULL,
+                             components = NULL,
+                             fill.components = TRUE,
+                             linear.modulation = FALSE,
+                             xlog = FALSE,
+                             ylog = FALSE,
+                             main = NULL,
+                             xlab = "Time",
+                             ylab = "Signal",
+                             xlim = NULL,
+                             ylim = NULL,
+                             font.size = 10,
+                             graph.colors = NULL,
+                             graph.names = NULL,
+                             legend.position = "right",
+                             legend.justification = NULL,
+                             theme.set = ggplot2::theme_classic(),
+                             hide.plot = FALSE){
+
+  # Changelog:
+  # * 2024-08-29, DM: First version of the new function
+  # * 2024-09-25, DM: Debugged function and added module test
+
+  #### INPUT CHECKS #### -------------------------------------------------------
+
+  if (is.null(curve) && is.null(components)) stop("Either 'curve' or 'components' must be defined")
+
+  # Check input components
+  if (!is.null(components)) {
+
+    if (inherits(components, "numeric")) {
+
+      if (is.null(curve))
+        stop("An input 'curve' is needed if 'components' input is just a numeric vector")
+
+      components <- decompose_OSLcurve(curve,
+                                       components,
+                                       algorithm = "det+nls",
+                                       error.estimation = "none",
+                                       verbose = FALSE)
+
+    } else if (inherits(components, "data.frame")) {
+
+      if(!("name" %in% colnames(components)) ||
+         !("lambda" %in% colnames(components)) ||
+         !("n" %in% colnames(components)))
+        stop("Input data.frame for 'components' needs at least the columns 'name', 'lambda' and 'n'")
+
+      # Create curve from component table if not given
+      if (is.null(curve)) {
+        channel_width <- 1 / (2*max(components$lambda))
+        channel_number <- ceiling(1 / (min(components$lambda) * channel_width))
+        curve <- simulate_OSLcomponents(components,
+                                        channel.width = channel_width,
+                                        channel.number = channel_number,
+                                        simulate.curve = TRUE,
+                                        add.poisson.noise = FALSE)
+      }
+
+    } else {
+      stop("Argument 'components' is not of type numeric or data.frame")
+    }
+  }
+
+  # Check input curve
+  if(!inherits(curve, c("RLum.Data.Curve", "data.frame", "matrix"))){
+    stop("Input object 'curve' is not of type 'RLum.Data.Curve' or 'data.frame' or 'matrix'!")}
+
+  if(inherits(curve, "RLum.Data.Curve")) {
+
+    # if no component table is given, check if the data set was already decomposed by RLum.OSL_decomposition
+    if (is.null(components)) {
+      if ("COMPONENTS" %in% names(curve@info)) components <- curve@info$COMPONENTS}
+
+    # now transform the RLum object into a simple table. There is no need to keep all the extra info
+    curve <- as.data.frame(Luminescence::get_RLum(curve))
+  }
+
+  if(inherits(curve, "matrix"))
+    curve <- data.frame(X = curve[, 1], Y = curve[, 2])
+
+  #### CREATE COMPONENT GRAPHS #### --------------------------------------------
+
+  # Calculate components data points (signal values will not be overwritten)
+  if (!is.null(components)){
+    curve <- simulate_OSLcomponents(components, curve, simulate.curve = FALSE)
+  } else {
+    if (ncol(curve) > 2) {
+      message("Input object 'curve' has more than two columns. Just the first two are used to define time and signal")
+      curve <- curve[,1:2]
+    }
+  }
+
+  K <- 0
+  if (ncol(curve) > 4) K <- ncol(curve) - 4
+
+  # Transform to linearly modulated curves here in accordance to Bulur (2000)
+  if (linear.modulation) {
+
+    P = 2*max(curve[,1])
+    for (i in 2:ncol(curve))
+      curve[,i] <- curve[,i] * sqrt(2 * curve[,1] / P)
+
+    curve[,1] <- sqrt(2 * P * curve[,1])
+  }
+
+
+  # Build a new well defined object which will contain all values
+  values <- data.frame(X = curve[,1],
+                       Y = curve[,2])
+
+  # Is there a "sum" curve?
+  if (ncol(curve) > 2) {
+    values <- cbind(values, curve[,3])
+  }  else {
+   # values <- cbind(values, NA)
+  }
+
+  # Is there a "residual" curve?
+  if (ncol(curve) > 3) {
+    values <- cbind(values, curve[,4])
+  }  else {
+  #  values <- cbind(values, NA)
+  }
+
+  # We will need these for the legend later
+  graph_names <- c("Measurement", "Model", "Residual")
+
+  # Stacked plots need special treatment to be displayed properly
+  if (K > 0) {
+
+    positive_comps <- negative_comps <- data.frame(NULL)
+    if (K == 1) {
+
+      if (components$n >= 0) {
+        positive_comps <- as.data.frame(curve[,5])
+        colnames(positive_comps) <- colnames(curve)[5]
+      } else {
+        negative_comps <- as.data.frame(curve[,5])
+        colnames(negative_comps) <- colnames(curve)[5]
+      }
+
+    } else {
+
+      # Separate components into two types: Increasing and decreasing
+      positve_ns <- components$n >= 0
+      comps <- curve[,-1:-4]
+
+      positive_comps <- as.data.frame(comps[, positve_ns])
+      colnames(positive_comps) <- colnames(comps)[positve_ns]
+
+      negative_comps <- as.data.frame(comps[, !positve_ns])
+      colnames(negative_comps) <- colnames(comps)[!positve_ns]
+    }
+
+    # Re-iterate K to account for components which cannot be displayed
+    K <- ncol(positive_comps)
+
+    # Now stack up the components with positive n (decreasing values)
+    # but put the SLOWEST component first. This way, it will always have
+    # the same color, no matter if later fittings add some new
+    # component or not
+
+    if (ncol(positive_comps) > 0) {
+
+      if (fill.components) {
+        added_signal <- rep(0, nrow(curve))
+        for (i in ncol(positive_comps):1) {
+
+          # ymin boundary
+          values <- cbind(values, added_signal)
+
+          # ymax boundary
+          added_signal <- added_signal + positive_comps[,i]
+          values <- cbind(values, added_signal)
+        }
+      } else { # for "line" plots
+        # rev() will revert the column order
+        values <- cbind(values, rev(positive_comps))
+      }
+      graph_names <- c(graph_names, rev(colnames(positive_comps)))
+    }
+
+    # Do the same for components with n below zero (increasing values)
+    if (ncol(negative_comps) > 0 && !ylog) {
+
+    #  are_there_negative_values <- TRUE
+      K <- K + ncol(negative_comps)
+
+      if (fill.components) {
+        previous_signal <- rep(0, nrow(curve))
+        for (i in ncol(negative_comps):1) {
+
+          # ymin boundary
+          added_signal <- previous_signal + negative_comps[, i]
+          values <- cbind(values, added_signal)
+
+          # ymax boundary
+          values <- cbind(values, previous_signal)
+          previous_signal <- added_signal
+        }
+      } else {
+        values <- cbind(values, rev(negative_comps))
+      }
+      graph_names <- c(graph_names, rev(colnames(negative_comps)))
+    } else if(ncol(negative_comps) > 0 && ylog){
+      message(paste("Input data contains signal components with negative intensity (increasing signals).",
+                    "These can not be displayed with logarithmic y-axis and are therefore omitted."))
+    }
+  }
+
+
+  #### CHECK AND SET AXES LIMITS #### ------------------------------------------
+
+  if (!is.null(xlim)) {
+
+    if (xlim[2] <= xlim[1])
+      stop("X-axis minimum is larger then X-axis maximum.")
+
+    if (xlog && (xlim[1] <= 0 || xlim[2] <= 0))
+      stop("X-axis limits must be larger than zero when using logarithmic axis.")
+
+    # Remove too small values
+    time_values <- values$X
+    values <- values[time_values >= xlim[1],]
+
+    # Remove too large values
+    values <- values[time_values <= xlim[2],]
+
+    if (nrow(curve) < 1) stop("X-axis limits are too small for this data.")
+  } else if(is.null(xlim) && xlog){
+
+    # Check if there are values which won't work on logarithmic axis and remove them
+    invalid_x <- curve[,1] <= 0
+    if (sum(invalid_x) > 0) {
+      message("X-axis contains values below/equal zero. Those are removed to enable logaritmic X-axis.")
+      values <- values[!invalid_x,]
+    }
+  }
+
+  if (!is.null(ylim)) {
+    if (ylim[2] <= ylim[1])
+      stop("Y-axis minimum is larger then Y-axis maximum.")
+
+    if (ylog && (ylim[1] <= 0 || ylim[2] <= 0))
+      stop("Y-axis limits must be larger than zero when using logarithmic axis.")
+
+  } else if (is.null(ylim) && ylog){
+
+    # The auto-limits extend too far to lower values to fully show all components.
+    # Thus, we set some reasonable limits manually
+
+    # Take also the sum curve into account, if one is defined
+    signal_min <- min(c(curve[,2], curve$sum), na.rm = TRUE)
+    signal_max <- max(c(curve[,2], curve$sum), na.rm = TRUE)
+
+    if (signal_max <= 0)
+      stop("Signal curve with just negative values can not be displayed with logarithmic Y-axis.")
+
+    if (signal_min <= 0) {
+      message("Signal curve contains value equal/lower zero. Values below 0.1 will not be displayed.")
+      signal_min <- 0.1
+    }
+
+    ylim <- c(signal_min * 0.2, signal_max * 1.5)
+  }
+
+  #### DESIGN CHOICES #### -----------------------------------------------------
+
+  # Set color and line themes
+  ggplot2::theme_set(theme.set)
+
+  # Set colors and legend names
+  if (length(graph.names) > 0)
+    graph_names[1:length(graph.names)] <- graph.names
+
+  graph_colors <- c("grey30", "darkblue", "skyblue2","orchid","cyan2","orange","red2","pink3","brown2")
+
+  if (length(graph.colors) > 0)
+    graph_colors[1:length(graph.colors)] <- graph.colors
+
+  # Use signal color also for residual graph
+  graph_colors <- append(graph_colors, graph_colors[1], after = 2)
+
+  graph_colors <- graph_colors[1:length(graph_names)]
+  names(graph_colors) <- graph_names
+
+  # Do this to prevent generic col names which might throw an exception in ggplot2
+  if(ncol(values) > 3)
+    colnames(values)[3:ncol(values)] <- letters[1:(ncol(values) - 2)]
+
+
+  #### ADD COMPONENT PLOTS #### ------------------------------------------------
+
+  # We start with an empty plot to keep full control over everything
+  p <- ggplot2::ggplot(values, ggplot2::aes(x = X))
+
+  # Are there any columns besides Signal, Time, Sum and Residual?
+  # Then these are the components. Draw them first!
+  if (K > 0) {
+
+    if (K >= 8)
+      warning("Graphs with more than 7 components are not supported. Only the first 7 are displayed.")
+
+    if (fill.components) {
+
+      # Yes, the code looks weird. However, it seems like ggplot does not copy object.
+      # Instead it works with address pointer to the input data. Thus, dynamical approaches
+      # like increasing indices won't work.
+
+      if (K >= 1) p <- p +
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = values[,5],  ymax = values[,6], fill = graph_names[4]))
+
+      if (K >= 2) p <- p +
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = values[,7],  ymax = values[,8], fill = graph_names[5]))
+
+      if (K >= 3) p <- p +
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = values[,9],  ymax = values[,10], fill = graph_names[6]))
+
+      if (K >= 4) p <- p +
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = values[,11],  ymax = values[,12], fill = graph_names[7]))
+
+      if (K >= 5) p <- p +
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = values[,13],  ymax = values[,14], fill = graph_names[8]))
+
+      if (K >= 6) p <- p +
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = values[,15],  ymax = values[,16], fill = graph_names[9]))
+
+      if (K >= 7) p <- p +
+          ggplot2::geom_ribbon(ggplot2::aes(ymin = values[,17],  ymax = values[,18], fill = graph_names[10]))
+
+    } else { # line values
+
+      if (K >= 1) p <- p +
+          ggplot2::geom_line(ggplot2::aes(y = values[,5], color = graph_names[4]), linewidth = 0.75)
+
+      if (K >= 2) p <- p +
+          ggplot2::geom_line(ggplot2::aes(y = values[,6], color = graph_names[5]), linewidth = 0.75)
+
+      if (K >= 3) p <- p +
+          ggplot2::geom_line(ggplot2::aes(y = values[,7], color = graph_names[6]), linewidth = 0.75)
+
+      if (K >= 4) p <- p +
+          ggplot2::geom_line(ggplot2::aes(y = values[,8], color = graph_names[7]), linewidth = 0.75)
+
+      if (K >= 5) p <- p +
+          ggplot2::geom_line(ggplot2::aes(y = values[,9], color = graph_names[8]), linewidth = 0.75)
+
+      if (K >= 6) p <- p +
+          ggplot2::geom_line(ggplot2::aes(y = values[,10], color = graph_names[9]), linewidth = 0.75)
+
+      if (K >= 7) p <- p +
+          ggplot2::geom_line(ggplot2::aes(y = values[,11], color = graph_names[10]), linewidth = 0.75)
+    }
+  }
+
+
+  #### BASIC PLOT #### ---------------------------------------------------------
+
+  # Signal curve
+  p <- p + ggplot2::geom_line(ggplot2::aes(y = values[, 2], color = graph_names[1]), linewidth = 0.5)
+
+  # If there is any value with negative sign, draw a zero line. Time and residual does not count
+  if (any(values[,c(-1, -4)] < 0, na.rm = TRUE)) {
+    p <- p + ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "black", linewidth = 0.5)
+  }
+
+  # Summed up components
+  if (ncol(values) > 2) {
+    p <- p + ggplot2::geom_line(ggplot2::aes(y = values[, 3], color = graph_names[2]), linewidth = 0.75)
+  }
+
+
+  #### SET SCALES #### ---------------------------------------------------------
+
+  p <- p + ggplot2::scale_color_manual(values = graph_colors)
+
+  if (fill.components && K > 0)
+    p <- p + ggplot2::scale_fill_manual(values = graph_colors)
+
+  if (ylog) {
+    p <- p + ggplot2::scale_y_log10(limits = ylim)
+  } else {
+    p <- p + ggplot2::scale_y_continuous(limits = ylim)
+  }
+
+  if (xlog) {
+    p <- p + ggplot2::scale_x_log10(limits = xlim)
+  } else {
+    p <- p + ggplot2::scale_x_continuous(limits = xlim)
+  }
+
+  #### APPLY DESIGN SETTINGS #### ----------------------------------------------
+
+  # Apply axis labels and design choices
+  if (is.null(xlab)) xlab <- "Time"
+  if (is.null(ylab)) ylab <- "Signal"
+
+  # Set legend, axis labels and design choices
+  p <- p +
+    ggplot2::labs(color = NULL,
+         fill = "Signal components",
+         subtitle = main, x = xlab, y = ylab) +
+    ggplot2::theme(axis.title = ggplot2::element_text(size = font.size),
+          ggplot2::element_text(size = font.size + 1, face = "bold"),
+          legend.position = legend.position,
+          legend.justification = legend.justification,
+          legend.text = ggplot2::element_text(size = font.size))
+
+  #### RETURN OBJECTS #### -----------------------------------------------------
+
+  # show plot
+  if (!hide.plot){
+
+    # ggplot will throw a lot of annoying warnings when data points are outside
+    # of the limits, thus we suppress them.
+    # However, better would be to set them NA
+    suppressWarnings(print(p))
+  }
+
+  # return plot object
+  invisible(p)
+}

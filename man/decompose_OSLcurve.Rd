@@ -20,7 +20,8 @@ y-Axis: \verb{$signal} or second column as luminescence signal. Further columns 
 
 \item{components}{\link{data.frame} or \link{numeric} vector (\strong{required}):
 Either a vector containing the decay parameters of the CW-OSL components or a table (data.frame), usually the table returned by \link{fit_OSLcurve}.
-In case of a vector: It is recommended to use less than 7 parameters. The parameters will be sorted in decreasing order.
+In case of a vector: It is recommended to use less than 7 parameters. If the vector elements are named, the names will be used as component
+names, otherwise the signal components will be named Component 1, Component 2, etc.
 In case of a data.frame, one column must be named \verb{$lambda}.
 It is recommended to provide also integration interval parameters (columns \verb{$t.start}, \verb{$t.end}, \verb{$ch.start}, \verb{$ch.end}),
 which can be found by applying \link{optimise_OSLintervals} to the global mean curve, calculated by \link{sum_OSLcurves}.
@@ -29,8 +30,9 @@ If one or more column is missing, a simple interval definition algorithm is run 
 \item{background.fitting}{\link{logical} (\emph{with default}):
 if \code{TRUE}, an additional signal component with a decay rate of \eqn{\lambda = 0} is included.
 This allows for an accurate estimation of slow component intensities if the data is not background
-corrected. However, the additional component reduces the overall precision of the algorithm.
-It can also cause implausible slow component results if the measurement duration is not sufficiently long (> 30 s).}
+corrected. \emph{Warning:} Background fitting decreases the algorithm stability. In case of significant signal noise
+or rather short measurements (< 30s in case of quartz OSL measurements), results become \emph{less} accurate. Thus,
+for most applications it is recommended to not activate this option, even if significant signal background is present.}
 
 \item{algorithm}{\link{character} string (\emph{with default}):
 Choice of curve decomposition approach. Either \code{"det"} or \code{"det+nls"} or \code{"nls"}, see section \strong{Details}.
@@ -94,7 +96,7 @@ caused by uncorrected signal background.
 
 \code{algorithm = "det+nls"}
 
-Both algorithms can be combined. Then, \code{"det"} provides the startings values and the error estimations for
+Both algorithms can be combined. Then, \code{"det"} provides the starting values and the error estimations for
 \code{"nls"} and returns replacement results, in case \code{"nls"} fails. \code{"nls"} compensates for potential systematic
 errors in the fast and medium components intensity values due to uncorrected signal background. However, the
 background signal will still affect slow component results. The slowest component will be overestimated while
@@ -163,11 +165,15 @@ The ratio of the error values of both error estimation methods can be used to de
 errors. \code{"poisson"} error values are not affected by systematic errors, while \code{"empiric"} errors are.
 If the detector noise is known and taken into account, the relation between both values for a given
 signal bin should be about \eqn{empiric / poisson = 1}. In case of systematic errors, this ratio increases.
+
+This function was black-box tested prior release.
+These tests as well as many code examples are available at:
+https://luminescence.de/OSLdecomposition/module_tests/Test_decompose_OSLcurve.html
 }
-\section{Last updates}{
+\section{Last updated}{
 
 
-2022-07-25, DM: Extended algorithm for bin-wise RSS calculation and added error estimation option "only.bin.RSS"
+2024-09-25, DM: If 'components' is a numeric vector, element names are now used as component names.
 }
 
 \examples{

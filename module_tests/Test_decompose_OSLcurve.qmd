@@ -1,0 +1,196 @@
+---
+title: "Module tests for decompose_OSLcurve()"
+author: "Dirk Mittelstraß"
+date: "2024-09-25"
+format:
+  html:
+    toc: true
+    toc-location: right
+    toc-expand: true
+    self-contained: true
+editor: visual
+execute:
+  output: true
+  warning: true
+---
+
+This document collects scripts for developing, bug-fixing and pre-release validating a specific function.
+
+## Sourcing
+
+Is the function successfully sourced?
+
+```{r sourcing}
+
+library(OSLdecomposition)
+source("../R/decompose_OSLcurve.R")
+
+# For measuring execution time
+library(tictoc)
+
+# For printing tables
+library(knitr)
+```
+
+## Basic algorithm test
+
+Create test curve
+
+```{r}
+
+# Some common quartz CW-OSL measurement with a PMT
+sim_components <- data.frame(name = c("Fast", "Medium", "Slow"),
+                             lambda = c(1.5, 0.2, 0.01), 
+                             n = c(1000, 1000, 20000),
+                             n.error = NA)
+
+# Simulate the curve, add shot noise, detector noise and detector background
+curve <- simulate_OSLcomponents(sim_components, 
+                                simulate.curve = TRUE, 
+                                add.poisson.noise = TRUE,
+                                add.gaussian.noise = 2,
+                                add.background = 10)
+
+# How does the curve look like?
+plot(x = curve$time, y = curve$signal, type = "l")
+
+```
+
+Cycle algorithms, without background correction
+
+```{r}
+
+results <- data.frame(NULL)
+
+for (arg_algorithm in c("det", 
+                        "nls", 
+                        "det+nls")) {
+  for (arg_error_est in c("empiric", 
+                          "poisson", 
+                          "only.bin.RSS", 
+                          "none", 
+                          2)) {
+    
+    case_title <- paste("Algorithm =", arg_algorithm,
+                        "| Error est. =", arg_error_est)
+    cat("\n", case_title, "\n")
+    
+    # Function call with return
+    components <- decompose_OSLcurve(curve,
+                                     sim_components,
+                                     background.fitting = FALSE,
+                                     algorithm = arg_algorithm,
+                                     error.estimation = arg_error_est,
+                                     verbose = TRUE)
+    
+    
+    # Call the function now 1000 times to test performance and see if errors occur
+    tic("Execution time")
+    for (i in 1:1000) {
+      suppressWarnings({
+        decompose_OSLcurve(curve,
+                           sim_components,
+                           background.fitting = FALSE,
+                           algorithm = arg_algorithm,
+                           error.estimation = arg_error_est,
+                           verbose = FALSE)
+      })
+    }
+    tictoc <- toc()
+    elapsed <- as.numeric((tictoc$toc - tictoc$tic)/1000)
+    
+    result <- data.frame(test = case_title,
+                         t(components$n),
+                         t(components$n.error),
+                         time = elapsed)
+    
+    results <- rbind(results, result)
+    
+  }
+}
+
+kable(results)
+```
+
+### With background correction
+
+Now do the same, **with** background correction.
+
+```{r}
+
+# Background fittings needs pre-defined integration intervals
+sim_components <- optimise_OSLintervals(sim_components, curve, 
+                                        background.component = TRUE)
+
+results <- data.frame(NULL)
+
+for (arg_algorithm in c("det", 
+                        "nls", 
+                        "det+nls")) {
+  for (arg_error_est in c("empiric", 
+                          "poisson", 
+                          "only.bin.RSS", 
+                          "none", 
+                          2)) {
+    
+    case_title <- paste("Algorithm =", arg_algorithm,
+                        "| Error est. =", arg_error_est)
+    cat("\n", case_title, "\n")
+    
+    # Function call with return
+    components <- decompose_OSLcurve(curve,
+                                     sim_components,
+                                     background.fitting = TRUE,
+                                     algorithm = arg_algorithm,
+                                     error.estimation = arg_error_est,
+                                     verbose = TRUE)
+    
+    
+    # Call the function now 1000 times to test performance and see if errors occur
+    tic("Execution time")
+    for (i in 1:1000) {
+      suppressWarnings({
+        decompose_OSLcurve(curve,
+                           sim_components,
+                           background.fitting = TRUE,
+                           algorithm = arg_algorithm,
+                           error.estimation = arg_error_est,
+                           verbose = FALSE)
+      })
+    }
+    tictoc <- toc()
+    elapsed <- as.numeric((tictoc$toc - tictoc$tic)/1000)
+    
+    result <- data.frame(test = case_title,
+                         t(components$n),
+                         t(components$n.error),
+                         time = elapsed)
+    
+    results <- rbind(results, result)
+  }
+}
+
+kable(results)
+```
+
+## Input checks
+
+Try out a variety of possible cases for the lambda input
+
+```{r}
+
+component_inputs <- list(as_usual = sim_components,
+                        lambda_only = sim_components$lambda,
+                        named_vector = c(Schnell = 1,
+                                         Mittel = 0.1,
+                                         Langsam = 0.01),
+                        single_lambda = 0.5,
+                        many_lambda = c(2,1,0.5,0.2,0.1,0.05, 0.01))
+
+for (i in 1:length(component_inputs)) {
+  
+  cat("\nTest case:", names(component_inputs)[i], "\n")
+   decompose_OSLcurve(curve, component_inputs[[i]])
+}
+
+```

@@ -1,0 +1,330 @@
+---
+title: "Module tests for plot_OSLcurve()"
+author: "Dirk Mittelstraß"
+date: "2025-08-31"
+format:
+  html:
+    code-fold: true 
+    code-summary: "Show code"
+    toc: true
+    toc-location: right
+    toc-expand: true
+    self-contained: true
+editor: visual
+execute:
+  output: true
+  warning: true
+---
+
+This document collects scripts for developing, bug-fixing and pre-release validating a specific function.
+
+**Found issues as for 2025-08-31:**
+
+-   If `show.intervals = TRUE` there is an unimportant "scale is overwritten" warning
+
+-   There are too many warnings when values are omitted due to log scaling. One warning would be enough
+
+-   If a simulated curve is used as input but no component given, the warnings are not helpful
+
+**ToDo:**
+
+-   Test if function works with background component
+
+-   More tests for RLum input objects
+
+## Test sourcing
+
+Is the function successfully sourced?
+
+```{r sourcing}
+
+library(OSLdecomposition)
+library(ggplot2)
+library(Luminescence)
+
+source("../R/plot_OSLcurve.R")
+source("../R/plot_MultiExponential.R") # core function
+
+```
+
+## Define test cases
+
+```{r cases}
+
+cases <- list()
+add_component_case <- 
+  function(cases, lambda, n, 
+           channel_width = 0.1, 
+           channel_number = 400, 
+           noise = 0, 
+           background = 0,
+           reiterate = FALSE,
+           title = "Unspecified test case"){
+    
+    components <- data.frame(name = paste("Component", 1:length(n)),
+                             lambda = lambda, 
+                             n = n)
+    curve <- simulate_OSLcomponents(components, 
+                                    channel.width = channel_width,
+                                    channel.number = channel_number,
+                                    simulate.curve = TRUE, 
+                                    add.poisson.noise = TRUE,
+                                    add.gaussian.noise = noise,
+                                    add.background = background)
+    
+    # Re-iterate components to add some uncertainty
+    if (reiterate) {
+          components <- decompose_OSLcurve(curve, 
+                                     components, 
+                                     verbose = FALSE)
+    }
+  
+    case <- list(components = components,
+                 curve = curve,
+                 title = title)
+    
+    cases <- c(cases, list(case))
+    return(cases)
+  }
+
+cases <- add_component_case(cases,
+                   lambda = c(1, 0.2, 0.02),
+                   n = c(1000, 1000, 10000),
+                   reiterate = TRUE,
+                   title = "Typical quartz OSL curve")
+
+cases <- add_component_case(cases,
+                   lambda = c(2, 0.5, 0.2, 0.001),
+                   n = c(200, -500, 2000, 100000),
+                   channel_width = 0.875,
+                   channel_number = 42,
+                   title = "Atypical low-res measurement with stretched medium component")
+
+cases <- add_component_case(cases,
+                   lambda = c(0.1, 0.02),
+                   n = c(-10e4, 10e5),
+                   channel_width = 0.2,
+                   channel_number = 200,
+                   title = "Increasing signal")
+
+cases <- add_component_case(cases,
+                   lambda = c(1, 0.01),
+                   n = c(10, 100),
+                   noise = 10,
+                   reiterate = TRUE,
+                   title = "Background-corrected noise")
+
+cases <- add_component_case(cases,
+                   lambda = c(2, 0.5, 0.03, 0.001),
+                   n = c(30e5, 2e6, -5e6, 5e8),
+                   channel_width = 0.01,
+                   channel_number = 5000,
+                   title = "Sharp drop then complex, with many channels")
+
+
+```
+
+## Test standard plotting
+
+### Default settings
+
+```{r default}
+
+for (case in cases) {
+  plot_OSLcurve(case$curve, case$components,
+                       title = case$title)
+  cat("\n")
+}
+```
+
+### Changed on/off settings
+
+```{r table_settings}
+
+for (case in cases) {
+  plot_OSLcurve(case$curve, case$components,
+                show.legend = FALSE,
+                show.intervals = TRUE,
+                show.crosssec = TRUE,
+                show.initial = TRUE)
+  cat("\n")
+}
+
+```
+
+## Test other display modes
+
+Vary the argument "display". Vary also the ggplot2 themes
+
+```{r display_settings}
+
+modes <- c("lin","compare_lin","log","compare_log","loglog","LM","res","tab","raw")
+themes <- list(ggplot2::theme_minimal(),
+            ggplot2::theme_dark(),
+            ggplot2::theme_classic(),
+            ggplot2::theme_void(),
+            ggplot2::theme_gray(),
+            ggplot2::theme_linedraw(),
+            ggplot2::theme_bw())
+
+for (display_mode in modes) {
+  
+  case <- sample(cases, size = 1)[[1]]  # Random case
+  cat("Display mode:", display_mode, "with case", case$title, "\n")
+  
+
+  
+    tryCatch({
+      plot_OSLcurve(case$curve, case$components,
+                display = display_mode,
+                show.legend = TRUE,
+                theme.set = sample(themes, size = 1)[[1]],
+                title = case$title)
+    
+    },error = function(e) {message("FOUND ERROR", conditionMessage(e))})
+  
+  cat("\n")
+}
+
+# Repeat test but with 
+
+for (display_mode in modes) {
+  
+  case <- sample(cases, size = 1)[[1]]  # Random case
+  cat("Display mode:", display_mode, "with case", case$title, "\n")
+  
+  tryCatch({
+    plot_OSLcurve(case$curve, case$components,
+                display = display_mode,
+                show.legend = FALSE,
+                show.intervals = TRUE,
+                theme.set = sample(themes, size = 1)[[1]])
+    
+    },error = function(e) {message("FOUND ERROR", conditionMessage(e))})
+  
+  cat("\n")
+}
+```
+
+## Display fit_OSLcurve output
+
+```{r fit_OSLcurve}
+# Create a simple curve with just one component
+curve <- data.frame(
+  X = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
+  Y = c(377, 244, 163, 93, 59, 28, 17, 13, 10, 8, 9, 5))
+# Perform fitting
+components <- fit_OSLcurve(curve, F.threshold = 3)
+
+# Display results
+plot_OSLcurve(curve, components)
+
+```
+
+## Use RLum objects as input
+
+```{r rlum_input}
+
+# Load example data set
+data_path <- system.file("examples", 
+                         "FB_10Gy_SAR.bin", 
+                         package = "OSLdecomposition")
+data_set <- Luminescence::read_BIN2R(data_path, 
+                                     fastForward = TRUE,
+                                     verbose = FALSE)
+
+# Separate components
+data_set_decomposed <- RLum.OSL_decomposition(data_set, 
+                                              decay_rates = c(0.8, 0.05))
+
+cat("\nCase 1: Use raw RLum.Data.Curve as input\n")
+plot_OSLcurve(data_set[[4]]@records[[1]])
+
+cat("\nCase 2: Use decomposed RLum.Data.Curve as input\n")
+plot_OSLcurve(data_set_decomposed[[4]]@records[[1]])
+
+cat("\nCase 3: Use data matrix as input\n")
+plot_OSLcurve(data_set_decomposed[[4]]@records[[1]]@data)
+
+cat("\nCase 4: Use invalid RLum object as input\n")
+tryCatch({plot_OSLcurve(data_set[[4]])}, 
+         error = function(e) {
+           message("TEST ERROR ", conditionMessage(e))
+})
+
+```
+
+## Wrong/missing input
+
+```{r wrong_input}
+
+case <- sample(cases, size = 1)[[1]]  # Random case
+
+cat("\nCase 1: No component argument\n")
+tryCatch({plot_OSLcurve(case$curve)}, 
+         error = function(e) {
+           message("TEST ERROR ", conditionMessage(e))
+})
+
+cat("\nCase 2: No curve argument\n")
+tryCatch({plot_OSLcurve(component = case$component)}, 
+         error = function(e) {
+           message("TEST ERROR ", conditionMessage(e))
+})
+
+cat("\nCase 3: No arguments at all\n")
+tryCatch({plot_OSLcurve()}, 
+         error = function(e) {
+           message("TEST ERROR ", conditionMessage(e))
+})
+
+cat("\nCase 4: Wrong argument\n")
+tryCatch({plot_OSLcurve(case$component, case$curve)}, 
+         error = function(e) {
+           message("TEST ERROR ", conditionMessage(e))
+})
+```
+
+## Don't show plot
+
+```{r hide_plot}
+
+case <- sample(cases, size = 1)[[1]]  # Random case
+plot_obj <- plot_OSLcurve(case$curve, case$components, hide.plot = TRUE)
+
+# Try to display by itself
+plot_obj
+
+# Try to display with print()
+print(plot_obj)
+
+# Try to display with gridExtra function
+gridExtra::grid.arrange(plot_obj)
+
+```
+
+## Save plot as file it
+
+The first plot is saved as PNG file and shown, the second plot is saved as PDF file and not shown. Both are saved in the working directory (`r getwd()`). Please check and delete both files after executing this test.
+
+```{r save_plot}
+
+file_name = paste0(getwd(), "/plot_OSLcurve_test.png")
+cat("\nSave file:", file_name, "\n")
+case <- sample(cases, size = 1)[[1]]  # Random case
+
+plot_OSLcurve(case$curve, case$components,
+              hide.plot = FALSE,
+              filename = file_name)
+cat("\n")
+
+file_name = "plot_OSLcurve_test.pdf"
+cat("\nSave file:", file_name, "\n")
+case <- sample(cases, size = 1)[[1]]  # Random case
+
+plot_OSLcurve(case$curve, case$components,
+              hide.plot = TRUE,
+              filename = file_name)
+cat("\n")
+
+```
