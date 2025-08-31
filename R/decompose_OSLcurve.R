@@ -114,7 +114,7 @@
 #' signal bin should be about \eqn{empiric / poisson = 1}. In case of systematic errors, this ratio increases.
 #'
 #' This function was black-box tested prior release.
-#' These tests as well as many code examples are available at:
+#' These tests as well as code examples are available at:
 #' https://luminescence.de/OSLdecomposition/module_tests/Test_decompose_OSLcurve.html
 #'
 #' @param curve [data.frame] or [matrix] or [Luminescence::RLum.Data.Curve-class] (**required**):

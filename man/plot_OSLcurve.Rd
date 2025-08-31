@@ -103,6 +103,10 @@ residual plots can also be plotted.
 PseudoLM-OSL curves are created using the transformation described by Bulur (2000).
 The stimulation ramp duration is twice the CW-OSL duration.
 See Bos and Wallinga (2012) for a detailed explanation and discussion.
+
+This function was black-box tested prior release.
+These tests as well as code examples are available at:
+https://luminescence.de/OSLdecomposition/module_tests/Test_plot_OSLcurve.html
 }
 \section{Last updates}{
 

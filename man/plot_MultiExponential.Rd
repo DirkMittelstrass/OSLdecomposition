@@ -100,7 +100,7 @@ If caught, the plot can be drawn manually for example by using \link[gridExtra:a
 \value{
 Returns an invisible \link[ggplot2:ggplot]{ggplot2::ggplot} object containing the plot "Invisible" means, the no value
 will be returned (e.g. no console printout) if the function is not assigned to a variable via \verb{<-}.
-If the function is assigned, the returned object can be further manipulated by \link{ggplot2-package} methods
+If the function is assigned, the returned object can be further manipulated by \link[ggplot2:ggplot2-package]{ggplot2::ggplot2-package} methods
 or manually drawn by various functions like for example \link[gridExtra:arrangeGrob]{gridExtra::grid.arrange}.
 }
 \description{
@@ -108,8 +108,8 @@ This function plots multi-exponentially decaying measurements and its signal com
 \link{plot_OSLcurve} is a wrapper for this function.
 
 This function was black-box tested prior release.
-These tests as well as many code examples are available at:
-https://luminescence.de/OSLdecomposition/module_tests/Test_decompose_OSLcurve.html
+These tests as well as code examples are available at:
+https://luminescence.de/OSLdecomposition/module_tests/Test_plot_MultiExponential.html
 }
 \section{Last update}{
 

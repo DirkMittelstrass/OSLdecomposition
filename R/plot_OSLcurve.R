@@ -23,6 +23,10 @@
 #' The stimulation ramp duration is twice the CW-OSL duration.
 #' See Bos and Wallinga (2012) for a detailed explanation and discussion.
 #'
+#' This function was black-box tested prior release.
+#' These tests as well as code examples are available at:
+#' https://luminescence.de/OSLdecomposition/module_tests/Test_plot_OSLcurve.html
+#'
 #'
 #' @param curve [data.frame] or [matrix] or [Luminescence::RLum.Data.Curve-class] (*optional*):
 #' CW-OSL curve x-Axis: `$time` or first column as measurement time (must have constant time intervals);

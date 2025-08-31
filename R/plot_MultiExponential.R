@@ -4,8 +4,8 @@
 #' [plot_OSLcurve] is a wrapper for this function.
 #'
 #' This function was black-box tested prior release.
-#' These tests as well as many code examples are available at:
-#' https://luminescence.de/OSLdecomposition/module_tests/Test_decompose_OSLcurve.html
+#' These tests as well as code examples are available at:
+#' https://luminescence.de/OSLdecomposition/module_tests/Test_plot_MultiExponential.html
 #'
 #'
 #' @param curve [data.frame] or [matrix] or [Luminescence::RLum.Data.Curve-class] (*optional*):
@@ -82,7 +82,7 @@
 #' @return
 #' Returns an invisible [ggplot2::ggplot] object containing the plot "Invisible" means, the no value
 #' will be returned (e.g. no console printout) if the function is not assigned to a variable via `<-`.
-#' If the function is assigned, the returned object can be further manipulated by [ggplot2-package] methods
+#' If the function is assigned, the returned object can be further manipulated by [ggplot2::ggplot2-package] methods
 #' or manually drawn by various functions like for example [gridExtra::grid.arrange].
 #'
 #' @section Last update:
@@ -423,6 +423,10 @@ plot_MultiExponential <- function(curve = NULL,
 
 
   #### ADD COMPONENT PLOTS #### ------------------------------------------------
+
+  # We don't need this object, but otherwise R CMD check would throw a note
+  # that X is used but not assigned in the ggplot-call
+  X <- values$X
 
   # We start with an empty plot to keep full control over everything
   p <- ggplot2::ggplot(values, ggplot2::aes(x = X))
