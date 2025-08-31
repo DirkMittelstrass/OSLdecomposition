@@ -1,7 +1,7 @@
 ---
 title: "Module tests for plot_OSLcurve()"
 author: "Dirk Mittelstraß"
-date: "2025-08-28"
+date: "2025-08-31"
 format:
   html:
     code-fold: true 
@@ -18,10 +18,21 @@ execute:
 
 This document collects scripts for developing, bug-fixing and pre-release validating a specific function.
 
-ToDo:
-- Test if function works with background component
+**Found issues as for 2025-08-31:**
 
-## Sourcing
+-   If `show.intervals = TRUE` there is an unimportant "scale is overwritten" warning
+
+-   There are too many warnings when values are omitted due to log scaling. One warning would be enough
+
+-   If a simulated curve is used as input but no component given, the warnings are not helpful
+
+**ToDo:**
+
+-   Test if function works with background component
+
+-   More tests for RLum input objects
+
+## Test sourcing
 
 Is the function successfully sourced?
 
@@ -29,14 +40,16 @@ Is the function successfully sourced?
 
 library(OSLdecomposition)
 library(ggplot2)
+library(Luminescence)
+
 source("../R/plot_OSLcurve.R")
+source("../R/plot_MultiExponential.R") # core function
 
 ```
 
 ## Define test cases
 
 ```{r cases}
- # ToDo: Create a couple of test curves with wild varity of signal shapes
 
 cases <- list()
 add_component_case <- 
@@ -111,7 +124,7 @@ cases <- add_component_case(cases,
 
 ```
 
-## Default plot
+## Test standard plotting
 
 ### Default settings
 
@@ -126,7 +139,6 @@ for (case in cases) {
 
 ### Changed on/off settings
 
-
 ```{r table_settings}
 
 for (case in cases) {
@@ -140,13 +152,7 @@ for (case in cases) {
 
 ```
 
-Issues:
-
--   y-axis does not scale correctly in case of negative components
-
--   no warning message if show.xxx is not possible due to missing information
-
-## Display modes
+## Test other display modes
 
 Vary the argument "display". Vary also the ggplot2 themes
 
@@ -187,8 +193,6 @@ for (display_mode in modes) {
   case <- sample(cases, size = 1)[[1]]  # Random case
   cat("Display mode:", display_mode, "with case", case$title, "\n")
   
-
-  
   tryCatch({
     plot_OSLcurve(case$curve, case$components,
                 display = display_mode,
@@ -202,6 +206,54 @@ for (display_mode in modes) {
 }
 ```
 
+## Display fit_OSLcurve output
+
+```{r fit_OSLcurve}
+# Create a simple curve with just one component
+curve <- data.frame(
+  X = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
+  Y = c(377, 244, 163, 93, 59, 28, 17, 13, 10, 8, 9, 5))
+# Perform fitting
+components <- fit_OSLcurve(curve, F.threshold = 3)
+
+# Display results
+plot_OSLcurve(curve, components)
+
+```
+
+## Use RLum objects as input
+
+```{r rlum_input}
+
+# Load example data set
+data_path <- system.file("examples", 
+                         "FB_10Gy_SAR.bin", 
+                         package = "OSLdecomposition")
+data_set <- Luminescence::read_BIN2R(data_path, 
+                                     fastForward = TRUE,
+                                     verbose = FALSE)
+
+# Separate components
+data_set_decomposed <- RLum.OSL_decomposition(data_set, 
+                                              decay_rates = c(0.8, 0.05))
+
+cat("\nCase 1: Use raw RLum.Data.Curve as input\n")
+plot_OSLcurve(data_set[[4]]@records[[1]])
+
+cat("\nCase 2: Use decomposed RLum.Data.Curve as input\n")
+plot_OSLcurve(data_set_decomposed[[4]]@records[[1]])
+
+cat("\nCase 3: Use data matrix as input\n")
+plot_OSLcurve(data_set_decomposed[[4]]@records[[1]]@data)
+
+cat("\nCase 4: Use invalid RLum object as input\n")
+tryCatch({plot_OSLcurve(data_set[[4]])}, 
+         error = function(e) {
+           message("TEST ERROR ", conditionMessage(e))
+})
+
+```
+
 ## Wrong/missing input
 
 ```{r wrong_input}
@@ -211,25 +263,25 @@ case <- sample(cases, size = 1)[[1]]  # Random case
 cat("\nCase 1: No component argument\n")
 tryCatch({plot_OSLcurve(case$curve)}, 
          error = function(e) {
-           message("FOUND ERROR", conditionMessage(e))
+           message("TEST ERROR ", conditionMessage(e))
 })
 
 cat("\nCase 2: No curve argument\n")
 tryCatch({plot_OSLcurve(component = case$component)}, 
          error = function(e) {
-           message("FOUND ERROR", conditionMessage(e))
+           message("TEST ERROR ", conditionMessage(e))
 })
 
 cat("\nCase 3: No arguments at all\n")
 tryCatch({plot_OSLcurve()}, 
          error = function(e) {
-           message("FOUND ERROR", conditionMessage(e))
+           message("TEST ERROR ", conditionMessage(e))
 })
 
 cat("\nCase 4: Wrong argument\n")
 tryCatch({plot_OSLcurve(case$component, case$curve)}, 
          error = function(e) {
-           message("FOUND ERROR", conditionMessage(e))
+           message("TEST ERROR ", conditionMessage(e))
 })
 ```
 

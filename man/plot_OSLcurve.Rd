@@ -8,12 +8,13 @@ plot_OSLcurve(
   curve = NULL,
   components = NULL,
   display = "detailed",
-  show.legend = TRUE,
+  show.legend = FALSE,
   show.intervals = FALSE,
   show.crosssec = FALSE,
   show.initial = FALSE,
-  theme.set = ggplot2::theme_classic(),
   title = NULL,
+  graph.colors = NULL,
+  theme.set = ggplot2::theme_classic(),
   hide.plot = FALSE,
   filename = NULL
 )
@@ -47,16 +48,21 @@ Displays photoionisation cross section values in the component table (if availab
 \item{show.initial}{\link{logical} (\emph{with default}):
 Displays signal share at the first channel in the component table (if available).}
 
+\item{title}{\link{character} (\emph{with default}):
+Plot title. Overwrites automatic titles but affects just the first (upper left)
+diagram in case of multi-plot display setting.
+Set \code{title = NULL} for auto-title and \code{title = ""} for no title.}
+
+\item{graph.colors}{\link{character} vector (\emph{optional}):
+Color for the graphs/stacked areas are defined in the following order: 1. Measurement,
+2. Model, 3. Component 1, 4. Component 2, etc. The color vector is allowed to
+be shorter than the needed colors. For missing colors, the default colors will be used}
+
 \item{theme.set}{\link[ggplot2:ggplot2-package]{ggplot2::ggplot2-package} object (\emph{with default}):
 Graphical theme of the output plot. This argument is forwarded to \link[ggplot2:theme_get]{ggplot2::theme_set}.
 Recommended themes are \code{ggplot2::theme_minimal()}, \code{ggplot2::theme_classic()} and \code{ggplot2::theme_bw()},
 see \link[ggplot2:ggtheme]{ggplot2::theme_bw} or \href{https://ggplot2.tidyverse.org/reference/ggtheme.html}{here} for
 a full list.}
-
-\item{title}{\link{character} (\emph{with default}):
-Plot title. Overwrites automatic titles but affects just the first (upper left)
-graph in case of multi-graph display setting.
-Set \code{title = NULL} for auto-title and \code{title = ""} for no title.}
 
 \item{hide.plot}{\link{logical} (\emph{with default}):
 If true, plot is not drawn but can still be saved as file or caught by \code{A <- plot_OSLcurve(...)}.
@@ -98,10 +104,11 @@ PseudoLM-OSL curves are created using the transformation described by Bulur (200
 The stimulation ramp duration is twice the CW-OSL duration.
 See Bos and Wallinga (2012) for a detailed explanation and discussion.
 }
-\section{Last update}{
+\section{Last updates}{
 
 
-2021-03-29, DM: Hidden output objects are now \link[ggplot2:ggplot2-package]{ggplot2::ggplot2-package} objects if the plot is not a composite diagram
+2025-08-29, DM: Function is now a wrapper of \link{plot_MultiExponential} which makes it more stable and universal.
+2025-08-29, DM: Changed from component graphs to colored areas. Changed also default colors..
 }
 
 \examples{

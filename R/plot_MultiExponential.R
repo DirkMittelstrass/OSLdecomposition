@@ -505,6 +505,11 @@ plot_MultiExponential <- function(curve = NULL,
 
   #### SET SCALES #### ---------------------------------------------------------
 
+  p <- p + ggplot2::scale_color_manual(values = graph_colors)
+
+  if (fill.components && K > 0)
+    p <- p + ggplot2::scale_fill_manual(values = graph_colors)
+
   if (ylog) {
     p <- p + ggplot2::scale_y_log10(limits = ylim)
   } else {
@@ -525,8 +530,6 @@ plot_MultiExponential <- function(curve = NULL,
 
   # Set legend, axis labels and design choices
   p <- p +
-    ggplot2::scale_color_manual(values = graph_colors) +
-    ggplot2::scale_fill_manual(values = graph_colors) +
     ggplot2::labs(color = NULL,
          fill = "Signal components",
          subtitle = main, x = xlab, y = ylab) +

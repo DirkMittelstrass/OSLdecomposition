@@ -54,7 +54,7 @@
 #'
 #' @param title [character] (*with default*):
 #' Plot title. Overwrites automatic titles but affects just the first (upper left)
-#' graph in case of multi-graph display setting.
+#' diagram in case of multi-plot display setting.
 #' Set `title = NULL` for auto-title and `title = ""` for no title.
 #'
 #' @param graph.colors [character] vector (*optional*):
@@ -84,9 +84,10 @@
 #' If the function is assigned, the returned object can be further manipulated by [ggplot2::ggplot2-package] methods
 #' or manually drawn by various functions like for example [gridExtra::grid.arrange].
 #'
-#' @section Last update:
+#' @section Last updates:
 #'
-#' 2025-08-29, DM: This function is now a wrapper function of [plot_MultiExponential] which makes it much more stable but changes colors and style.
+#' 2025-08-29, DM: Function is now a wrapper of [plot_MultiExponential] which makes it more stable and universal.
+#' 2025-08-29, DM: Changed from component graphs to colored areas. Changed also default colors..
 #'
 #' @author
 #' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
@@ -147,6 +148,8 @@ plot_OSLcurve <- function(curve = NULL,
   # * 2020-11-16, DM: Added parameter `show.crosssec` and `show.initial`
   # * 2020-11-19, DM: RLum.Data.Curves can now be displayed without 'components' if RLum.OSL_decomposition was already performed at data set
   # * 2021-03-29, DM: Hidden output objects are now [ggplot2] objects if the plot is not a composite diagram
+  # * 2025-08-29, DM: Function is now a wrapper of [plot_MultiExponential] which makes it more stable and universal.
+  # * 2025-08-29, DM: Changed from component graphs to colored areas. Changed also default colors..
   #
   # ToDo:
   # * When drawing components without curve, skip residual curve
@@ -195,10 +198,10 @@ plot_OSLcurve <- function(curve = NULL,
     if (!("time" %in% colnames(curve)) |
         !("signal" %in% colnames(curve))) {
 
-      curve <- data.frame(time = curve[,1], signal = curve[,2])}}
+      curve <- data.frame(time = curve[,1], signal = curve[,2])}
+  }
 
   time <- curve$time
-  channel.width <- time[2] - time[1]
 
   # if a component table is given, add or overwrite the component signal columns in the curve data.frame
   if (!is.null(components))
@@ -227,11 +230,10 @@ plot_OSLcurve <- function(curve = NULL,
   if (length(graph.colors) > 0)
     graph_colors[1:length(graph.colors)] <- graph.colors
 
-
   # The colors are NOT assigned to the components iterativly
   # see plot_MultiExponential for the rules. However, we have to resort
   # the colors to be in line with plot_MultiExponential
-  if(display != "raw" && !is.null(components) && nrow(components) > 1){
+  if(display != "raw" && !is.null(components) && nrow(components) > 0){
 
     component_colors <- rep("black", nrow(components))
     col_i <- 3
@@ -338,7 +340,7 @@ plot_OSLcurve <- function(curve = NULL,
     res_curve <- data.frame(time = curve$time, signal = res)
 
     if (is.null(title)) title <- "Residual"
-    # IMPORTANT: Deactived RSS display for the moment as there is a mismatch
+    # IMPORTANT: Deactivated RSS display for the moment as there is a mismatch
     #            between RSS here and those returned by fit_OSLcurve()
     # if (is.null(title))
     #   title <- paste0("Residual (RSS = ", prettyNum(sum(res^2, na.rm = TRUE), digits = 1), ")")
@@ -353,9 +355,10 @@ plot_OSLcurve <- function(curve = NULL,
                                     hide.plot = TRUE)
 
     # if the integration intervals are given, draw them into the residual curve
-    res.intervals <- list(NULL)
     if (("t.start" %in% colnames(components))
         & show.intervals) {
+
+      res.intervals <- list(NULL)
 
       # set y-axis
       res.max <- ceiling(abs(max(res))) + 1
@@ -381,15 +384,12 @@ plot_OSLcurve <- function(curve = NULL,
       p.res <- p.res + res.intervals +
         ggplot2::scale_x_continuous(breaks = t.times, limits = c(0, max(time)), labels = t.labels)
     }
-
   }
-
 
   ######################## TABLE #########################################################
 
   if ((display == "detailed") | (display == "compare_lin") |
       (display == "compare_log") | (display == "tab")) {
-
 
     if (!is.null(components) ) {
 
@@ -451,6 +451,7 @@ plot_OSLcurve <- function(curve = NULL,
     } else {
 
       # if no component table is given, draw blank image
+      p.table <- data.frame(NULL)
       p.tab <- ggplot2::ggplot() + ggplot2::geom_blank()}}
 
 
@@ -459,13 +460,13 @@ plot_OSLcurve <- function(curve = NULL,
   if (display == "raw") {
 
     # Create plot without components
-    p.res  <- plot_MultiExponential(curve,
-                                    main = title,
-                                    theme.set = theme.set,
-                                    xlab = "Time (s)", ylab = "Signal (cts)",
-                                    font.size = 8,
-                                    legend.position = guide,
-                                    hide.plot = TRUE)
+    p.raw <- plot_MultiExponential(curve,
+                                   main = title,
+                                   theme.set = theme.set,
+                                   xlab = "Time (s)", ylab = "Signal (cts)",
+                                   font.size = 8,
+                                   legend.position = guide,
+                                   hide.plot = TRUE)
   }
 
 
