@@ -201,6 +201,7 @@ RLum.OSL_correction <- function(
   # * IMPORTANT: If a RLum.object is manipulated, change its @info accordingly
   # * The routine for 'remove_light_off' is quite slow and needs performance improvement
 
+verbose_performance <- FALSE
 
   ##########################
   #### Data preparation ####
@@ -359,7 +360,8 @@ RLum.OSL_correction <- function(
 
 
     # print needed computing time
-    if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose) c("\n")
   }
 
   if (remove_light_off) {
@@ -434,8 +436,9 @@ RLum.OSL_correction <- function(
             ref_curve$time[length(stimulated)], "s\n")}
     }
 
-    if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")}
-
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose) c("\n")
+  }
 
   if (normalize_x_axis) {
     correction_step <- correction_step + 1 ########################################################
@@ -471,7 +474,8 @@ RLum.OSL_correction <- function(
           cat("First x-axis value is already equal channel width value for all records.\n")}}
 
 
-    if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose) c("\n")
   }
 
   if (is.numeric(limit_duration) && (limit_duration > 0)) {
@@ -505,7 +509,8 @@ RLum.OSL_correction <- function(
       if(verbose) cat("Reduced length of", records_changed, record_type, "records from",
                       before, "s to", after, "s\n")}
 
-    if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose) c("\n")
   }
 
   if (is.numeric(PMT_pulse_pair_resolution) && (PMT_pulse_pair_resolution > 0)) {
@@ -579,7 +584,8 @@ RLum.OSL_correction <- function(
       if(verbose) cat("No records exceeding the signal limits found.\n")
     }
 
-    if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose) c("\n")
   }
 
   if (!(is.null(background_sequence) || is.na(background_sequence))
@@ -624,7 +630,8 @@ RLum.OSL_correction <- function(
     cor_data <- c(cor_data, list(background_curve = background_curve))
 
     if(verbose) cat("Background saved at @CORRECTION@background_curve\n")
-    if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose) c("\n")
 
   } else {
     if (!(is.null(background_sequence))) {
@@ -651,7 +658,8 @@ RLum.OSL_correction <- function(
     #
     # Alternatively: Use the function from the Luminescence package: verify_SingleGrainData()
 
-    if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose) c("\n")
   }
 
 
@@ -672,8 +680,8 @@ RLum.OSL_correction <- function(
           data_set[[j]]@records[[i]]@data <- matrix(c(time, signal), ncol = 2)}}}
 
     if(verbose) cat("Offset of", subtract_offset, "counts per second subtracted from every", record_type, "record\n")
-    if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+    if(verbose) c("\n")
   }
 
   ################################ REPORT  ################################
