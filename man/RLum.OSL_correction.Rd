@@ -7,12 +7,13 @@
 RLum.OSL_correction(
   object,
   record_type = "OSL",
-  background_sequence = NULL,
-  subtract_offset = 0,
   check_consistency = TRUE,
   remove_light_off = TRUE,
+  normalize_x_axis = TRUE,
   limit_duration = 20,
   PMT_pulse_pair_resolution = 18,
+  background_sequence = NULL,
+  subtract_offset = 0,
   verbose = TRUE
 )
 }
@@ -24,17 +25,6 @@ Data set of one or multiple CW-OSL measured aliquots.}
 \item{record_type}{\link{character} (\emph{with default}):
 Type of records selected from the input \code{object}, see
 \code{object[[]]@records[[]]@recordType}. Common are: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}.}
-
-\item{background_sequence}{\link{numeric} vector (\emph{optional}):
-Indices of list items with CW-OSL measurements of empty aliquots.
-The records in these list items are used to calculate one average CW-OSL background curve
-with \link{sum_OSLcurves}. This background curve is subtracted from each
-CW-OSL record of the data set. The attributes \verb{@recordType} of the background
-measurements will be renamed to \code{"{record_type}background"}.}
-
-\item{subtract_offset}{\link{numeric} (\emph{optional}):
-Signal offset value in counts per second (\emph{cts/s}). Value is handled as background
-level and will be subtracted from each CW-OSL record.}
 
 \item{check_consistency}{\link{logical} (\emph{with default}):
 The CW-OSL component identification and separation procedure requires uniform detection parameters
@@ -48,6 +38,11 @@ with other sets of measurement parameter will be enumerated \code{record_type}
 Checks if the records contain zero-signal intervals at beginning and/or end of the
 measurement and removes them. Useful to tailor single-grain measurements.}
 
+\item{normalize_x_axis}{\link{logical} (\emph{with default}):
+Checks if first x-axis value is equal the channel width value. If not, shift the x-axis
+accordingly. This way, correct x values are ensured for \link{fit_OSLcurve} and \link{decompose_OSLcurve}
+are ensured.}
+
 \item{limit_duration}{\link{numeric} (\emph{with default}):
 Reduce measurement duration to input value in seconds (\emph{s}).
 Long measurement duration can lead to over-fitting at the component identification
@@ -60,6 +55,17 @@ Time span of the pulse-pair resolution of the PMT in nanoseconds (\emph{ns}).
 If a value is given, the signal values will be corrected for time-resolution related
 non-linearity at height counting rates, see \emph{Details}.
 Set \code{PMT_pulse_pair_resolution = NA} if algorithm shall be omitted.}
+
+\item{background_sequence}{\link{numeric} vector (\emph{optional}):
+Indices of list items with CW-OSL measurements of empty aliquots.
+The records in these list items are used to calculate one average CW-OSL background curve
+with \link{sum_OSLcurves}. This background curve is subtracted from each
+CW-OSL record of the data set. The attributes \verb{@recordType} of the background
+measurements will be renamed to \code{"{record_type}background"}.}
+
+\item{subtract_offset}{\link{numeric} (\emph{optional}):
+Signal offset value in counts per second (\emph{cts/s}). Value is handled as background
+level and will be subtracted from each CW-OSL record.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
 Enables console text output.}
@@ -85,6 +91,7 @@ The data preparation tools are executed in the following order:
 \enumerate{
 \item{\code{check_consistency}}
 \item{\code{remove_light_off}}
+\item{\code{normalize_x_axis}}
 \item{\code{limit_duration}}
 \item{\code{PMT_pulse_pair_resolution}}
 \item{\code{background_sequence}}
@@ -130,7 +137,7 @@ that those PMTs have a better pulse-pair resolution than 18 \emph{ns}.
 \section{Last updates}{
 
 
-2023-09-01, DM: Improved input checks to return more helpful messages
+2025-09-23, DM: Added normalize_x_axis algorithm
 }
 
 \examples{

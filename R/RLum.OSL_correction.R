@@ -13,6 +13,7 @@
 #' \enumerate{
 #'   \item{`check_consistency`}
 #'   \item{`remove_light_off`}
+#'   \item{`normalize_x_axis`}
 #'   \item{`limit_duration`}
 #'   \item{`PMT_pulse_pair_resolution`}
 #'   \item{`background_sequence`}
@@ -65,17 +66,6 @@
 #' Type of records selected from the input `object`, see
 #' `object[[]]@records[[]]@recordType`. Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`.
 #'
-#' @param background_sequence [numeric] vector (*optional*):
-#' Indices of list items with CW-OSL measurements of empty aliquots.
-#' The records in these list items are used to calculate one average CW-OSL background curve
-#' with [sum_OSLcurves]. This background curve is subtracted from each
-#' CW-OSL record of the data set. The attributes `@recordType` of the background
-#' measurements will be renamed to `"{record_type}background"`.
-#'
-#' @param subtract_offset [numeric] (*optional*):
-#' Signal offset value in counts per second (*cts/s*). Value is handled as background
-#' level and will be subtracted from each CW-OSL record.
-#'
 #' @param check_consistency [logical] (*with default*):
 #' The CW-OSL component identification and separation procedure requires uniform detection parameters
 #' throughout the whole data set. If `TRUE`, all records are compared for their
@@ -87,6 +77,11 @@
 #' @param remove_light_off [logical] (*with default*):
 #' Checks if the records contain zero-signal intervals at beginning and/or end of the
 #' measurement and removes them. Useful to tailor single-grain measurements.
+#'
+#' @param normalize_x_axis [logical] (*with default*):
+#' Checks if first x-axis value is equal the channel width value. If not, shift the x-axis
+#' accordingly. This way, correct x values are ensured for [fit_OSLcurve] and [decompose_OSLcurve]
+#' are ensured.
 #'
 #' @param limit_duration [numeric] (*with default*):
 #' Reduce measurement duration to input value in seconds (*s*).
@@ -101,13 +96,24 @@
 #' non-linearity at height counting rates, see *Details*.
 #' Set `PMT_pulse_pair_resolution = NA` if algorithm shall be omitted.
 #'
+#' @param background_sequence [numeric] vector (*optional*):
+#' Indices of list items with CW-OSL measurements of empty aliquots.
+#' The records in these list items are used to calculate one average CW-OSL background curve
+#' with [sum_OSLcurves]. This background curve is subtracted from each
+#' CW-OSL record of the data set. The attributes `@recordType` of the background
+#' measurements will be renamed to `"{record_type}background"`.
+#'
+#' @param subtract_offset [numeric] (*optional*):
+#' Signal offset value in counts per second (*cts/s*). Value is handled as background
+#' level and will be subtracted from each CW-OSL record.
+#'
 #' @param verbose [logical] (*with default*):
 #' Enables console text output.
 #'
 #'
 #' @section Last updates:
 #'
-#' 2023-09-01, DM: Improved input checks to return more helpful messages
+#' 2025-09-23, DM: Added normalize_x_axis algorithm
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -163,12 +169,13 @@
 RLum.OSL_correction <- function(
   object,
   record_type = "OSL",
-  background_sequence = NULL,
-  subtract_offset = 0,
   check_consistency = TRUE,
   remove_light_off = TRUE,
+  normalize_x_axis = TRUE,
   limit_duration = 20,
   PMT_pulse_pair_resolution = 18,
+  background_sequence = NULL,
+  subtract_offset = 0,
   verbose = TRUE
 ){
 
@@ -180,9 +187,12 @@ RLum.OSL_correction <- function(
   # * 2022-01-02, DM: Revised `PMT_pulse_pair_resolution` algorithm.
   # * 2023-07-15, DM: Bugfix in remove_light_off
   # * 2023-09-01, DM: Improved input checks to return more helpful messages
+  # * 2025-09-23, DM: Added normalize_x_axis algorithm
   #
   # ToDo:
-  # * Check for Zero as first value at the time axis
+  # * Write module test
+  # * test if more than zero suitable records of the record_type are in the data set
+  # * change from @info$RecordType == record_type to grepl(record_type, @info$RecordType)
   # * enhance 'check_consistency' to accept vectors of @info-arguments, include LPOWER and LIGHTSOURCE per default and print arguments
   # * enhance 'background' to accept whole RLum objects
   # * deploy Luminescence::verify_SingleGrainData() for 'check_single_grain_signal'
@@ -248,6 +258,9 @@ RLum.OSL_correction <- function(
   if (!(check_consistency) && !(is.null(background_sequence))) {
     stop("Background correction requires consistent data! Please set 'check_consistency=TRUE' and try again.")}
 
+  if (grepl("TL", record_type) && normalize_x_axis) {
+    warning("It is not recommended to normalize the X-axis for TL measurements. Temperature information may get lost.")}
+
 
   ########################
   #### Start workflow ####
@@ -305,7 +318,7 @@ RLum.OSL_correction <- function(
       Cstats$record_type <- record_type
       Cstats$record_type[2:N] <- paste0(record_type, 2:N)
 
-      # Insert new levels in OSL record type colection
+      # Insert new levels in OSL record type collection
       levels(Ctable$record_type) <- Cstats$record_type
 
 
@@ -408,7 +421,6 @@ RLum.OSL_correction <- function(
 
             records_changed <- records_changed + 1 }}}
 
-
       # write console output
       if(verbose) {
 
@@ -422,10 +434,45 @@ RLum.OSL_correction <- function(
             ref_curve$time[length(stimulated)], "s\n")}
     }
 
-
-
     if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")}
 
+
+  if (normalize_x_axis) {
+    correction_step <- correction_step + 1 ########################################################
+    if(verbose) cat("CORRECTION STEP", correction_step, "----- Normalize x-axis -----\n")
+    time.start <- Sys.time()
+    records_changed <- 0
+
+    # go through all records
+    for (j in 1:length(data_set)) {
+      for (i in c(1:length(data_set[[j]]@records))) {
+
+        if (data_set[[j]]@records[[i]]@recordType == record_type) {
+
+          # read record
+          time <- data_set[[j]]@records[[i]]@data[,1]
+          signal <- data_set[[j]]@records[[i]]@data[,2]
+
+          channel_width <- time[2] - time[1]
+          if (time[1] != channel_width) {
+            time <- time - time[1] + channel_width
+
+            # write record
+            data_set[[j]]@records[[i]]@data <- matrix(c(time, signal), ncol = 2)
+            records_changed <- records_changed + 1
+
+          }}}}
+
+      # write console output
+      if(verbose) {
+        if (records_changed > 0) {
+          cat("Shifted x-axis of ",records_changed ,"records to start with first value equal the channel width.\n")
+        }else{
+          cat("First x-axis value is already equal channel width value for all records.\n")}}
+
+
+    if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+  }
 
   if (is.numeric(limit_duration) && (limit_duration > 0)) {
     correction_step <- correction_step + 1 ########################## CUT ###############################
@@ -541,7 +588,6 @@ RLum.OSL_correction <- function(
     correction_step <- correction_step + 1 ######################### BACKGROUND ################################
     if(verbose) cat("CORRECTION STEP", correction_step,"----- Subtract background measurement -----\n")
     time.start <- Sys.time()
-
 
     N <- 0
     # create background curve
