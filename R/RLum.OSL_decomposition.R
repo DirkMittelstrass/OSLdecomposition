@@ -277,7 +277,7 @@ RLum.OSL_decomposition <- function(
                                            background.component = background_fitting,
                                            verbose = verbose)
 
-  if(verbose)  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
 
 
 
@@ -309,7 +309,7 @@ RLum.OSL_decomposition <- function(
 
       current_record <- data_set[[j]]@records[[i]]
 
-      if (current_record@recordType == record_type) {
+      if (grepl(record_type, current_record@recordType, fixed = TRUE)) {
 
         decomp_table <- decompose_OSLcurve(current_record@data,
                                            component_table,

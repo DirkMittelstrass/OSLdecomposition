@@ -283,7 +283,7 @@ verbose_performance <- FALSE
     Ctable <- data.frame(NULL)
     for (j in 1:length(data_set)) {
       for (i in 1:length(data_set[[j]]@records)) {
-        if (data_set[[j]]@records[[i]]@recordType == record_type) {
+        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
 
           channels <- length(data_set[[j]]@records[[i]]@data[,1])
           channel_width <- data_set[[j]]@records[[i]]@data[,1][2] - data_set[[j]]@records[[i]]@data[,1][1]
@@ -408,7 +408,7 @@ verbose_performance <- FALSE
       # go through all records
       for (j in 1:length(data_set)) {
         for (i in c(1:length(data_set[[j]]@records))) {
-          if (data_set[[j]]@records[[i]]@recordType == record_type) {
+          if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
 
             # read record
             time <- data_set[[j]]@records[[i]]@data[,1]
@@ -450,7 +450,7 @@ verbose_performance <- FALSE
     for (j in 1:length(data_set)) {
       for (i in c(1:length(data_set[[j]]@records))) {
 
-        if (data_set[[j]]@records[[i]]@recordType == record_type) {
+        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
 
           # read record
           time <- data_set[[j]]@records[[i]]@data[,1]
@@ -486,7 +486,7 @@ verbose_performance <- FALSE
 
     for (j in 1:length(data_set)) {
       for (i in c(1:length(data_set[[j]]@records))) {
-        if (data_set[[j]]@records[[i]]@recordType == record_type) {
+        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
 
           time <- data_set[[j]]@records[[i]]@data[,1]
           signal <- data_set[[j]]@records[[i]]@data[,2]
@@ -534,7 +534,7 @@ verbose_performance <- FALSE
 
     for (j in 1:length(data_set)) {
       for (i in c(1:length(data_set[[j]]@records))) {
-        if (data_set[[j]]@records[[i]]@recordType == record_type) {
+        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
 
           time <- data_set[[j]]@records[[i]]@data[,1]
           signal <- data_set[[j]]@records[[i]]@data[,2]
@@ -605,7 +605,7 @@ verbose_performance <- FALSE
     # rename background OSL curves
     for (j in background_sequence) {
       for (i in c(1:length(data_set[[j]]@records))) {
-        if (data_set[[j]]@records[[i]]@recordType == record_type) {
+        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
 
           N <- N + 1
           data_set[[j]]@records[[i]]@recordType <- paste0(record_type, "background")}}}
@@ -617,7 +617,7 @@ verbose_performance <- FALSE
     # subtract background curve
     for (j in 1:length(data_set)) {
       for (i in c(1:length(data_set[[j]]@records))) {
-        if (data_set[[j]]@records[[i]]@recordType == record_type) {
+        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
 
           time <- data_set[[j]]@records[[i]]@data[,1]
           signal <- data_set[[j]]@records[[i]]@data[,2]
@@ -670,7 +670,7 @@ verbose_performance <- FALSE
 
     for (j in 1:length(data_set)) {
       for (i in c(1:length(data_set[[j]]@records))) {
-        if (data_set[[j]]@records[[i]]@recordType == record_type) {
+        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
 
           time <- data_set[[j]]@records[[i]]@data[,1]
           signal <- data_set[[j]]@records[[i]]@data[,2]
