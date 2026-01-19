@@ -6,7 +6,7 @@
 \usage{
 RLum.OSL_correction(
   object,
-  record_type = "OSL (PMT)",
+  record_type = "OSL",
   check_consistency = TRUE,
   remove_light_off = TRUE,
   normalize_x_axis = TRUE,
@@ -153,10 +153,10 @@ data_set_corrected <- RLum.OSL_correction(data_set, background = 11, remove_ligh
 
 \donttest{
 # Plot background corrected global average CW-OSL curve
-sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSL (PMT)")
+sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSL")
 
 # Plot background curve
-sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSL (PMT)background")
+sum_OSLcurves(data_set_corrected, output.plot = TRUE, record_type = "OSLbackground")
 }
 
 }

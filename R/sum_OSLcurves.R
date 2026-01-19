@@ -80,7 +80,7 @@
 #' @export
 sum_OSLcurves <- function(
   object,
-  record_type = "OSL (PMT)",
+  record_type = "OSL",
   aliquot_selection = NULL,
   offset_value = 0,
   verbose = TRUE,

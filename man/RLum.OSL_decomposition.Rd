@@ -6,7 +6,7 @@
 \usage{
 RLum.OSL_decomposition(
   object,
-  record_type = "OSL (PMT)",
+  record_type = "OSL",
   K = 3,
   decay_rates = NULL,
   report = FALSE,
