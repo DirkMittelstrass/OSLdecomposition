@@ -6,7 +6,7 @@
 \usage{
 sum_OSLcurves(
   object,
-  record_type = "OSL",
+  record_type = "OSL (PMT)",
   aliquot_selection = NULL,
   offset_value = 0,
   verbose = TRUE,

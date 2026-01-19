@@ -130,7 +130,7 @@
 
 RLum.OSL_decomposition <- function(
   object,
-  record_type = "OSL",
+  record_type = "OSL (PMT)",
   K = 3,
   decay_rates = NULL,
   report = FALSE,
@@ -309,7 +309,7 @@ RLum.OSL_decomposition <- function(
 
       current_record <- data_set[[j]]@records[[i]]
 
-      if (current_record@recordType == record_type) {
+      if (grepl(record_type, current_record@recordType, fixed = TRUE)) {
 
         decomp_table <- decompose_OSLcurve(current_record@data,
                                            component_table,

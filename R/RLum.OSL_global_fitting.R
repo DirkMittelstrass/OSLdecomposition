@@ -139,7 +139,7 @@
 #' @export
 
 RLum.OSL_global_fitting <- function(object,
-                                    record_type = "OSL",
+                                    record_type = "OSL (PMT)",
                                     K_maximum = 5,
                                     F_threshold = 150,
                                     stimulation_intensity = 35,
