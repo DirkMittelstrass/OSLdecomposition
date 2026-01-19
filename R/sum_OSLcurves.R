@@ -149,7 +149,7 @@ sum_OSLcurves <- function(
         records <- object[[j]]@records
         for (i in c(1:length(records))) {
 
-          if (records[[i]]@recordType == record_type) {
+          if (grepl(record_type, records[[i]]@recordType, fixed = TRUE)) {
 
             mean.values <- mean.values + records[[i]]@data[,2] - offset_value
 
