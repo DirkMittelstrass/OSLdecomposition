@@ -1,0 +1,106 @@
+---
+title: "Module tests for RLum.OSL functions"
+author: "Dirk Mittelstraß"
+date: "2026-02-16"
+format:
+  html:
+    code-fold: true 
+    code-summary: "Show code"
+    toc: true
+    toc-location: right
+    toc-expand: true
+    self-contained: true
+editor: visual
+execute:
+  output: true
+  warning: true
+---
+
+This document collects scripts for developing, bug-fixing and pre-release validating the RLum.OSL workflow for evaluating the SAR protocol measurements as found on [https://luminescence.de/OSL_tutorial.html](https://luminescence.de/OSL_tutorial.html#3_SAR_data_analysis_tutorial)
+
+**Found issues as for 2026-02-17:**
+
+-   ...
+
+**ToDo:**
+
+-   ...
+
+## Library loading and sourcing
+
+Load the Luminescence package and its OSL SAR example data sets
+
+```{r load_luminescence}
+
+library(Luminescence)
+
+```
+
+Load OSLdecomposition
+
+```{r sourcing}
+
+library(OSLdecomposition)
+
+source("../R/utils.R")
+source("../R/RLum.OSL_global_fitting.R")
+source("../R/RLum.OSL_correction.R")
+source("../R/RLum.OSL_decomposition.R")
+
+```
+
+Prepare data sets
+
+```{r load_datasets}
+
+
+# Data provides with OSLdecomposition
+data_path <- system.file("examples", 
+                         "FB_10Gy_SAR.bin", 
+                         package = "OSLdecomposition")
+data_FB <- read_BIN2R(data_path, fastForward = TRUE, verbose = FALSE)
+
+
+# Load example data from the Luminescence package
+data(ExampleData.BINfileData, envir = environment())
+data_LumRisoe <- Risoe.BINfileData2RLum.Analysis(CWOSL.SAR.Data)
+
+# Load also XSYG data
+data(ExampleData.XSYG)
+data_LumLexsyg <- OSL.SARMeasurement #$Sequence.Object
+
+
+data_sets <- list(data_LumRisoe, data_FB, data_LumLexsyg)
+names(data_sets) <- c("FB calibration quartz", 
+                      "BT607 (BIN.Example)",
+                      "BT753 (XSYG.Example)")
+
+```
+
+## Default workflow
+
+```{r default_workflow}
+
+
+for (data_name in names(data_sets)) {
+  
+  cat("\n####", data_name, "#####\n\n")
+  data_set <- data_sets[[data_name]]
+  # Check the data for consistency and eventually manipulate the records for better results
+data_set <- RLum.OSL_correction(data_set)
+
+# Identify the OSL components globally (Step 1)
+data_set <- RLum.OSL_global_fitting(data_set,
+                                    K_maximum = 3,
+                              #      stimulation_wavelength = 445,
+                               #     stimulation_intensity = 100,
+                                    report = FALSE)
+
+# Plot global curve
+plot_OSLcurve(data_set$OSL_COMPONENTS$curve, data_set$OSL_COMPONENTS$components)
+
+# Separate OSL components in each record (Step 2)
+data_set <- RLum.OSL_decomposition(data_set, report = FALSE)
+  
+}
+```
