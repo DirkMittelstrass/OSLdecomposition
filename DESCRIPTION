@@ -1,8 +1,8 @@
 Package: OSLdecomposition
 Type: Package
 Title: Signal Component Analysis for Optically Stimulated Luminescence
-Version: 1.1.260119
-Date: 2026-01-19
+Version: 1.1.260217
+Date: 2026-02-17
 Authors@R: c(
     person("Dirk", "Mittelstraß", email = "dirk.mittelstrass@luminescence.de", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9567-8791")),
     person("Sebastian", "Kreutzer", role = c("aut"), comment = c(ORCID = "0000-0002-0734-2199")),
@@ -20,7 +20,7 @@ Description: Function library for the identification and separation of exponenti
     data sets imported and analysed with the R package 'Luminescence'.
     This includes the optional automatic creation of HTML reports. Further information and tutorials
     can be found at <https://luminescence.de>.
-Depends: R (>= 4.3)
+Depends: R (>= 4.4)
 License: GPL-3
 BugReports: https://github.com/DirkMittelstrass/OSLdecomposition/issues
 Encoding: UTF-8

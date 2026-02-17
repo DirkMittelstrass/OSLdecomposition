@@ -64,6 +64,7 @@ Authors:
 \itemize{
   \item Sebastian Kreutzer (\href{https://orcid.org/0000-0002-0734-2199}{ORCID})
   \item Christoph Schmidt (\href{https://orcid.org/0000-0002-2309-3209}{ORCID})
+  \item Colombo Marco (\href{https://orcid.org/0000-0001-6672-0623}{ORCID})
 }
 
 Other contributors:
