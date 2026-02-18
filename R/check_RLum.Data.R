@@ -3,10 +3,8 @@
 #' @description
 #' The input object is checked for the following properties:
 #' * Is the object of class [Luminescence::RLum.Data.Curve-class] ?
-#' * Has the object a slot `recordType`?
 #' * Does the objects record type match with this functions argument `record_type`?
 #' * Is the record not just a XSYG metadata object (marked by '_' before the record type name)?
-#' * Contains the record a curve, thus has the object a slot `data`?
 #' * Is the curve of type XY, thus has it a 2 x N dimension?
 #' * If a `curve_template` is provided, the input object is also checked if it matches number of data points, x-axis and the `info` parameters "LPOWER", "LTYPE" and "TEMPERATURE".
 #'
@@ -62,25 +60,21 @@ check_RLum.Data <- function(
                      paste0("'", obj_class, "'.\n"))
     return(FALSE)}
 
-  obj_slots <- methods::slotNames(object)
-
-  if (!("recordType" %in% obj_slots)) {
-    if (verbose) cat("Object does not contain a slot 'recordType'.\n")
-    return(FALSE)}
-
   obj_type <- object@recordType
 
-  if (!grepl(paste0(record_type, "\\s\\([a-zA-Z]+\\)"), obj_type, fixed = FALSE)) {
+  if (is.na(obj_type)) {
+    if (verbose) cat("Record type of object is not set (NA).\n")
+    return(FALSE)}
+
+  # More strict pattern that requires the clamp behind the record type:
+  # paste0(record_type, "\\s\\([a-zA-Z]+\\)")
+  if (!grepl(paste0("_?", record_type, "(?![0-9])"), obj_type, perl = TRUE)) {
     if (verbose) cat("Record is not of type", paste0("'", record_type, "'"),
                      "but of type", paste0("'", obj_type, "'."), "\n")
     return(FALSE)}
 
   if (startsWith(obj_type, "_")) {
     if (verbose) cat("Record consists only of XSYG metadata.\n")
-    return(FALSE)}
-
-  if (!("data" %in% obj_slots)) {
-    if (verbose) cat("Record does not contain a slot 'data'.\n")
     return(FALSE)}
 
   if (length(dim(object@data)) != 2 || ncol(object@data) != 2) {
@@ -101,16 +95,14 @@ check_RLum.Data <- function(
       return(FALSE)}
 
     # Check if the x-axes match. Allow small deviations (0.1 %)
-    if (all(abs(curve_template@data[,1] - object@data[,1]) / abs(object@data[,1]) <= 0.001)) {
+    if (!all(abs(curve_template@data[,1] - object@data[,1]) / abs(object@data[,1]) <= 0.001, na.rm = TRUE)) {
       if (verbose) cat("X-axes do not match between record and template.\n")
       return(FALSE)}
 
     # Check if measurement settings match
     info_params <- c("LPOWER", "LTYPE", "TEMPERATURE")
     for (param in info_params) {
-      if ("info" %in% obj_slots &&
-          "info" %in% methods::slotNames(curve_template) &&
-          param %in% names(object@info) &&
+      if (param %in% names(object@info) &&
           param %in% names(curve_template@info) &&
           object@info[[param]] != curve_template@info[[param]]) {
 
