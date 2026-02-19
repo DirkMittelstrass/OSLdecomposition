@@ -28,6 +28,11 @@ test_that("check functionality", {
   template <- empty
   expect_output(expect_true(check_RLum.Data(empty, curve_template = template)))
 
+  template@data <- matrix(1:20, ncol = 1)
+  expect_output(expect_error(check_RLum.Data(empty, curve_template = template),
+                             "Invalid value of argument 'curve_template'"),
+                "Template curve is invalid: Curve data is no XY data")
+
   template@data <- matrix(1:20, ncol = 2)
   expect_output(expect_false(check_RLum.Data(empty, curve_template = template)),
                 "Number of data points differ between record and template")
