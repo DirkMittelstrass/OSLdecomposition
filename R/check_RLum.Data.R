@@ -85,9 +85,9 @@ check_RLum.Data <- function(
   if (!is.null(curve_template)) {
 
     # Test also the curve template
-    if (!check_RLum.Data(curve_template, verbose = FALSE)) {
+    if (!check_RLum.Data(curve_template, record_type = record_type, verbose = FALSE)) {
       cat("Template curve is invalid: ")
-      check_RLum.Data(curve_template, verbose = TRUE)
+      check_RLum.Data(curve_template, record_type = record_type, verbose = TRUE)
       stop("Invalid value of argument 'curve_template'.")}
 
     if (nrow(curve_template@data) != nrow(object@data)) {

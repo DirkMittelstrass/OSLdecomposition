@@ -50,4 +50,10 @@ test_that("check functionality", {
   empty@info$TEMPERATURE <- 70
   expect_output(expect_false(check_RLum.Data(empty, curve_template = template)),
                 "Value of parameter 'TEMPERATURE' does not match")
+
+  empty@recordType <- "IRSL"
+  empty@info$TEMPERATURE <- 125
+  template@recordType <- "IRSL"
+  expect_output(expect_false(check_RLum.Data(empty, curve_template = template)))
+  expect_output(expect_true(check_RLum.Data(empty, record_type = "IRSL", curve_template = template)))
 })
