@@ -1,0 +1,100 @@
+---
+title: "Module tests for sum_OSLcurves()"
+author: "Dirk Mittelstraß"
+date: "2026-02-25"
+format:
+  html:
+    toc: true
+    toc-location: right
+    toc-expand: true
+    self-contained: true
+editor: visual
+execute:
+  fig-width: 10
+  fig-height: 5
+  output: true
+  warning: true
+---
+
+This document collects scripts for developing, bug-fixing and pre-release validating a specific function.
+
+## Sourcing
+
+Is the function successfully sourced?
+
+```{r sourcing}
+
+library(OSLdecomposition)
+source("../R/sum_OSLcurves.R")
+
+```
+
+## Load data sets
+
+Data sets for testing
+
+```{r}
+
+library(Luminescence)
+
+# 'FB_10Gy' is a dose recovery test with the Fontainebleau quartz
+# measured in a lexsyg research with green LED stimulation
+data_path <- system.file("examples", 
+                         "FB_10Gy_SAR.bin", 
+                         package = "OSLdecomposition")
+data_FB <- read_BIN2R(data_path, fastForward = TRUE, verbose = FALSE)
+
+# Load another example data from the Luminescence package
+data(ExampleData.BINfileData, envir = environment())
+data_Lum <- Risoe.BINfileData2RLum.Analysis(CWOSL.SAR.Data)
+```
+
+## Input object types
+
+```{r test_calc}
+
+# Give average CW-OSL curve of back
+m_curve <- sum_OSLcurves(data_FB, output.plot = TRUE)
+
+# Does the red average curve match the actually returned curve?
+plot(m_curve, type = 'l')
+
+# Second allowed object type
+record_list <- data_FB[[3]]@records
+m_curve <- sum_OSLcurves(record_list, output.plot = TRUE)
+
+
+# Third allowed object type
+df_list <- list(as.data.frame(record_list[[1]]@data),
+                as.data.frame(record_list[[2]]@data),
+                as.data.frame(record_list[[5]]@data))
+
+m_curve <- sum_OSLcurves(df_list, 
+                         output.plot = TRUE, 
+                         plot.first = TRUE,
+                         title = "auto")
+
+
+# This is not allowed and should return NULL
+sum_OSLcurves(c(1:13), output.plot = TRUE)
+```
+
+## Selecting record types
+
+Test extracting different types of records and again plotting
+
+```{r test_plots}
+# Regular OSL measurements
+table <-sum_OSLcurves(data_Lum, record_type = "OSL", output.plot = TRUE)
+
+# Should return average of 24 post-OSL IRSL tests
+sum_OSLcurves(data_Lum, record_type = "IRSL", output.plot = TRUE,
+              title = "Average post-OSL IRSL tests")
+
+# Should return average of preheat TL curves
+sum_OSLcurves(data_Lum, record_type = "TL", output.plot = TRUE, 
+              title = "Average of preheat TL curves")
+
+# Should return NULL
+sum_OSLcurves(data_Lum, record_type = "TROSL", output.plot = TRUE)
+```
