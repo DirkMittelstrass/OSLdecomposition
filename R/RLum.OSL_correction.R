@@ -188,12 +188,14 @@ RLum.OSL_correction <- function(
   # * 2023-07-15, DM: Bugfix in remove_light_off
   # * 2023-09-01, DM: Improved input checks to return more helpful messages
   # * 2025-09-23, DM: Added normalize_x_axis algorithm
+  # * 2026-02-25, DM: Test if more than zero suitable records of the record_type are in the data set
+  # * 2026-02-25, DM: Function is now ready for Luminescence package 1.2
   #
   # ToDo:
   # * Write module test
-  # * test if more than zero suitable records of the record_type are in the data set
   # * use new function from Luminescence package for PMT linearity correction
   # * enhance 'check_consistency' to accept vectors of @info-arguments, include LPOWER and LIGHTSOURCE per default and print arguments
+  #   use check_RLum.Data for this
   # * enhance 'background' to accept whole RLum objects
   # * deploy Luminescence::verify_SingleGrainData() for 'check_single_grain_signal'
   # * handle previous CORRECTION steps
@@ -262,6 +264,19 @@ verbose_performance <- FALSE
   if (grepl("TL", record_type) && normalize_x_axis) {
     warning("It is not recommended to normalize the X-axis for TL measurements. Temperature information may get lost.")}
 
+  # Preliminary test if any record has the set record_type
+  no_records <- 0
+  for (j in 1:length(data_set)) {
+    for (i in 1:length(data_set[[j]]@records)) {
+      if (check_RLum.Data(data_set[[j]]@records[[i]], record_type, verbose = FALSE))
+        no_records <- no_records + 1
+    }
+  }
+  if (no_records == 0) {
+    warning("No record has the set record_type. Dataset is returned without correction.")
+    object <- c(data_set, data_set_overhang)
+    invisible(object)
+  }
 
   ########################
   #### Start workflow ####
@@ -283,7 +298,7 @@ verbose_performance <- FALSE
     Ctable <- data.frame(NULL)
     for (j in 1:length(data_set)) {
       for (i in 1:length(data_set[[j]]@records)) {
-        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
+        if (check_RLum.Data(data_set[[j]]@records[[i]], record_type, verbose = FALSE)) {
 
           channels <- length(data_set[[j]]@records[[i]]@data[,1])
           channel_width <- data_set[[j]]@records[[i]]@data[,1][2] - data_set[[j]]@records[[i]]@data[,1][1]
@@ -408,7 +423,7 @@ verbose_performance <- FALSE
       # go through all records
       for (j in 1:length(data_set)) {
         for (i in c(1:length(data_set[[j]]@records))) {
-          if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
+          if (check_RLum.Data(data_set[[j]]@records[[i]], record_type, verbose = FALSE)) {
 
             # read record
             time <- data_set[[j]]@records[[i]]@data[,1]
@@ -450,7 +465,7 @@ verbose_performance <- FALSE
     for (j in 1:length(data_set)) {
       for (i in c(1:length(data_set[[j]]@records))) {
 
-        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
+        if (check_RLum.Data(data_set[[j]]@records[[i]], record_type, verbose = FALSE)) {
 
           # read record
           time <- data_set[[j]]@records[[i]]@data[,1]
@@ -486,7 +501,7 @@ verbose_performance <- FALSE
 
     for (j in 1:length(data_set)) {
       for (i in c(1:length(data_set[[j]]@records))) {
-        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
+        if (check_RLum.Data(data_set[[j]]@records[[i]], record_type, verbose = FALSE)) {
 
           time <- data_set[[j]]@records[[i]]@data[,1]
           signal <- data_set[[j]]@records[[i]]@data[,2]
@@ -534,7 +549,7 @@ verbose_performance <- FALSE
 
     for (j in 1:length(data_set)) {
       for (i in c(1:length(data_set[[j]]@records))) {
-        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
+        if (check_RLum.Data(data_set[[j]]@records[[i]], record_type, verbose = FALSE)) {
 
           time <- data_set[[j]]@records[[i]]@data[,1]
           signal <- data_set[[j]]@records[[i]]@data[,2]
@@ -605,7 +620,7 @@ verbose_performance <- FALSE
     # rename background OSL curves
     for (j in background_sequence) {
       for (i in c(1:length(data_set[[j]]@records))) {
-        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
+        if (check_RLum.Data(data_set[[j]]@records[[i]], record_type, verbose = FALSE)) {
 
           N <- N + 1
           data_set[[j]]@records[[i]]@recordType <- paste0(record_type, "background")}}}
@@ -617,7 +632,7 @@ verbose_performance <- FALSE
     # subtract background curve
     for (j in 1:length(data_set)) {
       for (i in c(1:length(data_set[[j]]@records))) {
-        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
+        if (check_RLum.Data(data_set[[j]]@records[[i]], record_type, verbose = FALSE)) {
 
           time <- data_set[[j]]@records[[i]]@data[,1]
           signal <- data_set[[j]]@records[[i]]@data[,2]
@@ -670,7 +685,7 @@ verbose_performance <- FALSE
 
     for (j in 1:length(data_set)) {
       for (i in c(1:length(data_set[[j]]@records))) {
-        if (grepl(record_type, data_set[[j]]@records[[i]]@recordType, fixed = TRUE)) {
+        if (check_RLum.Data(data_set[[j]]@records[[i]], record_type, verbose = FALSE)) {
 
           time <- data_set[[j]]@records[[i]]@data[,1]
           signal <- data_set[[j]]@records[[i]]@data[,2]
