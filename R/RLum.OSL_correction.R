@@ -192,7 +192,7 @@ RLum.OSL_correction <- function(
   # ToDo:
   # * Write module test
   # * test if more than zero suitable records of the record_type are in the data set
-  # * change from @info$RecordType == record_type to grepl(record_type, @info$RecordType)
+  # * use new function from Luminescence package for PMT linearity correction
   # * enhance 'check_consistency' to accept vectors of @info-arguments, include LPOWER and LIGHTSOURCE per default and print arguments
   # * enhance 'background' to accept whole RLum objects
   # * deploy Luminescence::verify_SingleGrainData() for 'check_single_grain_signal'
@@ -598,7 +598,7 @@ verbose_performance <- FALSE
     N <- 0
     # create background curve
     background_curve <- sum_OSLcurves(data_set, record_type,
-                             aliquot_selection = background_sequence,
+                             selection = background_sequence,
                              output.plot = FALSE,
                              verbose = TRUE)
 

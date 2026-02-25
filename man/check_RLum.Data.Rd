@@ -32,10 +32,8 @@ A bolean value: \code{TRUE} or \code{FALSE}.
 The input object is checked for the following properties:
 \itemize{
 \item Is the object of class \link[Luminescence:RLum.Data.Curve-class]{Luminescence::RLum.Data.Curve} ?
-\item Has the object a slot \code{recordType}?
 \item Does the objects record type match with this functions argument \code{record_type}?
 \item Is the record not just a XSYG metadata object (marked by '_' before the record type name)?
-\item Contains the record a curve, thus has the object a slot \code{data}?
 \item Is the curve of type XY, thus has it a 2 x N dimension?
 \item If a \code{curve_template} is provided, the input object is also checked if it matches number of data points, x-axis and the \code{info} parameters "LPOWER", "LTYPE" and "TEMPERATURE".
 }
