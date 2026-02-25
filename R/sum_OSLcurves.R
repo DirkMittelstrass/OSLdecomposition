@@ -227,7 +227,7 @@ sum_OSLcurves <- function(
   ggplot2::theme_set(theme.set)
   text_format <-
     ggplot2::theme(axis.title = ggplot2::element_text(size = 8),
-                   plot.subtitle = ggplot2::element_text(size = 9, face = "bold"))
+                   plot.title = ggplot2::element_text(size = 9, face = "bold"))
 
   # Make points lighter with increasing number of points
   alpha.value <- round(10 / no_records, digits = 3)
@@ -247,23 +247,23 @@ sum_OSLcurves <- function(
     if (verbose) cat("Plotting may take a while because of many data points...\n")
 
   # ---------- Linear plot --------------
-  p.lin <- ggplot() +
+  p.lin <- ggplot2::ggplot() +
 
     # Grey/black data cloud
-    geom_point(
-      aes(x = x_vals, y = y_vals),
+    ggplot2::geom_point(
+      ggplot2::aes(x = x_vals, y = y_vals),
       color = "black", alpha = alpha.value, size = 0.5) +
 
     # Global average curve
-    geom_line(
-      aes(x = mean_curve$time, y = mean_curve$signal),
+    ggplot2::geom_line(
+      ggplot2::aes(x = mean_curve$time, y = mean_curve$signal),
       color = "red", linewidth = 0.5) +
 
     # Scaling and formatting
-    coord_cartesian(ylim = c(0, round(max(mean_curve$signal) * 1.5))) +
+    ggplot2::coord_cartesian(ylim = c(0, round(max(mean_curve$signal) * 1.5))) +
     ggplot2::scale_x_continuous(labels = scales::label_number_auto()) +
     ggplot2::scale_y_continuous(labels = scales::label_number_auto()) +
-    labs(title = "CW-OSL", x = "Time (s)", y = "Signal (cts)") +
+    ggplot2::labs(title = "CW-OSL", x = "Time (s)", y = "Signal (cts)") +
     text_format
 
   # ---------- LM-OSL plot --------------
@@ -281,37 +281,40 @@ sum_OSLcurves <- function(
   LMcurve$signal <- LMcurve$signal * sqrt(2 * LMcurve$time / P)
   LMcurve$time <- sqrt(2 * P * LMcurve$time)
 
-  p.LM <- ggplot() +
+  p.LM <- ggplot2::ggplot() +
 
     # Grey/black data cloud
-    geom_point(
-      aes(x = x_LM, y = y_LM),
+    ggplot2::geom_point(
+      ggplot2::aes(x = x_LM, y = y_LM),
       color = "black", alpha = alpha.value, size = 0.5) +
 
     # Global average curve
-    geom_line(
-      aes(x = LMcurve$time, y = LMcurve$signal),
+    ggplot2::geom_line(
+      ggplot2::aes(x = LMcurve$time, y = LMcurve$signal),
       color = "red", linewidth = 0.5) +
 
     # Scaling and formatting
-    coord_cartesian(ylim = c(0, round(max(LMcurve$signal) * 1.5))) +
+    ggplot2::coord_cartesian(ylim = c(0, round(max(LMcurve$signal) * 1.5))) +
     ggplot2::scale_x_continuous(labels = scales::label_number_auto()) +
     ggplot2::scale_y_continuous(labels = scales::label_number_auto()) +
-    labs(title = "pseudoLM-OSL", x = "Ramping time (s)", y = "Signal (cts)") +
+    ggplot2::labs(title = "pseudoLM-OSL", x = "Ramping time (s)", y = "Signal (cts)") +
     text_format
 
   # ---------- Plot first curve --------------
   if (plot.first) {
     p.lin <- p.lin +
-      ggplot2::geom_line(aes(x = first_curve$time, y = first_curve$signal),
-                         size = 0.5, color = "blue")
+      ggplot2::geom_line(
+        ggplot2::aes(x = first_curve$time, y = first_curve$signal),
+        size = 0.5, color = "blue")
 
     LMfirst <- first_curve
     LMfirst$signal <- LMfirst$signal * sqrt(2 * LMfirst$time / P)
     LMfirst$time <- sqrt(2 * P * LMfirst$time)
+
     p.LM <- p.LM +
-      ggplot2::geom_line(aes(x = LMfirst$time, y = LMfirst$signal),
-                         size = 0.5, color = "blue")
+      ggplot2::geom_line(
+        ggplot2::aes(x = LMfirst$time, y = LMfirst$signal),
+        size = 0.5, color = "blue")
     }
 
   # ---------- Arrange plots --------------

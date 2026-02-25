@@ -2,41 +2,41 @@
 % Please edit documentation in R/sum_OSLcurves.R
 \name{sum_OSLcurves}
 \alias{sum_OSLcurves}
-\title{Combine RLum OSL records to one global average curve}
+\title{Combine lists of records to one global average curve}
 \usage{
 sum_OSLcurves(
   object,
   record_type = "OSL",
-  aliquot_selection = NULL,
-  offset_value = 0,
+  selection = NULL,
+  Y_offset = 0,
   verbose = TRUE,
   output.plot = FALSE,
   theme.set = ggplot2::theme_classic(),
   plot.first = FALSE,
-  title = "default",
+  title = NULL,
   filename = NULL
 )
 }
 \arguments{
-\item{object}{\link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} or \link{list} of \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} (\strong{required}):
-Data set of one or multiple aliquots containing CW-OSL records.}
+\item{object}{\link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis}, or \link{list} of \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis}, \link[Luminescence:RLum.Data.Curve-class]{Luminescence::RLum.Data.Curve} or \link{data.frame} (\strong{required}):
+Data set of CW-OSL records.}
 
 \item{record_type}{\link{character} (\emph{with default}):
-Type of records which are selected from the input \code{object},
-for example: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}.}
+Type of records which are selected from the input \code{object} if it is a RLum object,
+for example: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}. Does not apply for lists of \link{data.frame}.}
 
-\item{aliquot_selection}{\link{numeric} vector (\emph{optional}):
+\item{selection}{\link{numeric} vector (\emph{optional}):
 Vector specifying the indices of elements (aliquots) of a list of \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} objects
 which shall be included.}
 
-\item{offset_value}{\link{numeric} (\emph{with default}):
+\item{Y_offset}{\link{numeric} (\emph{with default}):
 Signal offset (background) which will be subtracted from each record.}
 
 \item{verbose}{\link{logical} (\emph{with default}):
 Enables console text output.}
 
 \item{output.plot}{\link{logical} (\emph{with default}):
-returns a plot with all data points of all records and the average curve}
+Returns a linear plot as well as a pseudoLM-OSL plot with all data points of all records and the average curve.}
 
 \item{theme.set}{\link[ggplot2:ggplot2-package]{ggplot2::ggplot2-package} object (\emph{with default}):
 sets the graphical theme of the output plot.
@@ -45,9 +45,8 @@ See \link[ggplot2:ggtheme]{ggplot2::theme_bw} for available themes}
 \item{plot.first}{\link{logical} (\emph{with default}):
 Plot includes additional drawing of first \code{record_type} record of first \code{object} list element.}
 
-\item{title}{\link{character} (\emph{with default}):
-Plot title. Set \code{title = "default"} for an automatically generated title.
-Set \code{title = NULL} for no title.}
+\item{title}{\link{character} (\emph{optional}):
+Plot title. Set \code{title = "auto"} for an automatically generated title.}
 
 \item{filename}{\link{character} (\emph{optional}):
 File name or path to save the plot as image. If just a file name is given, the image is
@@ -56,13 +55,11 @@ as well as pixel images are possible. Allowed are \code{.pdf}, \code{.eps}, \cod
 \code{.jpg}, \code{.png}, \code{.bmp} (pixel graphics) and more, see \link[ggplot2:ggsave]{ggplot2::ggsave}.}
 }
 \value{
-A \link{data.frame} of the average CW-OSL curve is returned, containing two columns: \verb{$time} and \verb{$signal}.
+A \link{data.frame} of the average signal curve is returned, containing two columns: \verb{$time} and \verb{$signal}.
 }
 \description{
-This function adds up all CW-OSL records of the same type saved
-in \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis}
-objects and
-calculates the arithmetic mean signal from all records for each channel.
+This function adds up all records of the same type and
+calculates the arithmetic mean signals.
 This is useful to create global average curve with sufficient signal-to-noise ratio
 for OSL components identification with \link{fit_OSLcurve} or to create a signal background
 reference curve.
@@ -70,7 +67,14 @@ reference curve.
 \section{Last updates}{
 
 
-2020-10-30, DM: Overworked plotting; Expanded roxygen documentation
+2026-02-25, DM: Revised and refactored whole code
+\itemize{
+\item Function won't accept data sets with varying x-axes and measurement lengths anymore. Now, ONLY records with x-axes IDENTICAL to those of the first record ARE INCLUDED.
+\item Accepts list of data.frames as input objects
+\item Changed naming and default values of some secondary arguments
+\item Faster calculation
+\item Plotting is less prone of errors and warnings
+}
 }
 
 \examples{
