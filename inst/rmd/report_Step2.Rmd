@@ -40,6 +40,7 @@ params:
 #   ... 
 # * 2022-05-04, DM: Added handling in case kableExtra is not installed
 # * 2022-05-04, DM: Changed style to have better match between text font and formulas
+# * 2026-03-02, DM: Solved some issues
 
 # ToDo's:
 # * Reduce font size of the intensity tables if there are more than 3 components
@@ -105,8 +106,7 @@ for (j in 1:length(data_set)) {
   index <- c(NULL)
   
   for (i in 1:length(data_set[[j]]@records)) {
-    if (data_set[[j]]@records[[i]]@recordType == record_type) {
-      
+    if (check_RLum.Data(data_set[[j]]@records[[i]], record_type, verbose = FALSE)) {
       index <- c(index, i)
       n.curves <- n.curves + 1}}
   
@@ -114,7 +114,6 @@ for (j in 1:length(data_set)) {
     
     record[[""]] <- list(sequence = j, 
                          index = index)}}
-
 
 ```
 
@@ -130,8 +129,6 @@ for (j in 1:length(record)) {
   
   result <- dec_data$results[dec_data$results$list.index == record[[j]]$sequence,]
 
-  if(result$IRR_TIME[1] == 0) result$IRR_TIME[1] <- "?"
-  
   aliquot_table <- subset(result, select = c(record.index, IRR_TIME))
   
   plot_table <- data.frame(NULL)
@@ -142,11 +139,19 @@ for (j in 1:length(record)) {
   
   result <- data.frame(result, type = factor(" ", levels = c(" ", "Lx", "Tx")))
   
-  # Where is the highest regenerated dose?
-  max_Lx <- which.max(result$IRR_TIME[2:length(result$IRR_TIME)]) + 1
+
 
   # get a index sequence: i = 3, 5, 7, 9
-  i_Lx <- 1:((max_Lx - 1)/2) * 2 + 1
+  if (any(is.na(aliquot_table[,2]))) {
+    i_Lx <- 1:(nrow(result)/2) * 2 - 1
+  }
+  else{
+     # Where is the highest regenerated dose?
+    max_Lx <- which.max(result$IRR_TIME[2:length(result$IRR_TIME)]) + 1
+  
+    i_Lx <- 1:((max_Lx - 1)/2) * 2 + 1
+  }
+  
   result$type[i_Lx] <- "Lx"
   
   i_Tx <- 1:(nrow(result)/2) * 2
