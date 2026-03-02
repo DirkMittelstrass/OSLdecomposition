@@ -28,7 +28,7 @@ Maximum number of components \emph{K}. The computing time increases exponentiall
 \item{F.threshold}{\link{numeric} (\emph{with default}):
 Fitting stop criterion. If the F-value is lower than this threshold, the fitting procedure stops and the K - 1 fit is returned}
 
-\item{stimulation.intensity}{\link{numeric} (\emph{with default}):
+\item{stimulation.intensity}{\link{numeric} (\emph{optional}):
 Intensity of optical stimulation in \emph{mW / cm²}. Used to calculate photoionisation cross sections.}
 
 \item{stimulation.wavelength}{\link{numeric} (\emph{with default}):
@@ -116,7 +116,7 @@ photoionisation cross sections are calculated using the \code{stimulation.wavele
 Here \eqn{\sigma_k} is the photoionisation cross section of component \emph{k} in cm^2,
 \eqn{\lambda_k} the CW-OSL decay constant in s^-1, \emph{h} the Planck constant and \emph{c} the speed of light.
 
-If a \code{stimulation.intensity} between 460 nm and 485 nm is defined,
+If a \code{stimulation.intensity} is defined and a \code{stimulation.wavelength} between 460 nm and 485 nm is given,
 the components are named automatically in accordance to the
 cross-sections published by Durcan and Duller (2011), Jain et al. (2003) and Singarayer and Bailey (2003).
 For the Ultrafast and the Slow4 component, no consistent literature values could be found, so their range
@@ -136,7 +136,7 @@ Slow4 \tab 1e-21 \tab 1e-20
 \section{Last update}{
 
 
-2022-07-27, DM: Moved residual sum of squares (RSS) calculation during DE-optimization cycle to decompose_OSLcurve() to improve computing time by factor 3 to 4
+2026-02-27, DM: Changed default 'stimulation.intensity' to NA and allowed that no stimulation intensity is given
 }
 
 \examples{
