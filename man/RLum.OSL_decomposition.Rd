@@ -7,7 +7,7 @@
 RLum.OSL_decomposition(
   object,
   record_type = "OSL",
-  K = 3,
+  K = NA,
   decay_rates = NULL,
   report = FALSE,
   report_dir = NULL,
@@ -21,7 +21,7 @@ RLum.OSL_decomposition(
 \item{object}{\link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} or \link{list} of \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis}
 (\strong{required}):
 Data set of one or multiple CW-OSL measured aliquots. The data set must either
-contain a list element \verb{$OSL_COMPONENTS} or the parameter \code{decay_rates} must
+contain a list element \verb{$FITTING} or the parameter \code{decay_rates} must
 be defined.}
 
 \item{record_type}{\link{character} (\emph{with default}):
@@ -29,7 +29,7 @@ Type of records, selected by the \link[Luminescence:RLum.Analysis-class]{Lumines
 Common are: \code{"OSL"},\code{"SGOSL"} or \code{"IRSL"}.}
 
 \item{K}{\link{numeric} (\emph{with default}):
-Number of components. Selects the according result table in the \verb{$OSL_COMPONENTS} list item of the data set \code{object}.}
+Number of components. Selects the according result table in the \verb{$FITTING} list item of the data set \code{object}.}
 
 \item{decay_rates}{\link{numeric} vector or \link{data.frame} (\emph{optional}):
 User-defined component decay rates. If this parameter is defined, the parameter \code{K} will ignored.
@@ -111,7 +111,14 @@ The \emph{Rmarkdown} source code of the report can be found with the following c
 \section{Last updates}{
 
 
-2023-09-01, DM: Improved input checks to return more helpful messages
+2026-03-02, DM:
+\itemize{
+\item Function no longer crashes if record data contains no '@info$IRR_TIME' parameters.
+\item Default number of components 'K' if 'K' is not set is no longer 3. Instead 'K = length(decay_rates)' if 'decay_rates' are set, else 'K = $FITTING$K.selected'.
+\item Made pattern matching of 'record_type' with '@recordType' slot ready for Luminescence package 1.2
+\item Improved input data checks
+\item Existing RLum.OSL decomposition results are now removed with each execution of this function
+}
 }
 
 \examples{

@@ -7,9 +7,9 @@
 RLum.OSL_global_fitting(
   object,
   record_type = "OSL",
-  K_maximum = 5,
+  K_maximum = 3,
   F_threshold = 150,
-  stimulation_intensity = 35,
+  stimulation_intensity = NA,
   stimulation_wavelength = 470,
   report = FALSE,
   report_dir = NULL,
@@ -67,7 +67,7 @@ Enables console text output.}
 }
 \value{
 The input \code{object}, a \link{list} of \link[Luminescence:RLum.Analysis-class]{Luminescence::RLum.Analysis} objects is returned but with
-a new list element \code{object[["OSL_COMPONENTS"]]}, containing:
+a new list element \code{object[["FITTING"]]}, containing:
 \itemize{
 \item \verb{$decay.rates} \link{numeric} vector: Decay rates of F-test recommendation or last successful fitting.
 \item \verb{$K.selected} \link{numeric}: Number of components of F-test recommendation or last successful fitting.
@@ -113,7 +113,13 @@ The \emph{Rmarkdown} source code of the report can be found with the following c
 \section{Last updates}{
 
 
-2023-09-01, DM: Improved input checks to return more helpful messages
+2026-03-02, DM:
+\itemize{
+\item Changed default 'K_maximum 'to 3 and 'stimulation_intensity' to NA
+\item Made pattern matching of 'record_type' with '@recordType' slot ready for Luminescence package 1.2
+\item Improved input data checks
+\item Existing RLum.OSL fitting and decomposition results are now removed with each execution of this function
+}
 }
 
 \examples{

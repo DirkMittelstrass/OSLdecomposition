@@ -137,7 +137,13 @@ that those PMTs have a better pulse-pair resolution than 18 \emph{ns}.
 \section{Last updates}{
 
 
-2025-09-23, DM: Added normalize_x_axis algorithm
+2026-03-02, DM:
+\itemize{
+\item Test if more than zero suitable records of the 'record_type' are in the data set
+\item Made pattern matching of 'record_type' with '@recordType' slot ready for Luminescence package 1.2
+\item Improved input data checks
+\item Existing RLum.OSL result data is now removed with each execution of this function
+}
 }
 
 \examples{

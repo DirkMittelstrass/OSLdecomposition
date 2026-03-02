@@ -113,7 +113,11 @@
 #'
 #' @section Last updates:
 #'
-#' 2025-09-23, DM: Added normalize_x_axis algorithm
+#' 2026-03-02, DM:
+#' * Test if more than zero suitable records of the 'record_type' are in the data set
+#' * Made pattern matching of 'record_type' with '@recordType' slot ready for Luminescence package 1.2
+#' * Improved input data checks
+#' * Existing RLum.OSL result data is now removed with each execution of this function
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -188,8 +192,10 @@ RLum.OSL_correction <- function(
   # * 2023-07-15, DM: Bugfix in remove_light_off
   # * 2023-09-01, DM: Improved input checks to return more helpful messages
   # * 2025-09-23, DM: Added normalize_x_axis algorithm
-  # * 2026-02-25, DM: Test if more than zero suitable records of the record_type are in the data set
-  # * 2026-02-25, DM: Function is now ready for Luminescence package 1.2
+  # * 2026-02-25, DM: Test if more than zero suitable records of the 'record_type' are in the data set
+  # * 2026-02-26, DM: Made pattern matching of 'record_type' with '@recordType' slot ready for Luminescence package 1.2
+  # * 2026-03-02, DM: Improved input data checks
+  # * 2026-03-02, DM: Existing RLum.OSL result data is now removed with each execution of this function
   #
   # ToDo:
   # * Write module test
@@ -222,9 +228,8 @@ verbose_performance <- FALSE
                                      background_sequence = background_sequence,
                                      subtract_offset = subtract_offset))
 
-  # Test if object is a list. If not, create a list
+  # Test if object is a list of RLum.Analysis objects
   if (is.list(object)) {
-
     for (i in 1:length(object)) {
 
       if (inherits(object[[i]], "RLum.Analysis")) {
@@ -233,28 +238,37 @@ verbose_performance <- FALSE
       } else {
 
         element_name <- names(object)[i]
+        allowed <- c("Sequence.Header", "FITTING", "CORRECTION")
+        not_allowed <- c("DECOMPOSITION")
+
         if (is.null(element_name)){
+          cat("List element no.", i, "is not of type 'RLum.Analysis' and is removed from the data set.\n")
 
-          cat("List element no. ", i, " is not of type 'RLum.Analysis' and was removed from from the data set.\n")
+        } else if (element_name %in% not_allowed) {
+          cat("Removed old list element", element_name, "to circumvent misleading results.\n")
 
-          } else if (element_name == "CORRECTION") {
+        } else if (element_name %in% allowed) {
+          data_set_overhang[[element_name]] <- object[[i]]
 
-          cat("Data set was already manipulated by [RLum.OSL_correction()]. Old information in $CORRECTION were overwritten.\n")
+        } else{
+          cat("List element", paste0("\"", element_name, "\""), "is not of type 'RLum.Analysis' and removed from the data set.\n")
+        }
+      }
+    }
 
-          } else {
+  } else if (inherits(object, "Risoe.BINfileData")) {
+    stop(paste("Data is of type 'Risoe.BINfileData' instead of type 'RLum.Analysis'.",
+               "Please apply the Luminescence package function Risoe.BINfileData2RLum.Analysis()",
+               "to the data or ensure that read_BIN2R() has 'fastForward = TRUE' set."))
 
-            data_set_overhang[[element_name]] <- object[[i]]
-            cat("List element ", element_name, " is not of type 'RLum.Analysis' and was not included in the procedure but remained in the data set.\n")}}}
+  } else if (inherits(object, "RLum.Analysis")) {
+    data_set <- list(object)
+    warning("Input was not of type list, but output is of type list.")
 
   } else {
-
-    if (inherits(object, "Risoe.BINfileData")) {
-      stop(paste("Data is of type 'Risoe.BINfileData' instead of type 'RLum.Analysis'.",
-                 "Please apply the Luminescence package function Risoe.BINfileData2RLum.Analysis()",
-                 "to the data or ensure that read_BIN2R() has 'fastForward = TRUE' set."))}
-
-    data_set <- list(object)
-    warning("Input was not of type list, but output is of type list.")}
+    stop(paste("Invalid data type: Input object need to be a list of RLum.Analysis objects.",
+               "Instead it is of type", class(object)[1]))
+  }
 
   if (length(data_set) == 0) stop("Input data contains no RLum.Analysis objects. Please check if the data import was done correctly.")
 
@@ -273,7 +287,7 @@ verbose_performance <- FALSE
     }
   }
   if (no_records == 0) {
-    warning("No record has the set record_type. Dataset is returned without correction.")
+    warning("No record is of the record type", paste0("'", record_type, "'."), "Dataset is returned without correction.")
     object <- c(data_set, data_set_overhang)
     invisible(object)
   }
@@ -286,7 +300,7 @@ verbose_performance <- FALSE
 
   if (check_consistency) {
     correction_step <- correction_step + 1 #########################################################
-    if(verbose) cat("CORRECTION STEP", correction_step, "----- Check records for consistency in the detection settings -----\n")
+    if(verbose) cat("CORRECTION", correction_step, "----- Check records for consistency in the detection settings -----\n")
 
     # measure computing time
     time.start <- Sys.time()
@@ -364,24 +378,24 @@ verbose_performance <- FALSE
       if(verbose) cat("RLum.Data.Curve@RecordType changed to",
                       paste(paste0(record_type, 2:N), collapse = " or "),
                       "in sequence:", paste(sequences_with_replacements, collapse = ", "), "\n")
-      if(verbose) cat("Further data manipulations are performed just on", record_type,"records\n")
+      if(verbose) cat("Further data manipulations are performed just on", record_type,"records.\n")
 
     } else {
 
-      if(verbose) cat("All", record_type, "records have the same detection settings\n")}
+      if(verbose) cat("All", record_type, "records have the same detection settings.\n")}
 
     cor_data <- c(cor_data, list(measurement_characteristics = Ctable,
                             character_statistics = Cstats))
 
 
     # print needed computing time
-    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-    if(verbose) c("\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+    if(verbose) cat("\n")
   }
 
   if (remove_light_off) {
     correction_step <- correction_step + 1 ########################################################
-    if(verbose) cat("CORRECTION STEP", correction_step,"----- Remove not stimulated measurement parts -----\n")
+    if(verbose) cat("CORRECTION", correction_step,"----- Remove not stimulated measurement parts -----\n")
     time.start <- Sys.time()
 
     # Algorithm: (1) Create a global reference curve of all [record_type] curves
@@ -451,13 +465,13 @@ verbose_performance <- FALSE
             ref_curve$time[length(stimulated)], "s\n")}
     }
 
-    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-    if(verbose) c("\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+    if(verbose) cat("\n")
   }
 
   if (normalize_x_axis) {
     correction_step <- correction_step + 1 ########################################################
-    if(verbose) cat("CORRECTION STEP", correction_step, "----- Normalize x-axis -----\n")
+    if(verbose) cat("CORRECTION", correction_step, "----- Normalize x-axis -----\n")
     time.start <- Sys.time()
     records_changed <- 0
 
@@ -489,13 +503,13 @@ verbose_performance <- FALSE
           cat("First x-axis value is already equal channel width value for all records.\n")}}
 
 
-    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-    if(verbose) c("\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+    if(verbose) cat("\n")
   }
 
   if (is.numeric(limit_duration) && (limit_duration > 0)) {
     correction_step <- correction_step + 1 ########################## CUT ###############################
-    if(verbose) cat("CORRECTION STEP", correction_step,"----- Limit measurement duration -----\n")
+    if(verbose) cat("CORRECTION", correction_step,"----- Limit measurement duration -----\n")
     time.start <- Sys.time()
     records_changed <- 0
 
@@ -524,13 +538,13 @@ verbose_performance <- FALSE
       if(verbose) cat("Reduced length of", records_changed, record_type, "records from",
                       before, "s to", after, "s\n")}
 
-    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-    if(verbose) c("\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+    if(verbose) cat("\n")
   }
 
   if (is.numeric(PMT_pulse_pair_resolution) && (PMT_pulse_pair_resolution > 0)) {
     correction_step <- correction_step + 1 ######################### PMT PULSE-PAIR RESOLUTION ################################
-    if(verbose) cat("CORRECTION STEP", correction_step,"----- Correct for PMT pulse-pair resolution -----\n")
+    if(verbose) cat("CORRECTION", correction_step,"----- Correct for PMT pulse-pair resolution -----\n")
     time.start <- Sys.time()
     # See Hamamatsu PMT handbook chapter 6.3 section 2c for details
 
@@ -599,15 +613,15 @@ verbose_performance <- FALSE
       if(verbose) cat("No records exceeding the signal limits found.\n")
     }
 
-    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-    if(verbose) c("\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+    if(verbose) cat("\n")
   }
 
   if (!(is.null(background_sequence) || is.na(background_sequence))
       && is.vector(background_sequence)
       && (all(background_sequence> 0) ) && (all(background_sequence<= length(data_set)))) {
     correction_step <- correction_step + 1 ######################### BACKGROUND ################################
-    if(verbose) cat("CORRECTION STEP", correction_step,"----- Subtract background measurement -----\n")
+    if(verbose) cat("CORRECTION", correction_step,"----- Subtract background measurement -----\n")
     time.start <- Sys.time()
 
     N <- 0
@@ -645,8 +659,8 @@ verbose_performance <- FALSE
     cor_data <- c(cor_data, list(background_curve = background_curve))
 
     if(verbose) cat("Background saved at @CORRECTION@background_curve\n")
-    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-    if(verbose) c("\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+    if(verbose) cat("\n")
 
   } else {
     if (!(is.null(background_sequence))) {
@@ -657,7 +671,7 @@ verbose_performance <- FALSE
 
   if (FALSE) {
     correction_step <- correction_step + 1 ######################### NOISE LEVEL CHECK ################################
-    if(verbose) cat("CORRECTION STEP", correction_step,"----- Check measurements for sufficient signal levels -----\n")
+    if(verbose) cat("CORRECTION", correction_step,"----- Check measurements for sufficient signal levels -----\n")
     time.start <- Sys.time()
 
     # Roxygen2 Text:
@@ -673,14 +687,14 @@ verbose_performance <- FALSE
     #
     # Alternatively: Use the function from the Luminescence package: verify_SingleGrainData()
 
-    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-    if(verbose) c("\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+    if(verbose) cat("\n")
   }
 
 
   if (subtract_offset != 0) {
     correction_step <- correction_step + 1 ######################### OFFSET ################################
-    if(verbose) cat("CORRECTION STEP", correction_step,"----- Subtract offset value -----\n")
+    if(verbose) cat("CORRECTION", correction_step,"----- Subtract offset value -----\n")
     time.start <- Sys.time()
 
     for (j in 1:length(data_set)) {
@@ -695,8 +709,8 @@ verbose_performance <- FALSE
           data_set[[j]]@records[[i]]@data <- matrix(c(time, signal), ncol = 2)}}}
 
     if(verbose) cat("Offset of", subtract_offset, "counts per second subtracted from every", record_type, "record\n")
-    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-    if(verbose) c("\n")
+    if(verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+    if(verbose) cat("\n")
   }
 
   ################################ REPORT  ################################

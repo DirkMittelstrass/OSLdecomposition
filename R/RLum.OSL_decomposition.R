@@ -34,7 +34,7 @@
 #' @param object [Luminescence::RLum.Analysis-class] or [list] of [Luminescence::RLum.Analysis-class]
 #' (**required**):
 #' Data set of one or multiple CW-OSL measured aliquots. The data set must either
-#' contain a list element `$OSL_COMPONENTS` or the parameter `decay_rates` must
+#' contain a list element `$FITTING` or the parameter `decay_rates` must
 #' be defined.
 #'
 #' @param record_type [character] (*with default*):
@@ -42,7 +42,7 @@
 #' Common are: `"OSL"`,`"SGOSL"` or `"IRSL"`.
 #'
 #' @param K [numeric] (*with default*):
-#' Number of components. Selects the according result table in the `$OSL_COMPONENTS` list item of the data set `object`.
+#' Number of components. Selects the according result table in the `$FITTING` list item of the data set `object`.
 #'
 #' @param decay_rates [numeric] vector or [data.frame] (*optional*):
 #' User-defined component decay rates. If this parameter is defined, the parameter `K` will ignored.
@@ -77,7 +77,12 @@
 #'
 #' @section Last updates:
 #'
-#' 2023-09-01, DM: Improved input checks to return more helpful messages
+#' 2026-03-02, DM:
+#' * Function no longer crashes if record data contains no '@info$IRR_TIME' parameters.
+#' * Default number of components 'K' if 'K' is not set is no longer 3. Instead 'K = length(decay_rates)' if 'decay_rates' are set, else 'K = $FITTING$K.selected'.
+#' * Made pattern matching of 'record_type' with '@recordType' slot ready for Luminescence package 1.2
+#' * Improved input data checks
+#' * Existing RLum.OSL decomposition results are now removed with each execution of this function
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -131,7 +136,7 @@
 RLum.OSL_decomposition <- function(
   object,
   record_type = "OSL",
-  K = 3,
+  K = NA,
   decay_rates = NULL,
   report = FALSE,
   report_dir = NULL,
@@ -147,16 +152,22 @@ RLum.OSL_decomposition <- function(
   # * 2021-02-15, DM: Added new parameter `rmd_path`
   # * 2022-05-02, DM: Added new parameter `open_report` to give control over automatic browser opening
   # * 2023-09-01, DM: Improved input checks to return more helpful messages
+  # * 2026-02-26, DM: Function no longer crashes if record data contains no '@info$IRR_TIME' parameters.
+  # * 2026-02-26, DM: Default number of components 'K' if 'K' is not set is no longer 3. Instead 'K = length(decay_rates)' if 'decay_rates' are set, else 'K = $FITTING$K.selected'.
+  # * 2026-02-26, DM: Made pattern matching of 'record_type' with '@recordType' slot ready for Luminescence package 1.2
+  # * 2026-03-02, DM: Improved input data checks
+  # * 2026-03-02, DM: Existing RLum.OSL decomposition results are now removed with each execution of this function
+  #
   #
   ### ToDo's
   # * read 'lambda.error' if available and transfer it to decompose_OSLcurve for better error calculation
   # * collect warnings from [decompose_OSLcurve()] and others and display them bundled with record-index at the end
-  # * switch between "det" and "det+nls" automatically, depending on whether the data set was background corrected or not
 
 
   # hidden parameters
   background_fitting <- FALSE
   error_calculation <- "empiric" # "poisson", "empiric", "nls", numeric value
+  verbose_performance <- FALSE
 
   # get name of the input object
   object_name <- deparse(substitute(object))
@@ -165,9 +176,8 @@ RLum.OSL_decomposition <- function(
   data_set <- list()
   data_set_overhang <- list()
 
-  # Test if object is a list. If not, create a list
+  # Test if object is a list of RLum.Analysis objects
   if (is.list(object)) {
-
     for (i in 1:length(object)) {
 
       if (inherits(object[[i]], "RLum.Analysis")) {
@@ -176,29 +186,37 @@ RLum.OSL_decomposition <- function(
       } else {
 
         element_name <- names(object)[i]
+        allowed <- c("Sequence.Header", "FITTING", "CORRECTION")
+        not_allowed <- c("DECOMPOSITION")
+
         if (is.null(element_name)){
+          cat("List element no.", i, "is not of type 'RLum.Analysis' and is removed from the data set.\n")
 
-          cat("List element no. ", i, " is not of type 'RLum.Analysis' and was removed from from the data set.\n")
+        } else if (element_name %in% not_allowed) {
+          cat("Removed old list element", element_name, "to circumvent misleading results.\n")
 
-        } else if (element_name == "DECOMPOSITION") {
-
-          cat("Data set was already decomposed by [RLum.OSL_global_fitting()]. Old results in $DECOMPOSITION were overwritten.\n")
-
-        } else {
-
+        } else if (element_name %in% allowed) {
           data_set_overhang[[element_name]] <- object[[i]]
-          if (!((element_name == "OSL_COMPONENTS")  || (element_name=="CORRECTION"))) {
-            cat("List element ", element_name, " is not of type 'RLum.Analysis' and was not included in the procedure but remained in the data set.\n")}}}}
+
+        } else{
+          cat("List element", paste0("\"", element_name, "\""), "is not of type 'RLum.Analysis' and removed from the data set.\n")
+        }
+      }
+    }
+
+  } else if (inherits(object, "Risoe.BINfileData")) {
+    stop(paste("Data is of type 'Risoe.BINfileData' instead of type 'RLum.Analysis'.",
+               "Please apply the Luminescence package function Risoe.BINfileData2RLum.Analysis()",
+               "to the data or ensure that read_BIN2R() has 'fastForward = TRUE' set."))
+
+  } else if (inherits(object, "RLum.Analysis")) {
+    data_set <- list(object)
+    warning("Input was not of type list, but output is of type list.")
 
   } else {
-
-    if (inherits(object, "Risoe.BINfileData")) {
-      stop(paste("Data is of type 'Risoe.BINfileData' instead of type 'RLum.Analysis'.",
-                 "Please apply the Luminescence package function Risoe.BINfileData2RLum.Analysis()",
-                 "to the data or ensure that read_BIN2R() has 'fastForward = TRUE' set."))}
-
-    data_set <- list(object)
-    warning("Input was not of type list, but output is of type list.")}
+    stop(paste("Invalid data type: Input object need to be a list of RLum.Analysis objects.",
+               "Instead it is of type", class(object)[1]))
+  }
 
   if (length(data_set) == 0) stop("Input data contains no RLum.Analysis objects. Please check if the data import was done correctly.")
 
@@ -222,15 +240,15 @@ RLum.OSL_decomposition <- function(
 
   if (is.null(decay_rates)) {
 
-    if ("OSL_COMPONENTS" %in% names(data_set_overhang)) {
+    if ("FITTING" %in% names(data_set_overhang)) {
 
-      if (!is.numeric(K)) K <- data_set_overhang$OSL_COMPONENTS$K.selected
+      if (!is.numeric(K)) K <- data_set_overhang$FITTING$K.selected
 
-      component_table <- data_set_overhang$OSL_COMPONENTS$component.tables[[K]]
-      global_curve <- data_set_overhang$OSL_COMPONENTS$curve
+      component_table <- data_set_overhang$FITTING$component.tables[[K]]
+      global_curve <- data_set_overhang$FITTING$curve
 
     } else {
-       stop("Neither contains the input object an element $OSL_COMPONENTS (Step 1 results), nor is the argument 'decay_rates' defined")
+       stop("Neither contains the input object an element $FITTING (Step 1 results), nor is the argument 'decay_rates' defined")
     }
 
 
@@ -244,13 +262,16 @@ RLum.OSL_decomposition <- function(
     stop("Neither is argument 'decay_rates' of class [data.frame] containing a column $lambda, nor is it a numeric vector with max. 7 elements")
   }
 
+  # If K is still 'NA'
+  if (!is.numeric(K)) K <- nrow(component_table)
+
 
   # Check if the components are named
   if (!("name" %in% colnames(component_table))) {
     component_table$name <- paste0("Component ", 1:nrow(component_table))
   }
 
-  # Whit NLS, just the nls() errors are available
+  # Witt NLS, just the nls() errors are available
   if ((algorithm == "nls") &! (error_calculation == "nls")) {
     if (verbose) warning("When algorithm 'nls' is chosen, error.calculation must be also 'nls'. Argument changed to error.calculation='nls'")
     error_calculation <- "nls"}
@@ -277,9 +298,8 @@ RLum.OSL_decomposition <- function(
                                            background.component = background_fitting,
                                            verbose = verbose)
 
-  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-
-
+  if (verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+  if (verbose) cat("\n")
 
   ################################ STEP 2.2: Decomposition  ################################
 
@@ -295,21 +315,18 @@ RLum.OSL_decomposition <- function(
   results <- data.frame(NULL)
 
   N_records <- 0
-  if(verbose) cat("\n\n")
-  #if(verbose) cat("\       \t|\t Ln ", rep("     \t", times = nrow(test)), "    |\t Tn\n")
-  #if(verbose) cat("Aliquot\t| ", paste0("n.", 1:nrow(component_table), "    \t"), "| ", paste0("n.", 1:nrow(component_table), "    \t"))
+  if(verbose) cat("\nProcess aliquots: ")
 
   for (j in 1:length(data_set)) {
 
     N_in_aliquot <- 1
-    #if(verbose) cat(paste0("\n  #",j,"  \t"))
-    if(verbose) cat(".")
+    if(verbose) cat("o")
 
     for (i in 1:length(data_set[[j]]@records)) {
 
       current_record <- data_set[[j]]@records[[i]]
 
-      if (grepl(record_type, current_record@recordType, fixed = TRUE)) {
+      if (check_RLum.Data(current_record, record_type, verbose = FALSE)) {
 
         decomp_table <- decompose_OSLcurve(current_record@data,
                                            component_table,
@@ -320,6 +337,12 @@ RLum.OSL_decomposition <- function(
         # Add the resulting data.frame to the info section of the records RLum object
         current_record@info[["COMPONENTS"]] <- decomp_table
 
+        # BIN and BINX should contain the irradiation time, necessary to build
+        # a dose-response curve. However, XSYG files do not.
+        irr_time <- NA
+        if ("IRR_TIME" %in% names(current_record@info))
+          irr_time <- current_record@info[["IRR_TIME"]]
+
         # A new line for the big table
         results <- rbind(results, data.frame(list.index = j,
                                              record.index = i,
@@ -327,16 +350,15 @@ RLum.OSL_decomposition <- function(
                                              n.error = t(decomp_table$n.error),
                                              n.residual = t(decomp_table$n.residual),
                                              initial.signal = t(decomp_table$initial.signal),
-                                             IRR_TIME = current_record@info[["IRR_TIME"]]))
+                                             IRR_TIME = irr_time))
 
         data_set[[j]]@records[[i]] <- current_record
-
-        #if(verbose && (N_in_aliquot < 3)) cat("|", paste0(formatC(decomp_table$n, format = "e", digits = 2),"\t"))
         N_in_aliquot <- N_in_aliquot + 1
         N_records <- N_records + 1}}}
 
-  if(verbose) cat("\nSuccessfully decomposed", N_records,"records\n")
-  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+  if (verbose) cat("\nSuccessfully decomposed", N_records,"records\n")
+  if (verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+  if (verbose) cat("\n")
 
   # Build overview list
   dec_data <- list(parameters = list(record_type = record_type,

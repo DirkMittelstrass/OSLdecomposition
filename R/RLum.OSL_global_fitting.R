@@ -77,7 +77,11 @@
 #'
 #' @section Last updates:
 #'
-#' 2023-09-01, DM: Improved input checks to return more helpful messages
+#' 2026-03-02, DM:
+#' * Changed default 'K_maximum 'to 3 and 'stimulation_intensity' to NA
+#' * Made pattern matching of 'record_type' with '@recordType' slot ready for Luminescence package 1.2
+#' * Improved input data checks
+#' * Existing RLum.OSL fitting and decomposition results are now removed with each execution of this function
 #'
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
@@ -100,7 +104,7 @@
 #' @return
 #'
 #' The input `object`, a [list] of [Luminescence::RLum.Analysis-class] objects is returned but with
-#' a new list element `object[["OSL_COMPONENTS"]]`, containing:
+#' a new list element `object[["FITTING"]]`, containing:
 #' \itemize{
 #'   \item `$decay.rates` [numeric] vector: Decay rates of F-test recommendation or last successful fitting.
 #'   \item `$K.selected` [numeric]: Number of components of F-test recommendation or last successful fitting.
@@ -140,9 +144,9 @@
 
 RLum.OSL_global_fitting <- function(object,
                                     record_type = "OSL",
-                                    K_maximum = 5,
+                                    K_maximum = 3,
                                     F_threshold = 150,
-                                    stimulation_intensity = 35,
+                                    stimulation_intensity = NA,
                                     stimulation_wavelength = 470,
                                     report = FALSE,
                                     report_dir = NULL,
@@ -158,14 +162,19 @@ RLum.OSL_global_fitting <- function(object,
   # * 2021-02-15, DM: Added new parameter `rmd_path`
   # * 2022-05-02, DM: Added new parameter `open_report` to give control over automatic browser opening
   # * 2023-09-01, DM: Improved input checks to return more helpful messages
+  # * 2026-02-26, DM: Made pattern matching of 'record_type' with '@recordType' slot ready for Luminescence package 1.2
+  # * 2026-02-27, DM: Changed default 'K_maximum 'to 3 and 'stimulation_intensity' to NA
+  # * 2026-03-02, DM: Improved input data checks
+  # * 2026-03-02, DM: Existing RLum.OSL fitting and decomposition results are now removed with each execution of this function
   #
   # ToDo:
   # * Get stimulation.intensity from @info[["LPOWER"]]
-  # * add 'autoname' and other file handling parameters
+  # * add 'auto-name' and other file handling parameters
   # * add background fitting functionality
 
   # Hidden parameters
   report_format <- "html"
+  verbose_performance <- FALSE
 
   # Get name of the input object
   object_name <- deparse(substitute(object))
@@ -174,9 +183,8 @@ RLum.OSL_global_fitting <- function(object,
   data_set <- list()
   data_set_overhang <- list()
 
-  # Test if object is a list. If not, create a list
+  # Test if object is a list of RLum.Analysis objects
   if (is.list(object)) {
-
     for (i in 1:length(object)) {
 
       if (inherits(object[[i]], "RLum.Analysis")) {
@@ -185,34 +193,42 @@ RLum.OSL_global_fitting <- function(object,
       } else {
 
         element_name <- names(object)[i]
+        allowed <- c("CORRECTION", "Sequence.Header")
+        not_allowed <- c("DECOMPOSITION", "FITTING")
+
         if (is.null(element_name)){
+          cat("List element no.", i, "is not of type 'RLum.Analysis' and is removed from the data set.\n")
 
-          cat("List element no. ", i, " is not of type 'RLum.Analysis' and was removed from from the data set.\n")
+        } else if (element_name %in% not_allowed) {
+          cat("Removed old list element", element_name, "to circumvent misleading results.\n")
 
-        } else if (element_name == "OSL_COMPONENTS") {
-
-          cat("Data set was already fitted by [RLum.OSL_global_fitting()]. Old results in $OSL_COMPONENTS were overwritten.\n")
-
-        } else {
-
+        } else if (element_name %in% allowed) {
           data_set_overhang[[element_name]] <- object[[i]]
-          if (!((element_name == "DECOMPOSITION")  || (element_name=="CORRECTION"))) {
-            cat("List element ", element_name, " is not of type 'RLum.Analysis' and was not included in the procedure but remained in the data set.\n")}}}}
 
-  } else {
+        } else{
+          cat("List element", paste0("\"", element_name, "\""), "is not of type 'RLum.Analysis' and removed from the data set.\n")
+        }
+      }
+    }
 
-    if (inherits(object, "Risoe.BINfileData")) {
+  } else if (inherits(object, "Risoe.BINfileData")) {
       stop(paste("Data is of type 'Risoe.BINfileData' instead of type 'RLum.Analysis'.",
                  "Please apply the Luminescence package function Risoe.BINfileData2RLum.Analysis()",
-                 "to the data or ensure that read_BIN2R() has 'fastForward = TRUE' set."))}
+                 "to the data or ensure that read_BIN2R() has 'fastForward = TRUE' set."))
 
+  } else if (inherits(object, "RLum.Analysis")) {
     data_set <- list(object)
-    warning("Input was not of type list, but output is of type list.")}
+    warning("Input was not of type list, but output is of type list.")
+
+  } else {
+    stop(paste("Invalid data type: Input object need to be a list of RLum.Analysis objects.",
+               "Instead it is of type", class(object)[1]))
+  }
 
   if (length(data_set) == 0) stop("Input data contains no RLum.Analysis objects. Please check if the data import was done correctly.")
 
   # calc arithmetic mean curve
-  if(verbose) cat("STEP 1.1 ----- Build global average curve from all CW-OSL curves -----\n")
+  if (verbose) cat("STEP 1.1 ----- Build global average curve from all CW-OSL curves -----\n")
 
   # measure computing time
   time.start <- Sys.time()
@@ -222,11 +238,18 @@ RLum.OSL_global_fitting <- function(object,
                                 output.plot = FALSE,
                                 verbose = verbose)
 
-  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
+  if (verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+  if (verbose) cat("\n")
 
 
   # find components via fitting and F-statistics
-  if(verbose) cat("STEP 1.2 ----- Perform multi-exponential curve fitting -----\n")
+  if (verbose) cat("STEP 1.2 ----- Perform multi-exponential curve fitting -----\n")
+
+  # Check if fitting might take longer
+  expected_work <- nrow(global_curve) * K_maximum^2
+  if (expected_work > 42000) {
+    cat("Fitting might take while ...\n")
+    verbose_performance <- TRUE}
 
   time.start <- Sys.time()
 
@@ -241,8 +264,8 @@ RLum.OSL_global_fitting <- function(object,
   # Add 'record_type' to the argument list
   fit_data$parameters$record_type <- record_type
 
-  if(verbose) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n\n")
-
+  if (verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
+  if (verbose) cat("\n")
 
 # Report output -----------------------------------------------------------
   if (report) {
@@ -261,6 +284,6 @@ RLum.OSL_global_fitting <- function(object,
       verbose = verbose)}
 
 # Return ------------------------------------------------------------------
-  object <- c(data_set, data_set_overhang, OSL_COMPONENTS = list(fit_data))
+  object <- c(data_set, data_set_overhang, FITTING = list(fit_data))
   invisible(object)
 }
