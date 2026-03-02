@@ -45,7 +45,7 @@
 #' Here \eqn{\sigma_k} is the photoionisation cross section of component *k* in cm^2,
 #' \eqn{\lambda_k} the CW-OSL decay constant in s^-1, *h* the Planck constant and *c* the speed of light.
 #'
-#' If a `stimulation.intensity` between 460 nm and 485 nm is defined,
+#' If a `stimulation.intensity` is defined and a `stimulation.wavelength` between 460 nm and 485 nm is given,
 #' the components are named automatically in accordance to the
 #' cross-sections published by Durcan and Duller (2011), Jain et al. (2003) and Singarayer and Bailey (2003).
 #' For the Ultrafast and the Slow4 component, no consistent literature values could be found, so their range
@@ -74,7 +74,7 @@
 #' @param F.threshold [numeric] (*with default*):
 #' Fitting stop criterion. If the F-value is lower than this threshold, the fitting procedure stops and the K - 1 fit is returned
 #'
-#' @param stimulation.intensity [numeric] (*with default*):
+#' @param stimulation.intensity [numeric] (*optional*):
 #' Intensity of optical stimulation in *mW / cm²*. Used to calculate photoionisation cross sections.
 #'
 #' @param stimulation.wavelength [numeric] (*with default*):
@@ -97,7 +97,7 @@
 #'
 #' @section Last update:
 #'
-#' 2022-07-27, DM: Moved residual sum of squares (RSS) calculation during DE-optimization cycle to decompose_OSLcurve() to improve computing time by factor 3 to 4
+#' 2026-02-27, DM: Changed default 'stimulation.intensity' to NA and allowed that no stimulation intensity is given
 #'
 #' @author
 #' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
@@ -168,7 +168,7 @@ fit_OSLcurve <- function(
   curve,
   K.max = 5,
   F.threshold = 150,
-  stimulation.intensity = 30,
+  stimulation.intensity = NA,
   stimulation.wavelength = 470,
   verbose = TRUE,
   output.complex = FALSE,
@@ -191,6 +191,7 @@ fit_OSLcurve <- function(
   # * 2020-10-26, DM: Roxygen documentation
   # * 2020-11-25, DM: Reworked console output
   # * 2022-07-27, DM: Moved residual sum of squares (RSS) calculation during DE-optimization cycle to decompose_OSLcurve() to improve computing time by factor 3 to 4
+  # * 2026-02-27, DM: Changed default 'stimulation.intensity' to NA and allowed that no stimulation intensity is given
   #
   # ToDo:
   # * Enhance documentation with more algorithm info and some F.threshold recommendation
@@ -240,7 +241,7 @@ fit_OSLcurve <- function(
   info_text <- ""
 
   # prepare printed table
-  if (verbose) cat("\nDecay rates (s^-1):\n")
+  if (verbose) cat("Decay rates (s^-1):\n")
   if (verbose) cat("Cycle \t", paste(paste0("   Comp. ", X), collapse = "  "),
                    "        RSS     F-value\n")
 
@@ -271,10 +272,34 @@ fit_OSLcurve <- function(
   #   Chi2 <- sum(RS) / (length(RS) - K * 2)
   #   return(Chi2)}
 
-  ###################### Photo-Ionisation Crosssections #############################################
+  ###################### Photo-ionisation cross sections #############################################
   build_component_table <- function(lambda_vector, lambda_err, BCTcurve = curve){
 
+    # default names:
     Y <- 1:length(lambda_vector)
+    name <- paste0("Component ", Y)
+
+    # How much is the component bleached during stimulation?
+    bleaching.grade <- round(1 - exp(- lambda_vector * max(BCTcurve$time)), digits = 4)
+
+    # Decay with zero or negative error had no correct error estimation
+    lambda_err[lambda_err <= 0] <- NA
+
+    ##### Build result table #####
+    components <- data.frame(name = name,
+                             lambda = lambda_vector,
+                             lambda.error = lambda_err,
+                             bleaching.grade = bleaching.grade)
+
+    row.names(components) <- Y
+
+    # Go the easy way to extract additional information from the fitting
+    components <- decompose_OSLcurve(curve = BCTcurve,
+                                     components = components,
+                                     verbose = FALSE)
+
+    if (!is.numeric(stimulation.intensity) || !is.numeric(stimulation.wavelength))
+      return(components)
 
     # Calc photon energy: E = h*v  [W*s^2 * s^-1 = W*s = J]
     E <-6.62606957e-34 * 299792458 * 10^9 / stimulation.wavelength
@@ -286,10 +311,10 @@ fit_OSLcurve <- function(
     cross.section <- lambda_vector / Flux
     cross.relative <- round(cross.section / cross.section[1], digits=4)
 
-    ### NAME COMPONENTS ###
-    # default names:
-    name <- paste0("Component ", Y)
+    components <- cbind(components, data.frame(cross.section = cross.section,
+                                               cross.relative = cross.relative))
 
+    # Give components literature names
     if ((stimulation.wavelength >= 460) && (stimulation.wavelength <= 485)  ) {
 
       # Rename components according to literature
@@ -297,7 +322,7 @@ fit_OSLcurve <- function(
 
         c <- cross.section[i]
 
-        # Autonaming uses Table 1 in Durcan & Duller (2011)
+        # Auto-naming uses Table 1 in Durcan & Duller (2011)
         # Minimum = lowest value - 2-sigma
         # Maximum = highest value + 2-sigma
         # Exception are Ultrafast and Slow4 which are not well defined in literature and guessed freely
@@ -319,27 +344,8 @@ fit_OSLcurve <- function(
     # And again
     name[duplicated(name)] <- paste0(substr(name[duplicated(name)], 1, nchar(name[duplicated(name)]) - 2), ".c")
 
-    # How much is the component bleached during stimulation?
-    bleaching.grade <- round(1 - exp(- lambda_vector * max(BCTcurve$time)), digits = 4)
-
-    # Decay with zero or negative error had no correct error estimation
-    lambda_err[lambda_err <= 0] <- NA
-
-    ##### Build result table #####
-    components <- data.frame(name = name,
-                             lambda = lambda_vector,
-                             lambda.error = lambda_err,
-                             cross.section = cross.section,
-                             cross.relative = cross.relative,
-                             bleaching.grade = bleaching.grade)
-
-    row.names(components) <- Y
-
-    # Go the easy way to extract additional information from the fitting
-    components <- decompose_OSLcurve(curve = BCTcurve,
-                                     components = components,
-                                     verbose = FALSE)
-
+    components$name <- name
+    return(components)
   } ### END building tables for the various cases ###
 
 
@@ -447,8 +453,11 @@ fit_OSLcurve <- function(
     fittings[[K]] <- fit
 
     # identify the components and build the Component table
-    component_table <- try(build_component_table(lambda, lambda_error),
-                                 silent = silent)
+    component_table <- build_component_table(lambda, lambda_error)
+
+    # # Old version could throw exceptions
+    # component_table <- try(build_component_table(lambda, lambda_error),
+    #                              silent = silent)
 
     if (methods::is(component_table)[1] == "try-error") {
 
@@ -459,8 +468,6 @@ fit_OSLcurve <- function(
       component_tables[[K]] <- component_table}
 
 
-
-
     # Add values to [plot_Photocrosssections()] ploting table
     plot_data <- rbind(plot_data,
                        data.frame(lambda = lambda,
@@ -468,7 +475,6 @@ fit_OSLcurve <- function(
                                   lambda.up = lambda + lambda_error,
                                   name = factor(paste0("Best fit with K = ", K)),
                                   x = K))
-    #x <- x + 1
 
     ### F-test ###
     F_value <- 0.5*(RSS_old - RSS) / (RSS / (length(curve$signal) - 2 * K))
@@ -509,7 +515,7 @@ fit_OSLcurve <- function(
   computing_time <- as.numeric(difftime(Sys.time(), computing_time, units = "s"))
 
 
-  # Give F tables approbiate headers
+  # Give F tables appropriate headers
   colnames(F_table) <- c(paste0("f_", X),"RSS","F_value")
   colnames(F_table_print) <- c(paste0("f_", X),"RSS","F_value")
 
@@ -522,16 +528,16 @@ fit_OSLcurve <- function(
   components <- component_tables[[K_selected]]
 
   ######### Further console output ######
-  if (verbose) {
+  if (verbose) cat(paste0("-> The F-test suggests the K = ", K_selected," model"), "\n")
 
-    cat(paste0("-> The F-test suggests the K = ", K_selected," model"), "\n")
+  if (verbose && "cross.section" %in% colnames(components)) {
 
 
     # Build a nove looking photoionisation cross section table for the console output
     cat("\nPhotoionisation cross sections (cm^2):\n")
     cat("Cycle \t", sprintf(" %-19s", paste0("Comp. ", X)), "\n")
 
-    most_identified <- NULL
+    most_identified <- 0
     for (k in 1:K) {
 
       cross_section <- prettyNum(component_tables[[k]]$cross.section, digits = 3)
@@ -546,8 +552,6 @@ fit_OSLcurve <- function(
     if (sum(most_identified) > 0) {
       cat(paste0("-> Most known quartz OSL components found in the K = ",
                  which(max(most_identified) == most_identified)," model"), "\n")}
-
-
   }
 
   ######################### Return values #######################

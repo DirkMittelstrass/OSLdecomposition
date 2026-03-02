@@ -8,7 +8,7 @@ fit_OSLcurve(
   curve,
   K.max = 5,
   F.threshold = 150,
-  stimulation.intensity = 30,
+  stimulation.intensity = NA,
   stimulation.wavelength = 470,
   verbose = TRUE,
   output.complex = FALSE,
