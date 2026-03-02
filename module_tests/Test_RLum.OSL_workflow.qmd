@@ -1,7 +1,7 @@
 ---
 title: "Module tests for RLum.OSL functions"
 author: "Dirk Mittelstraß"
-date: "2026-02-16"
+date: "2026-03-02"
 format:
   html:
     code-fold: true 
@@ -28,21 +28,21 @@ This document collects scripts for developing, bug-fixing and pre-release valida
 
 ## Library loading and sourcing
 
-Load the Luminescence package and its OSL SAR example data sets
+Load the Luminescence package and its OSL SAR example data sets as well as OSLdecomposition
 
 ```{r load_luminescence}
 
 library(Luminescence)
+library(OSLdecomposition)
 
 ```
 
-Load OSLdecomposition
-
 ```{r sourcing}
+#| eval: false
+#| include: false
 
-library(OSLdecomposition)
 
-source("../R/utils.R")
+
 source("../R/RLum.OSL_global_fitting.R")
 source("../R/RLum.OSL_correction.R")
 source("../R/RLum.OSL_decomposition.R")
@@ -87,20 +87,46 @@ for (data_name in names(data_sets)) {
   cat("\n####", data_name, "#####\n\n")
   data_set <- data_sets[[data_name]]
   # Check the data for consistency and eventually manipulate the records for better results
-data_set <- RLum.OSL_correction(data_set)
-
-# Identify the OSL components globally (Step 1)
-data_set <- RLum.OSL_global_fitting(data_set,
-                                    K_maximum = 3,
-                              #      stimulation_wavelength = 445,
-                               #     stimulation_intensity = 100,
-                                    report = FALSE)
-
-# Plot global curve
-plot_OSLcurve(data_set$OSL_COMPONENTS$curve, data_set$OSL_COMPONENTS$components)
-
-# Separate OSL components in each record (Step 2)
-data_set <- RLum.OSL_decomposition(data_set, report = FALSE)
+  data_set <- RLum.OSL_correction(data_set)
+  
+  # Identify the OSL components globally (Step 1)
+  data_set <- RLum.OSL_global_fitting(data_set)
+  
+  # Plot global curve
+  plot_OSLcurve(data_set$FITTING$curve, 
+                data_set$FITTING$components)
+  
+  # Separate OSL components in each record (Step 2)
+  data_set <- RLum.OSL_decomposition(data_set)
   
 }
+```
+
+## With reporting and more components
+
+```{r with_reports}
+
+
+for (data_name in names(data_sets)) {
+  
+  cat("\n####", data_name, "#####\n\n")
+  data_set <- data_sets[[data_name]]
+  
+  # Check the data for consistency and eventually manipulate the records for better results
+  data_set <- RLum.OSL_correction(data_set)
+  
+  # Identify the OSL components globally (Step 1)
+  data_set <- RLum.OSL_global_fitting(data_set,
+                                      K_maximum = 4,
+                                      stimulation_intensity = 80,
+                                      report = TRUE)
+  
+  # Separate OSL components in each record (Step 2)
+  data_set <- RLum.OSL_decomposition(data_set, report = TRUE)
+  
+}
+```
+
+```{r}
+
 ```
