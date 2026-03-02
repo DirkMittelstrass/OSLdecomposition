@@ -535,7 +535,7 @@ plot_MultiExponential <- function(curve = NULL,
   # Set legend, axis labels and design choices
   p <- p +
     ggplot2::labs(color = NULL,
-         fill = "Signal components",
+     #    fill = "Signal components",
          subtitle = main, x = xlab, y = ylab) +
     ggplot2::theme(axis.title = ggplot2::element_text(size = font.size),
           ggplot2::element_text(size = font.size + 1, face = "bold"),
