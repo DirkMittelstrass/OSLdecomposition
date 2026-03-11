@@ -9,6 +9,10 @@ header-includes:
 
 ## OSLdecomposition `devel` (`r Sys.Date()`)
 
+-   `RLum.OSL_decomposition`: Returns now some basic statistics about contribution of the components to the initial CW-OSL signal, see console output and `object$DECOMPOSITION$initial.signal.stats`.
+
+-   `RLum.OSL_decomposition`: The component which dominates the initial signal on average (highest median) is now stated as Dominating Component in console output and `object$DECOMPOSITION$dominating.component`.
+
 -   `RLum.OSL_decomposition`: Function no longer crashes if record data contains no `@info$IRR_TIME` parameters.
 
 -   `RLum.OSL_decomposition`: Default number of components K is no longer `K = 3` if not set by the user. Instead `K = length(decay_rates)` if `decay_rates` are set, else `K = $FITTING$K.selected`.

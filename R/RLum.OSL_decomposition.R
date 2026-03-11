@@ -77,10 +77,12 @@
 #'
 #' @section Last updates:
 #'
-#' 2026-03-02, DM:
-#' * Function no longer crashes if record data contains no '@info$IRR_TIME' parameters.
+#' 2026-03-11, DM:
+#' * Returns now some basic statistics about contribution of the components to the initial CW-OSL signal, see console output and `object$DECOMPOSITION$initial.signal.stats`
+#' * The component which dominates the initial signal on average (highest median) is now stated as Dominating Component in console output and `object$DECOMPOSITION$dominating.component`
+#' * Function no longer crashes if record data contains no `@info$IRR_TIME` parameters.
 #' * Default number of components 'K' if 'K' is not set is no longer 3. Instead 'K = length(decay_rates)' if 'decay_rates' are set, else 'K = $FITTING$K.selected'.
-#' * Made pattern matching of 'record_type' with '@recordType' slot ready for Luminescence package 1.2
+#' * Made pattern matching of 'record_type' with `@recordType` slot ready for Luminescence package 1.2
 #' * Improved input data checks
 #' * Existing RLum.OSL decomposition results are now removed with each execution of this function
 #'
@@ -111,6 +113,7 @@
 #'   \item `$decompositon.input` [data.frame]: Set of input components. Relevant is just the column `$lambda`
 #'   \item `$results` [data.frame]: Overview table of decomposition
 #'   \item `$parameters` [list]: Input and algorithm parameters
+#'   \item `$dominant.component` [character]: That component which has the most share in the initial signals
 #' }
 #'
 #' The [Luminescence::RLum.Data.Curve-class] attribute `@info` of each CW-OSL record contains the
@@ -157,7 +160,8 @@ RLum.OSL_decomposition <- function(
   # * 2026-02-26, DM: Made pattern matching of 'record_type' with '@recordType' slot ready for Luminescence package 1.2
   # * 2026-03-02, DM: Improved input data checks
   # * 2026-03-02, DM: Existing RLum.OSL decomposition results are now removed with each execution of this function
-  #
+  # * 2026-03-11, DM: Returns now some basic statistics about contribution of the components to the initial CW-OSL signal, see console output and `object$DECOMPOSITION$initial.signal.stats`
+  # * 2026-03-11, DM: The component which dominates the initial signal on average (highest median) is now stated as Dominating Component in console output and `object$DECOMPOSITION$dominating.component`
   #
   ### ToDo's
   # * read 'lambda.error' if available and transfer it to decompose_OSLcurve for better error calculation
@@ -303,19 +307,25 @@ RLum.OSL_decomposition <- function(
 
   ################################ STEP 2.2: Decomposition  ################################
 
-  if (verbose) cat("STEP 2.2 ----- Decompose each ", record_type," curve -----\n")
-  if (verbose) cat("Calculate signal intensity n in each", record_type, " by '", algorithm,"' algorithm with", error_calculation, "error estimation\n")
-  if (verbose) cat("Table of input decay constants and signal bin intervals for [decompose_OSLcurve()]:\n")
-  if (verbose) print(subset(component_table, select = c("name", "lambda", "t.start", "t.end", "ch.start", "ch.end")))
+  if (verbose) {
+    cat("STEP 2.2 ----- Decompose each ", record_type," curve -----\n")
+    cat("Calculate signal intensity n in each", record_type, " by '", algorithm,"' algorithm with", error_calculation, "error estimation\n")
+    cat("\nTable of input decay constants and signal bin intervals:\n")
+
+    c_table <- subset(component_table, select = c("lambda", "t.start", "t.end", "ch.start", "ch.end"))
+    rownames(c_table) <- component_table$name
+    c_table$lambda <- round(c_table$lambda, 5)
+    print(c_table)
+
+    cat("\nProcess aliquots: ")
+  }
 
   time.start <- Sys.time()
 
   # Build one big table containing all results
   # So we can easily filter out any statistical aspect we want later
   results <- data.frame(NULL)
-
   N_records <- 0
-  if(verbose) cat("\nProcess aliquots: ")
 
   for (j in 1:length(data_set)) {
 
@@ -356,7 +366,44 @@ RLum.OSL_decomposition <- function(
         N_in_aliquot <- N_in_aliquot + 1
         N_records <- N_records + 1}}}
 
-  if (verbose) cat("\nSuccessfully decomposed", N_records,"records\n")
+  ### Get the dominant component ###
+
+  # Find all initial.signal columns
+  sig_cols <- grep("^initial\\.signal\\.", names(results), value = TRUE)
+
+  # Calculate statistics
+  min <- sapply(results[sig_cols], min, na.rm = TRUE)
+  q25 <- sapply(results[sig_cols], stats::quantile, probs = 0.25, na.rm = TRUE)
+  med <- sapply(results[sig_cols], stats::median, na.rm = TRUE)
+  q75 <- sapply(results[sig_cols], stats::quantile, probs = 0.75, na.rm = TRUE)
+  max <- sapply(results[sig_cols], max, na.rm = TRUE)
+
+  # Build result table with component names as row names
+  ini_stats <- data.frame(
+    "Minimum" = min,
+    "25% quantile" = q25,
+    "   Median" = med,
+    "75% quantile" = q75,
+    "Maximum" = max,
+    check.names = FALSE
+  )
+  rownames(ini_stats) <- component_table$name
+
+  # Get the name of the column with the highest median
+  names(med) <- component_table$name
+  dominant_component <- names(which.max(med))
+
+
+  if (verbose) {
+    cat("\n-> Successfully decomposed", N_records,"records\n")
+
+    # Initial signal statistics
+    cat("\nInitial signal statistics:\n")
+    print(round(ini_stats, 3))
+    cat("-> Dominating signal component at measurement start:", paste0("\"", dominant_component, "\"\n"))
+    cat(" (If not knowing the correct component, take this one)\n")
+  }
+
   if (verbose_performance) cat("(time needed:", round(as.numeric(difftime(Sys.time(), time.start, units = "s")), digits = 2),"s)\n")
   if (verbose) cat("\n")
 
@@ -366,8 +413,10 @@ RLum.OSL_decomposition <- function(
                                      algorithm = algorithm,
                                      error_calculation = error_calculation,
                                      background_fitting = background_fitting),
-                   decompositon.input = component_table,
-                   results = results)
+                   decomposition.input = component_table,
+                   results = results,
+                   initial.signal.stats = ini_stats,
+                   dominating.component = dominant_component)
 
   ################################ STEP 2.3: Report  ################################
   if (report) {
