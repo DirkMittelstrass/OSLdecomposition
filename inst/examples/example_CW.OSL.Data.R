@@ -18,7 +18,7 @@ OSLdata_corrected <- RLum.OSL_correction(OSLdata)
 
 # In the first step, the OSL components and their decay rates are identified
 # by multi-exponential fitting at a global CW-OSL curve.
-# The obtained information can be found at: OSLdata_fitted$OSL_COMPONENTS
+# The obtained information can be found at: OSLdata_fitted$FITTING
 OSLdata_fitted <- RLum.OSL_global_fitting(OSLdata_corrected,
                                           stimulation_intensity = 75)
 
@@ -29,8 +29,8 @@ OSLdata_decomposed <- RLum.OSL_decomposition(OSLdata_fitted,
 
 # The De's for specific signal components can be calculated without the need of
 # defining integration intervals
-De_fast_component <- analyse_SAR.CWOSL(OSLdata_decomposed, OSL.component = 1)
-De_medium_component <- analyse_SAR.CWOSL(OSLdata_decomposed, OSL.component = 2)
+De_fast_component <- analyse_SAR.CWOSL(OSLdata_decomposed, OSL.component = 1, plot = FALSE)
+De_medium_component <- analyse_SAR.CWOSL(OSLdata_decomposed, OSL.component = 2, plot = FALSE)
 
 # We can compare the component-based De's with the classical calculated late background subtraction De's
 De_late_background <- analyse_SAR.CWOSL(OSLdata, 1, 14, 800, 1000, plot = FALSE)

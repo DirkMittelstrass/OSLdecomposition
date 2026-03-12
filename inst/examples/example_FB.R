@@ -36,13 +36,9 @@ FB_decomposed <- RLum.OSL_decomposition(
 # De analysis and plotting ------------------------------------------------
 # Here, component 2 is the 'fast' component
 FB_fast_De <- analyse_SAR.CWOSL(
-  FB_decomposed[1:2],
-  signal.integral.min = NA,
-  signal.integral.max = NA,
-  background.integral.min = NA,
-  background.integral.max = NA,
-  OSL.component = c(1,2),
-  plot = TRUE
+  FB_decomposed,
+  OSL.component = "Component 1",
+  plot = FALSE
 )
 
 # the outlier comes from the background measurements
