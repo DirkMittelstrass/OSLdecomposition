@@ -1,7 +1,7 @@
 ---
 title: "Module tests for RLum.OSL functions"
 author: "Dirk Mittelstraß"
-date: "2026-03-02"
+date: "2026-03-10"
 format:
   html:
     code-fold: true 
@@ -41,8 +41,6 @@ library(OSLdecomposition)
 #| eval: false
 #| include: false
 
-
-
 source("../R/RLum.OSL_global_fitting.R")
 source("../R/RLum.OSL_correction.R")
 source("../R/RLum.OSL_decomposition.R")
@@ -81,7 +79,7 @@ names(data_sets) <- c("FB calibration quartz",
 
 ```{r default_workflow}
 
-
+results <- list()
 for (data_name in names(data_sets)) {
   
   cat("\n####", data_name, "#####\n\n")
@@ -97,8 +95,28 @@ for (data_name in names(data_sets)) {
                 data_set$FITTING$components)
   
   # Separate OSL components in each record (Step 2)
-  data_set <- RLum.OSL_decomposition(data_set)
+  data_set <- RLum.OSL_decomposition(data_set) #, K = 3)
   
+  results[[data_name]] <- data_set
+  
+}
+```
+
+## Analysing De values
+
+```{r lum_analyze}
+#| fig-height: 8
+#| fig-width: 10
+
+for (data_set in results) {
+  
+  De_vals <- 
+    analyse_SAR.CWOSL(data_set,
+                      OSL.component =
+                        data_set$DECOMPOSITION$dominating.component,
+                      plot = TRUE, plot_onePage = TRUE, verbose = FALSE)
+  
+  plot_AbanicoPlot(De_vals)
 }
 ```
 
@@ -125,8 +143,4 @@ for (data_name in names(data_sets)) {
   data_set <- RLum.OSL_decomposition(data_set, report = TRUE)
   
 }
-```
-
-```{r}
-
 ```
