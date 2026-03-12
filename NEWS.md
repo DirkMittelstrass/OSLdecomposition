@@ -34,8 +34,8 @@
   with @recordType slots of `RLum.Data.Curve` objects is replaced with
   `check_RLum.Data()` checks.
 - `check_RLum.Data`: Added a
-  [testthat](https://cran.r-project.org/web/packages/testthat/index.html)
-  test for with 100 % coverage (Done by @mcol).
+  [testthat](https://cran.r-project.org/package=testthat) test for with
+  100 % coverage (Done by @mcol).
 - Added function `check_RLum.Data()` to check if a `RLum.Data.Curve`
   object matches a specific type of record. As example, the function
   returns `TRUE` if the record type naming **“OSL”** is matched with

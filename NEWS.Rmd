@@ -18,7 +18,7 @@ header-includes:
 -   Better support for `RLum.Analysis` data sets which were imported from **XSYG** files in all `RLum.OSL` functions.
 -   Improved input data checks in all `RLum.OSL` functions.
 -   To make `OSLdecomposition` ready for the [breaking changes in Luminescence package 1.2](https://replay.geog.uni-heidelberg.de/REPLAY-website/post/2026/01/upcoming-breaking-changes-in-luminescence/), All pattern matching via `==` or `grepl()` of `record_type` arguments with \@recordType slots of `RLum.Data.Curve` objects is replaced with `check_RLum.Data()` checks.
--   `check_RLum.Data`: Added a [testthat](https://cran.r-project.org/web/packages/testthat/index.html) test for with 100 % coverage (Done by @mcol).
+-   `check_RLum.Data`: Added a [testthat](https://cran.r-project.org/package=testthat) test for with 100 % coverage (Done by @mcol).
 -   Added function `check_RLum.Data()` to check if a `RLum.Data.Curve` object matches a specific type of record. As example, the function returns `TRUE` if the record type naming **"OSL"** is matched with records of type "OSL", "OSL (PMT)", "OSL (NA)", etc. but returns `FALSE` if "OSL" is matched with "IRSL", "\_OSL (NA)", "OSL2" etc.
 -   `sum_OSLcurves`: Accepts now list of data.frames and `RLum.Data.Curve` objects as input.
 -   `sum_OSLcurves:` Revised function for faster calculation and plotting and to be less prone of errors of warnings..
