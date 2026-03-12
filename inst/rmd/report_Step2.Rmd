@@ -96,10 +96,10 @@ record <- list()
 n.curves <- 0
 
 # assign some local objects just for better readable code:
-K <- nrow(dec_data$decompositon.input)
+K <- nrow(dec_data$decomposition.input)
 record_type <- dec_data$parameters$record_type
 background_fitting <- dec_data$parameters$background_fitting
-input_table <- dec_data$decompositon.input
+input_table <- dec_data$decomposition.input
 
 for (j in 1:length(data_set)) {
 
@@ -411,7 +411,7 @@ To achieve component-separated dose information, the data analysis process is di
 
 ## Step 2 workflow {#Overview}
 
-The decompositon process in Step 2 calculates the signal component intensities $n_1$ to $n_K$ and their statistical errors $\sigma$. An intensity value $n$ is equal to the areas under the signal component curve, including the ongoing virtual signal beyond the stimulation end. The algorithm can be outlined as following:
+The decomposition process in Step 2 calculates the signal component intensities $n_1$ to $n_K$ and their statistical errors $\sigma$. An intensity value $n$ is equal to the areas under the signal component curve, including the ongoing virtual signal beyond the stimulation end. The algorithm can be outlined as following:
 
 <center>
 
@@ -432,13 +432,13 @@ In step 2.1, optimum signal bin intervals for the decomposition process are defi
 ```{r step2_bin_interval_table}
 
 interval_table <- data.frame(bin.no = c(1:K),
-                             t.start = dec_data$decompositon.input$t.start,
-                             t.end = dec_data$decompositon.input$t.end,
-                             channels = 1 + dec_data$decompositon.input$ch.end - dec_data$decompositon.input$ch.start)
+                             t.start = dec_data$decomposition.input$t.start,
+                             t.end = dec_data$decomposition.input$t.end,
+                             channels = 1 + dec_data$decomposition.input$ch.end - dec_data$decomposition.input$ch.start)
 
-if ("bin" %in% colnames(dec_data$decompositon.input)) {
+if ("bin" %in% colnames(dec_data$decomposition.input)) {
   interval_table <- cbind(interval_table,
-                          data.frame(bin = round(dec_data$decompositon.input$bin)))
+                          data.frame(bin = round(dec_data$decomposition.input$bin)))
   colnames(interval_table) <- c("signal bin","  $t_{start}$  ","  $t_{end}$  ", "channels", "$\\overline{I}_{bin}$")
   
 } else {
