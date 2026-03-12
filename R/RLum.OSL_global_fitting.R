@@ -86,10 +86,7 @@
 #' @author
 #' Dirk Mittelstrass, \email{dirk.mittelstrass@@luminescence.de}
 #'
-#' Please cite the package the following way:
-#'
-#' Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-#' R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, *in preparation*.
+#' Please cite this package, including its version number. Enter the command `citation("OSLdecomposition")` to generate the correct reference.
 #'
 #' @seealso [RLum.OSL_correction], [RLum.OSL_decomposition], [sum_OSLcurves], [fit_OSLcurve]
 #'

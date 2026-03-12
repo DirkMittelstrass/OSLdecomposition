@@ -35,6 +35,8 @@
 #' @author
 #' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
 #'
+#' Please cite this package, including its version number. Enter the command `citation("OSLdecomposition")` to generate the correct reference.
+#'
 #' @examples
 #'
 #' # Load example data
