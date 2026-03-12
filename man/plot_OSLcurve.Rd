@@ -142,8 +142,5 @@ Radiation Measurements, 32(2)
 \author{
 Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 
-Please cite the package the following way:
-
-Mittelstraß, D., Schmidt, C., Beyer, J., Heitmann, J. and Straessner, A.:
-R package OSLdecomposition: Automated identification and separation of quartz CW-OSL signal components, \emph{in preparation}.
+Please cite this package, including its version number. Enter the command \code{citation("OSLdecomposition")} to generate the correct reference.
 }

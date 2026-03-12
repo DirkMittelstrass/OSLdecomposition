@@ -150,9 +150,5 @@ Radiation Measurements, 32(2)
 \author{
 Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
 
-Please add the following references to your publication: Your currently used package version, obtained by
-\code{citation("OSLdecomposition")}
-
-Mittelstraß, D., Schmidt, C., Kreutzer, S., Beyer, J., Straessner, A. and Heitmann, J.:
-R package OSLdecomposition: Automated signal component analysis of multi-exponential decays for optically stimulated luminescence applications., \emph{in preparation}.
+Please cite this package, including its version number. Enter the command \code{citation("OSLdecomposition")} to generate the correct reference.
 }

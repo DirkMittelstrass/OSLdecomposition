@@ -60,4 +60,6 @@ check_RLum.Data(data_set[[5]]@records[[1]])
 }
 \author{
 Dirk Mittelstraß, \email{dirk.mittelstrass@luminescence.de}
+
+Please cite this package, including its version number. Enter the command \code{citation("OSLdecomposition")} to generate the correct reference.
 }
