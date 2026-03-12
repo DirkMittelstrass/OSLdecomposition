@@ -67,13 +67,14 @@ reference curve.
 \section{Last updates}{
 
 
-2026-02-25, DM: Revised and refactored whole code
+2026-03-12, DM: Revised and refactored whole code
 \itemize{
 \item Function won't accept data sets with varying x-axes and measurement lengths anymore. Now, ONLY records with x-axes IDENTICAL to those of the first record ARE INCLUDED.
 \item Accepts list of data.frames as input objects
 \item Changed naming and default values of some secondary arguments
 \item Faster calculation
 \item Plotting is less prone of errors and warnings
+\item Enhanced checks of the argument 'selection'
 }
 }
 
