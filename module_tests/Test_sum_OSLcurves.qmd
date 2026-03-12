@@ -98,3 +98,31 @@ sum_OSLcurves(data_Lum, record_type = "TL", output.plot = TRUE,
 # Should return NULL
 sum_OSLcurves(data_Lum, record_type = "TROSL", output.plot = TRUE)
 ```
+
+## Selecting subsets
+
+Calculate just from a subset, needed for `RLum.OSL_correction`
+
+```{r test_selection}
+
+# Should return background curve
+sum_OSLcurves(data_FB, record_type = "OSL", 
+              selection = 11,
+              output.plot = TRUE,
+              title = "FB quartz: background curve")
+
+# Should return a subset
+sum_OSLcurves(data_Lum, record_type = "OSL", 
+              selection = 11:13,
+              output.plot = TRUE,
+              title = "Only three aliquots")
+
+# Should return a error message
+result <- tryCatch({
+
+  sum_OSLcurves(data_FB, selection = 11:17)
+  
+}, error = function(w) {
+  cat("ERROR:", conditionMessage(w), "\n")
+})
+```

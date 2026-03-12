@@ -50,12 +50,13 @@
 #'
 #' @section Last updates:
 #'
-#' 2026-02-25, DM: Revised and refactored whole code
+#' 2026-03-12, DM: Revised and refactored whole code
 #' * Function won't accept data sets with varying x-axes and measurement lengths anymore. Now, ONLY records with x-axes IDENTICAL to those of the first record ARE INCLUDED.
 #' * Accepts list of data.frames as input objects
 #' * Changed naming and default values of some secondary arguments
 #' * Faster calculation
 #' * Plotting is less prone of errors and warnings
+#' * Enhanced checks of the argument 'selection'
 #'
 #' @author
 #' Dirk Mittelstraß, \email{dirk.mittelstrass@@luminescence.de}
@@ -99,6 +100,7 @@ sum_OSLcurves <- function(
   # * 2026-02-25, DM: Changed naming and default values of some secondary arguments
   # * 2026-02-25, DM: Function won't accept data sets with varying x-axes and measurement lengths anymore.
   #                   Now, ONLY records with x-axes IDENTICAL to those of the first record ARE INCLUDED.
+  # * 2026-03-12, DM: Enhanced checks of the argument 'selection'
 
   #  ToDo:
   # * Like in the old version, allow curves of different length. Shorten to the shortest curve
@@ -113,16 +115,22 @@ sum_OSLcurves <- function(
   if (is.list(object)) {
 
     # prove if aliquot selection is given. If not, take all aliquots of the data set
-    if (is.null(selection)
-        || is.na(selection)
-        || length(selection) > length(object)) {
+    if (is.null(selection) || all(is.na(selection))){
       selection <- c(1:length(object))
+
+    } else if(!all(selection %in% 1:length(object))){
+      stop("[sum_OSLcurve()] Argument 'selection' has indices not included in the data set.")
     }
   } else {
 
+    if (!(is.null(selection) || all(is.na(selection))))
+      warning("[sum_OSLcurve()] Argument 'selection' is definded but input object is not a list.")
     object <- list(object)
     selection <- c(1)
   }
+  object <- object[selection]
+
+  # Hidden parameter (enable for debug)
   check_verbose <- FALSE
 
   # ---------------------------------------------------------------- #
