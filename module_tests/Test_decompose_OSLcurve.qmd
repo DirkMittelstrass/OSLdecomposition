@@ -1,7 +1,7 @@
 ---
 title: "Module tests for decompose_OSLcurve()"
 author: "Dirk Mittelstraß"
-date: "2025-08-31"
+date: "2026-04-29"
 format:
   html:
     toc: true
@@ -36,7 +36,7 @@ library(knitr)
 
 Create test curve
 
-```{r}
+```{r define_cases}
 
 # Some common quartz CW-OSL measurement with a PMT
 sim_components <- data.frame(name = c("Fast", "Medium", "Slow"),
@@ -58,7 +58,7 @@ plot(x = curve$time, y = curve$signal, type = "l")
 
 Cycle algorithms, without background correction
 
-```{r}
+```{r basic_test}
 
 results <- data.frame(NULL)
 
@@ -116,7 +116,7 @@ kable(results)
 
 Now do the same, **with** background correction.
 
-```{r}
+```{r basic_test_bg}
 
 # Background fittings needs pre-defined integration intervals
 sim_components <- optimise_OSLintervals(sim_components, curve, 
@@ -177,7 +177,7 @@ kable(results)
 
 Try out a variety of possible cases for the lambda input
 
-```{r}
+```{r input_checks}
 
 component_inputs <- list(as_usual = sim_components,
                         lambda_only = sim_components$lambda,
@@ -193,4 +193,85 @@ for (i in 1:length(component_inputs)) {
    decompose_OSLcurve(curve, component_inputs[[i]])
 }
 
+```
+
+## Validation Test
+
+As the `det` algorithm is analytical, it should return for a noise-less curve **exactly** the expected results.
+
+```{r validation_test}
+sim_components <- sim_components[1:3,] # Remove background row
+
+cat("Intensity values n of input values:",  sim_components$n, "\n")
+
+# Simulate the curve, but do NOT add any noise or background
+curve <- simulate_OSLcomponents(sim_components, 
+                                simulate.curve = TRUE, 
+                                add.poisson.noise = FALSE,
+                                add.gaussian.noise = 0,
+                                add.background = 0,
+                                round.values = FALSE)
+
+cat("\nOutput:\n")
+result <- decompose_OSLcurve(curve,
+                             sim_components$lambda,
+                             algorithm = "det")
+
+# Result shall be correct up to the 4th digit
+if (any(!(round(result$n, 4) == round(sim_components$n, 4)))) 
+  stop("Det-algorithm output does not match input!")
+```
+
+## Speed test
+
+How fast are 9999 executions on average?
+
+\##### DET \######
+
+```{r speed_test}
+
+# Simulate three noisy curves
+sim2 <- data.frame(name = c("A", "B", "C", "D"),
+                   lambda = c(2, 0.2, 0.02, 0.002), 
+                   n = c(200, 2000, 20000, 200000))
+
+curves <- list(simulate_OSLcomponents(sim2[1:2,], simulate.curve = TRUE),
+               simulate_OSLcomponents(sim2[1:3,], simulate.curve = TRUE),
+               simulate_OSLcomponents(sim2[1:4,], simulate.curve = TRUE))
+
+speed_test <- function(algorithm, error){
+  for (j in 1:3333) {
+    for (i in 1:3) {
+      nirvana <- decompose_OSLcurve(curves[[i]],
+                               sim2$lambda[1:(1+i)],
+                               algorithm = algorithm,
+                               error.estimation = error,
+                               verbose = FALSE)}}}
+
+###### DET #############################
+tic()
+speed_test("det", "none")
+toc()
+###### DET with error calculation ######
+tic()
+speed_test("det", "empiric")
+toc()
+
+###### NLS #############################
+tic()
+speed_test("nls", "none")
+toc()
+###### NLS with error calculation #####
+tic()
+speed_test("nls", "empiric")
+toc()
+
+###### DET+NLS #############################
+tic()
+speed_test("nls", "none")
+toc()
+###### DET+NLS with error calculation #####
+tic()
+speed_test("nls", "empiric")
+toc()
 ```
