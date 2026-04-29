@@ -400,6 +400,9 @@ decompose_OSLcurve <- function(
           # assume that component k represents the signal background level
           D[i, k] <- t.end[i] - t.start[i]}}}
 
+    ## cache the determinant of D
+    det.D <- det(D)
+
     ## Build the enumerator matrices
 
     # prepare a list object to store the matrices
@@ -416,7 +419,7 @@ decompose_OSLcurve <- function(
     for (k in X) {
 
       # the signal intensities are calculated by the ratios of the determinants
-      n.temp <- det(A[[k]])/det(D)
+      n.temp <- det(A[[k]]) / det.D
       n <- c(n, n.temp)}
 
     # write the vector n containing the results
@@ -561,7 +564,7 @@ decompose_OSLcurve <- function(
           A.k[i,k] <- 1
           sum.err <- sum.err + (det(A.k) * I.err[i])^2}
 
-        components$n.error[k] <- sqrt(sum.err) / det(D)}
+        components$n.error[k] <- sqrt(sum.err) / det.D}
     }
     ############ end ERROR CALC ############
   } else {
